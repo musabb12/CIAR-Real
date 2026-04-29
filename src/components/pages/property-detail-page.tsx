@@ -622,7 +622,7 @@ export function PropertyDetailPage() {
       <motion.div variants={fadeInUp}>
         <Card>
           <CardHeader>
-            <CardTitle className="font-heading">Description</CardTitle>
+            <CardTitle className="font-heading">{t.property.description}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
@@ -637,7 +637,7 @@ export function PropertyDetailPage() {
         <motion.div variants={fadeInUp}>
           <Card>
             <CardHeader>
-              <CardTitle className="font-heading">Amenities</CardTitle>
+              <CardTitle className="font-heading">{t.property.amenities}</CardTitle>
               <CardDescription>
                 {property.amenities.length} amenities available
               </CardDescription>
@@ -667,7 +667,7 @@ export function PropertyDetailPage() {
         {agent && (
           <Card className="flex flex-col">
             <CardHeader>
-              <CardTitle className="font-heading">Listing Agent</CardTitle>
+              <CardTitle className="font-heading">{t.property.listingAgent}</CardTitle>
             </CardHeader>
             <CardContent className="flex-1">
               <div className="flex items-start gap-4">
@@ -748,7 +748,7 @@ export function PropertyDetailPage() {
         {/* Contact Form */}
         <Card className="flex flex-col">
           <CardHeader>
-            <CardTitle className="font-heading">Contact Agent</CardTitle>
+            <CardTitle className="font-heading">{t.property.contactAgent}</CardTitle>
             <CardDescription>
               Send an inquiry about this property
             </CardDescription>
@@ -860,7 +860,7 @@ export function PropertyDetailPage() {
       {/* CIAR SMART TOOLS SECTION */}
       <motion.div variants={fadeInUp} className="mt-12">
         <div className="mb-8">
-          <h2 className="font-heading text-2xl font-bold">CIAR Smart Tools</h2>
+          <h2 className="font-heading text-2xl font-bold">{t.property.smartTools}</h2>
           <div className="mt-2 h-[3px] w-16 bg-gradient-to-r from-amber-500 to-amber-400" />
           <p className="mt-2 text-muted-foreground">Advanced analytics and AI-powered insights</p>
         </div>

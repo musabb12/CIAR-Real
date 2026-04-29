@@ -603,7 +603,7 @@ export function HomePage() {
           transition={{ delay: 1.5 }}
         >
           <div className="flex flex-col items-center gap-1 text-white/40">
-            <span className="text-xs tracking-widest uppercase">Scroll</span>
+            <span className="text-xs tracking-widest uppercase">{t.hero.scroll}</span>
             <motion.div
               animate={{ y: [0, 6, 0] }}
               transition={{ repeat: Infinity, duration: 1.5 }}
@@ -620,8 +620,8 @@ export function HomePage() {
           ================================================================ */}
       <section className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
         <SectionHeading
-          title={t.property.featured}
-          subtitle={t.hero.subtitle}
+          title={t.hero.featuredProperties}
+          subtitle={t.hero.featuredSubtitle}
           viewAllLabel={t.common.viewAll}
           onViewAll={handleViewAllFeatured}
         />
@@ -775,8 +775,8 @@ export function HomePage() {
           ================================================================ */}
       <section className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
         <SectionHeading
-          title={t.search.allTypes}
-          subtitle="Explore diverse property categories to find exactly what you need"
+          title={t.hero.explore}
+          subtitle={t.hero.exploreSubtitle}
           centered={true}
         />
 
@@ -803,7 +803,7 @@ export function HomePage() {
                   {propertyTypeLabels[pt.type]}
                 </h3>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {pt.count} properties
+                  {pt.count} {t.nav.properties.toLowerCase()}
                 </p>
               </button>
             </motion.div>
@@ -910,7 +910,7 @@ export function HomePage() {
 
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeading
-            title="CIAR Exclusive Features"
+            title={t.property.ciarFeatures}
             subtitle="30+ smart tools powered by AI and advanced analytics to help you make the best property decisions"
             centered={true}
           />
@@ -1042,8 +1042,8 @@ export function HomePage() {
           ================================================================ */}
       <section className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
         <SectionHeading
-          title={t.footer.topLocations}
-          subtitle="Browse properties in the most popular destinations"
+          title={t.property.topDestinations}
+          subtitle={t.property.topDestinationsSubtitle}
           centered={true}
         />
 
@@ -1111,8 +1111,8 @@ export function HomePage() {
       <section className="bg-muted/20 py-20 sm:py-24">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeading
-            title={t.search.sortNewest}
-            subtitle="Stay updated with the latest property listings"
+            title={t.property.recentProperties}
+            subtitle={t.property.recentPropertiesSubtitle}
             viewAllLabel={t.common.viewAll}
             onViewAll={handleViewAllRecent}
           />

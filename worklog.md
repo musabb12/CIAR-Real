@@ -1,4 +1,49 @@
 ---
+Task ID: fix-hardcoded-i18n
+Agent: Fullstack Developer
+Task: Add missing translation keys and replace hardcoded English strings with i18n calls
+
+Work Log:
+- Added 5 new keys to Translations interface hero section: scroll, featuredProperties, featuredSubtitle, explore, exploreSubtitle
+- Added 9 new keys to Translations interface property section: smartTools, listingAgent, ciarFeatures, recentProperties, recentPropertiesSubtitle, topDestinations, topDestinationsSubtitle, beds, baths
+- Added 9 new keys to Translations interface footer section: newsletter, newsletterSubtitle, subscribe, emailPlaceholder, trustedBy, globalReach, premiumListings, securePayments, support247
+- Added 5 new keys to Translations interface admin section: adminPortal, adminPortalSubtitle, emailPlaceholder, passwordPlaceholder, backToHome
+- Added English translations for all 28 new keys across 4 sections
+- Added Arabic translations for all 28 new keys
+- Added French translations for all 28 new keys
+- Added Spanish translations for all 28 new keys
+- Added Turkish translations for all 28 new keys
+- Replaced hardcoded "Scroll" in home-page.tsx hero scroll hint with t.hero.scroll
+- Replaced featured section title/subtitle with t.hero.featuredProperties / t.hero.featuredSubtitle
+- Replaced property types section title/subtitle with t.hero.explore / t.hero.exploreSubtitle
+- Replaced CIAR Exclusive Features section title with t.property.ciarFeatures
+- Replaced Top Destinations section title/subtitle with t.property.topDestinations / t.property.topDestinationsSubtitle
+- Replaced Recent Properties section title/subtitle with t.property.recentProperties / t.property.recentPropertiesSubtitle
+- Replaced hardcoded "Description" with t.property.description in property-detail-page.tsx
+- Replaced hardcoded "Amenities" with t.property.amenities
+- Replaced hardcoded "Listing Agent" with t.property.listingAgent
+- Replaced hardcoded "Contact Agent" with t.property.contactAgent
+- Replaced hardcoded "CIAR Smart Tools" with t.property.smartTools
+- Replaced hardcoded "Email"/"Password" labels with t.auth.email / t.auth.password in admin-login-page.tsx
+- Replaced hardcoded "admin@ciar.com" placeholder with t.admin.emailPlaceholder
+- Replaced hardcoded "Enter your password" placeholder with t.admin.passwordPlaceholder
+- Replaced hardcoded "Sign In" button text with t.auth.signIn
+- Replaced hardcoded "Authenticating..." loading text with t.common.loading
+- Replaced hardcoded "Back to Home" with t.admin.backToHome
+- Replaced hardcoded "Administration" subtitle with t.admin.adminPortalSubtitle
+- Replaced hardcoded "Sign in to access the admin dashboard" subtitle with t.auth.subtitle
+- Verified zero new TypeScript errors introduced by changes (all pre-existing errors confirmed unchanged)
+
+Stage Summary:
+- 28 new translation keys added to Translations interface across hero, property, footer, and admin sections
+- All 5 languages (EN, AR, FR, ES, TR) updated with translations for every new key
+- home-page.tsx: 8 hardcoded strings replaced with translation calls
+- property-detail-page.tsx: 5 hardcoded strings replaced with translation calls
+- admin-login-page.tsx: 8 hardcoded strings replaced with translation calls
+- Total: 21 hardcoded English strings replaced with i18n translation calls
+- All existing functionality preserved, zero new TypeScript errors
+
+---
 Task ID: user-registration-flow
 Agent: Fullstack Developer
 Task: Add user registration (signup) flow to the platform

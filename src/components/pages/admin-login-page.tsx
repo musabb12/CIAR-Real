@@ -99,13 +99,13 @@ export function AdminLoginPage() {
                 CIAR
               </h1>
               <p className="mt-1 text-xs font-medium uppercase tracking-[0.25em] text-amber-400/60">
-                Administration
+                {t.admin.adminPortalSubtitle.replace('Access ', '')}
               </p>
             </div>
 
             {/* Subtitle */}
             <p className="text-center text-sm text-gray-400">
-              Sign in to access the admin dashboard
+              {t.auth.subtitle}
             </p>
           </CardHeader>
 
@@ -117,12 +117,12 @@ export function AdminLoginPage() {
                   htmlFor="admin-email"
                   className="text-xs font-medium uppercase tracking-wider text-gray-400"
                 >
-                  Email
+                  {t.auth.email}
                 </Label>
                 <Input
                   id="admin-email"
                   type="email"
-                  placeholder="admin@ciar.com"
+                  placeholder={t.admin.emailPlaceholder}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
@@ -137,13 +137,13 @@ export function AdminLoginPage() {
                   htmlFor="admin-password"
                   className="text-xs font-medium uppercase tracking-wider text-gray-400"
                 >
-                  Password
+                  {t.auth.password}
                 </Label>
                 <div className="relative">
                   <Input
                     id="admin-password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Enter your password"
+                    placeholder={t.admin.passwordPlaceholder}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
@@ -176,10 +176,10 @@ export function AdminLoginPage() {
                   {isLoading ? (
                     <span className="flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Authenticating...
+                      {t.common.loading}
                     </span>
                   ) : (
-                    'Sign In'
+                    t.auth.signIn
                   )}
                 </Button>
               </motion.div>
@@ -192,7 +192,7 @@ export function AdminLoginPage() {
               className="group flex items-center gap-2 text-sm text-gray-500 transition-colors duration-300 hover:text-amber-300"
             >
               <ArrowLeft className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-x-1" />
-              Back to Home
+              {t.admin.backToHome}
             </button>
           </CardFooter>
         </Card>

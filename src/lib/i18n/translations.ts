@@ -21,6 +21,11 @@ export interface Translations {
     propertiesCount: string;
     agentsCount: string;
     companiesCount: string;
+    scroll: string;
+    featuredProperties: string;
+    featuredSubtitle: string;
+    explore: string;
+    exploreSubtitle: string;
   };
   // Property
   property: {
@@ -45,6 +50,15 @@ export interface Translations {
     noProperties: string;
     sqm: string;
     perMonth: string;
+    smartTools: string;
+    listingAgent: string;
+    ciarFeatures: string;
+    recentProperties: string;
+    recentPropertiesSubtitle: string;
+    topDestinations: string;
+    topDestinationsSubtitle: string;
+    beds: string;
+    baths: string;
   };
   // Property types
   propertyTypes: {
@@ -204,6 +218,11 @@ export interface Translations {
     parentCountry: string;
     parentRegion: string;
     noData: string;
+    adminPortal: string;
+    adminPortalSubtitle: string;
+    emailPlaceholder: string;
+    passwordPlaceholder: string;
+    backToHome: string;
   };
   // Common
   common: {
@@ -228,6 +247,15 @@ export interface Translations {
     privacy: string;
     terms: string;
     rights: string;
+    newsletter: string;
+    newsletterSubtitle: string;
+    subscribe: string;
+    emailPlaceholder: string;
+    trustedBy: string;
+    globalReach: string;
+    premiumListings: string;
+    securePayments: string;
+    support247: string;
   };
   // How it works
   howItWorks: {
@@ -275,6 +303,11 @@ export const translations: Record<Locale, Translations> = {
       propertiesCount: 'Properties+',
       agentsCount: 'Agents+',
       companiesCount: 'Companies+',
+      scroll: 'Scroll',
+      featuredProperties: 'Featured Properties',
+      featuredSubtitle: 'Handpicked premium properties for you',
+      explore: 'Explore Property Types',
+      exploreSubtitle: 'Explore diverse property categories to find exactly what you need',
     },
     property: {
       featured: 'Featured',
@@ -298,6 +331,15 @@ export const translations: Record<Locale, Translations> = {
       noProperties: 'No properties found',
       sqm: 'sqm',
       perMonth: '/month',
+      smartTools: 'CIAR Smart Tools',
+      listingAgent: 'Listing Agent',
+      ciarFeatures: 'CIAR Exclusive Features',
+      recentProperties: 'Recent Properties',
+      recentPropertiesSubtitle: 'Stay updated with the latest property listings',
+      topDestinations: 'Top Destinations',
+      topDestinationsSubtitle: 'Browse properties in the most popular destinations',
+      beds: 'beds',
+      baths: 'baths',
     },
     propertyTypes: {
       apartment: 'Apartment',
@@ -450,6 +492,11 @@ export const translations: Record<Locale, Translations> = {
       parentCountry: 'Parent Country',
       parentRegion: 'Parent Region',
       noData: 'No data',
+      adminPortal: 'Admin Portal',
+      adminPortalSubtitle: 'Access CIAR Administration',
+      emailPlaceholder: 'admin@ciar.com',
+      passwordPlaceholder: 'Enter your password',
+      backToHome: 'Back to Home',
     },
     common: {
       loading: 'Loading...',
@@ -472,6 +519,15 @@ export const translations: Record<Locale, Translations> = {
       privacy: 'Privacy Policy',
       terms: 'Terms of Service',
       rights: 'All rights reserved',
+      newsletter: 'Newsletter',
+      newsletterSubtitle: 'Subscribe to get the latest updates',
+      subscribe: 'Subscribe',
+      emailPlaceholder: 'Enter your email',
+      trustedBy: 'Trusted By',
+      globalReach: 'Global Reach',
+      premiumListings: 'Premium Listings',
+      securePayments: 'Secure Payments',
+      support247: '24/7 Support',
     },
     howItWorks: {
       title: 'How It Works',
@@ -515,6 +571,11 @@ export const translations: Record<Locale, Translations> = {
       propertiesCount: 'عقار+',
       agentsCount: 'وكيل+',
       companiesCount: 'شركة+',
+      scroll: 'تمرير',
+      featuredProperties: 'عقارات مميزة',
+      featuredSubtitle: 'عقارات متميزة مختارة بعناية لك',
+      explore: 'استكشف أنواع العقارات',
+      exploreSubtitle: 'استكشف فئات العقارات المتنوعة للعثور على ما تريده بالضبط',
     },
     property: {
       featured: 'مميز',
@@ -538,6 +599,15 @@ export const translations: Record<Locale, Translations> = {
       noProperties: 'لا توجد عقارات',
       sqm: 'م²',
       perMonth: '/شهر',
+      smartTools: 'أدوات CIAR الذكية',
+      listingAgent: 'وكيل الباقة',
+      ciarFeatures: 'مميزات CIAR الحصرية',
+      recentProperties: 'أحدث العقارات',
+      recentPropertiesSubtitle: 'ابق على اطلاع بأحدث القوائم العقارية',
+      topDestinations: 'أفضل الوجهات',
+      topDestinationsSubtitle: 'تصفح العقارات في الوجهات الأكثر شعبية',
+      beds: 'غرف نوم',
+      baths: 'حمامات',
     },
     propertyTypes: {
       apartment: 'شقة',
@@ -690,6 +760,11 @@ export const translations: Record<Locale, Translations> = {
       parentCountry: 'الدولة الأم',
       parentRegion: 'المنطقة الأم',
       noData: 'لا توجد بيانات',
+      adminPortal: 'بوابة الإدارة',
+      adminPortalSubtitle: 'الوصول إلى إدارة CIAR',
+      emailPlaceholder: 'admin@ciar.com',
+      passwordPlaceholder: 'أدخل كلمة المرور',
+      backToHome: 'العودة للرئيسية',
     },
     common: {
       loading: 'جار التحميل...',
@@ -712,6 +787,15 @@ export const translations: Record<Locale, Translations> = {
       privacy: 'سياسة الخصوصية',
       terms: 'شروط الخدمة',
       rights: 'جميع الحقوق محفوظة',
+      newsletter: 'النشرة الإخبارية',
+      newsletterSubtitle: 'اشترك للحصول على أحدث التحديثات',
+      subscribe: 'اشتراك',
+      emailPlaceholder: 'أدخل بريدك الإلكتروني',
+      trustedBy: 'موثوق من قبل',
+      globalReach: 'وصول عالمي',
+      premiumListings: 'قوائم متميزة',
+      securePayments: 'دفع آمن',
+      support247: 'دعم على مدار الساعة',
     },
     howItWorks: {
       title: 'كيف تعمل المنصة',
@@ -755,6 +839,11 @@ export const translations: Record<Locale, Translations> = {
       propertiesCount: 'Propriétés+',
       agentsCount: 'Agents+',
       companiesCount: 'Entreprises+',
+      scroll: 'Défiler',
+      featuredProperties: 'Propriétés en vedette',
+      featuredSubtitle: 'Propriétés premium sélectionnées pour vous',
+      explore: 'Explorer les types de biens',
+      exploreSubtitle: 'Explorez diverses catégories de biens pour trouver exactement ce que vous cherchez',
     },
     property: {
       featured: 'En vedette',
@@ -778,6 +867,15 @@ export const translations: Record<Locale, Translations> = {
       noProperties: 'Aucune propriété',
       sqm: 'm²',
       perMonth: '/mois',
+      smartTools: 'Outils intelligents CIAR',
+      listingAgent: 'Agent annonceur',
+      ciarFeatures: 'Fonctionnalités exclusives CIAR',
+      recentProperties: 'Propriétés récentes',
+      recentPropertiesSubtitle: 'Restez informé des dernières annonces immobilières',
+      topDestinations: 'Top destinations',
+      topDestinationsSubtitle: 'Parcourez les biens dans les destinations les plus populaires',
+      beds: 'ch.',
+      baths: 'SDB',
     },
     propertyTypes: {
       apartment: 'Appartement',
@@ -930,6 +1028,11 @@ export const translations: Record<Locale, Translations> = {
       parentCountry: 'Pays parent',
       parentRegion: 'Région parente',
       noData: 'Aucune donnée',
+      adminPortal: 'Portail admin',
+      adminPortalSubtitle: 'Accéder à l\'administration CIAR',
+      emailPlaceholder: 'admin@ciar.com',
+      passwordPlaceholder: 'Entrez votre mot de passe',
+      backToHome: 'Retour à l\'accueil',
     },
     common: {
       loading: 'Chargement...',
@@ -952,6 +1055,15 @@ export const translations: Record<Locale, Translations> = {
       privacy: 'Confidentialité',
       terms: 'Conditions',
       rights: 'Tous droits réservés',
+      newsletter: 'Newsletter',
+      newsletterSubtitle: 'Abonnez-vous pour recevoir les dernières mises à jour',
+      subscribe: 'S\'abonner',
+      emailPlaceholder: 'Entrez votre e-mail',
+      trustedBy: 'Approuvé par',
+      globalReach: 'Portée mondiale',
+      premiumListings: 'Annonces premium',
+      securePayments: 'Paiements sécurisés',
+      support247: 'Support 24/7',
     },
     howItWorks: {
       title: 'Comment ça marche',
@@ -995,6 +1107,11 @@ export const translations: Record<Locale, Translations> = {
       propertiesCount: 'Propiedades+',
       agentsCount: 'Agentes+',
       companiesCount: 'Empresas+',
+      scroll: 'Desplazar',
+      featuredProperties: 'Propiedades destacadas',
+      featuredSubtitle: 'Propiedades premium seleccionadas para ti',
+      explore: 'Explorar tipos de propiedades',
+      exploreSubtitle: 'Explora diversas categorías de propiedades para encontrar exactamente lo que necesitas',
     },
     property: {
       featured: 'Destacado',
@@ -1018,6 +1135,15 @@ export const translations: Record<Locale, Translations> = {
       noProperties: 'Sin propiedades',
       sqm: 'm²',
       perMonth: '/mes',
+      smartTools: 'Herramientas inteligentes CIAR',
+      listingAgent: 'Agente anunciante',
+      ciarFeatures: 'Características exclusivas CIAR',
+      recentProperties: 'Propiedades recientes',
+      recentPropertiesSubtitle: 'Mantente actualizado con los últimos anuncios inmobiliarios',
+      topDestinations: 'Destinos populares',
+      topDestinationsSubtitle: 'Explora propiedades en los destinos más populares',
+      beds: 'hab.',
+      baths: 'baños',
     },
     propertyTypes: {
       apartment: 'Apartamento',
@@ -1170,6 +1296,11 @@ export const translations: Record<Locale, Translations> = {
       parentCountry: 'País padre',
       parentRegion: 'Región padre',
       noData: 'Sin datos',
+      adminPortal: 'Portal de administración',
+      adminPortalSubtitle: 'Acceder a la administración de CIAR',
+      emailPlaceholder: 'admin@ciar.com',
+      passwordPlaceholder: 'Ingresa tu contraseña',
+      backToHome: 'Volver al inicio',
     },
     common: {
       loading: 'Cargando...',
@@ -1192,6 +1323,15 @@ export const translations: Record<Locale, Translations> = {
       privacy: 'Privacidad',
       terms: 'Términos',
       rights: 'Todos los derechos reservados',
+      newsletter: 'Boletín',
+      newsletterSubtitle: 'Suscríbete para recibir las últimas novedades',
+      subscribe: 'Suscribirse',
+      emailPlaceholder: 'Ingresa tu correo',
+      trustedBy: 'Confianza de',
+      globalReach: 'Alcance global',
+      premiumListings: 'Anuncios premium',
+      securePayments: 'Pagos seguros',
+      support247: 'Soporte 24/7',
     },
     howItWorks: {
       title: 'Cómo funciona',
@@ -1235,6 +1375,11 @@ export const translations: Record<Locale, Translations> = {
       propertiesCount: 'Emlak+',
       agentsCount: 'Danışman+',
       companiesCount: 'Şirket+',
+      scroll: 'Kaydır',
+      featuredProperties: 'Öne Çıkan Emlaklar',
+      featuredSubtitle: 'Sizin için özenle seçilmiş premium emlaklar',
+      explore: 'Emlak Türlerini Keşfet',
+      exploreSubtitle: 'İhtiyacınız olanı bulmak için çeşitli emlak kategorilerini keşfedin',
     },
     property: {
       featured: 'Öne Çıkan',
@@ -1258,6 +1403,15 @@ export const translations: Record<Locale, Translations> = {
       noProperties: 'Emlak bulunamadı',
       sqm: 'm²',
       perMonth: '/ay',
+      smartTools: 'CIAR Akıllı Araçlar',
+      listingAgent: 'İlan Sahibi Danışman',
+      ciarFeatures: 'CIAR Özel Özellikler',
+      recentProperties: 'Son Emlaklar',
+      recentPropertiesSubtitle: 'En son emlak ilanlarından haberdar olun',
+      topDestinations: 'Popüler Destinasyonlar',
+      topDestinationsSubtitle: 'En popüler destinasyonlardaki emlakları gezin',
+      beds: 'oda',
+      baths: 'banyo',
     },
     propertyTypes: {
       apartment: 'Daire',
@@ -1410,6 +1564,11 @@ export const translations: Record<Locale, Translations> = {
       parentCountry: 'Üst Ülke',
       parentRegion: 'Üst Bölge',
       noData: 'Veri yok',
+      adminPortal: 'Yönetim Portalı',
+      adminPortalSubtitle: 'CIAR Yönetimine Erişin',
+      emailPlaceholder: 'admin@ciar.com',
+      passwordPlaceholder: 'Şifrenizi girin',
+      backToHome: 'Ana Sayfaya Dön',
     },
     common: {
       loading: 'Yükleniyor...',
@@ -1432,6 +1591,15 @@ export const translations: Record<Locale, Translations> = {
       privacy: 'Gizlilik',
       terms: 'Koşullar',
       rights: 'Tüm hakları saklıdır',
+      newsletter: 'Bülten',
+      newsletterSubtitle: 'Son güncellemeler için abone olun',
+      subscribe: 'Abone Ol',
+      emailPlaceholder: 'E-posta adresinizi girin',
+      trustedBy: 'Güvenilir',
+      globalReach: 'Küresel Erişim',
+      premiumListings: 'Premium İlanlar',
+      securePayments: 'Güvenli Ödeme',
+      support247: '7/24 Destek',
     },
     howItWorks: {
       title: 'Nasıl Çalışır',

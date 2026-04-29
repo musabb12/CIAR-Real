@@ -55,6 +55,12 @@ interface AppState {
   // i18n
   locale: Locale;
   setLocale: (locale: Locale) => void;
+
+  // Features
+  features: Record<string, boolean>;
+  setFeatures: (features: Record<string, boolean>) => void;
+  toggleFeature: (key: string, enabled: boolean) => void;
+  isFeatureEnabled: (key: string) => boolean;
 }
 
 // ============================================================
@@ -152,4 +158,14 @@ export const useAppStore = create<AppState>((set, get) => ({
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   setSearchQuery: (query) => set({ searchQuery: query }),
+
+  // ---- Features ----
+  features: {},
+  setFeatures: (features) => set({ features }),
+  toggleFeature: (key, enabled) => set((state) => ({ features: { ...state.features, [key]: enabled } })),
+  isFeatureEnabled: (key) => {
+    const state = get();
+    if (Object.keys(state.features).length === 0) return true; // Default enabled if not loaded
+    return state.features[key] ?? true;
+  },
 }));

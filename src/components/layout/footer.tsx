@@ -210,19 +210,16 @@ export function Footer() {
                 className="flex items-center gap-2 transition-opacity hover:opacity-80"
               >
                 <Building2 className="h-7 w-7" />
-                <span className="text-xl font-bold tracking-tight">
-                  Property
-                  <span className="bg-gradient-to-r from-emerald-400 to-amber-400 bg-clip-text text-transparent">
-                    Finder
-                  </span>
+                <span className="bg-gradient-to-r from-emerald-400 to-amber-400 bg-clip-text text-transparent text-xl font-bold tracking-tight">
+                  CIAR
                 </span>
               </button>
 
               {/* Description */}
               <p className="mt-4 text-sm leading-relaxed text-gray-400">
-                Your trusted global real estate directory. Discover premium
-                properties across 60+ countries with advanced search, verified
-                agents, and secure transactions.
+                CIAR is your trusted global real estate directory. Discover
+                premium properties across 60+ countries with AI-powered tools,
+                smart analytics, verified agents, and secure transactions.
               </p>
 
               {/* Social / Contact icons */}
@@ -356,7 +353,7 @@ export function Footer() {
           {/* ======== Bottom bar ======== */}
           <div className="mt-8 flex flex-col items-center justify-between gap-4 md:flex-row">
             <p className="text-xs text-gray-500">
-              &copy; {new Date().getFullYear()} PropertyFinder.{' '}
+              &copy; {new Date().getFullYear()} CIAR.{' '}
               {t.footer.rights}.
             </p>
             <div className="flex items-center gap-6">

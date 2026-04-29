@@ -239,11 +239,8 @@ export function Header() {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-emerald-500 shadow-lg shadow-amber-500/20 transition-shadow duration-300 group-hover:shadow-amber-500/40">
               <Building2 className="h-5 w-5 text-white" />
             </div>
-            <span className={`text-xl font-bold tracking-tight ${logoColor}`}>
-              Property
-              <span className="bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-500 bg-clip-text text-transparent">
-                Finder
-              </span>
+            <span className={`bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-500 bg-clip-text text-transparent text-xl font-bold tracking-tight`}>
+              CIAR
             </span>
           </button>
 
@@ -528,11 +525,8 @@ export function Header() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-emerald-500 shadow-lg shadow-amber-500/20">
                   <Building2 className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-xl font-bold tracking-tight text-gray-900 dark:text-white">
-                  Property
-                  <span className="bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-500 bg-clip-text text-transparent">
-                    Finder
-                  </span>
+                <span className="bg-gradient-to-r from-amber-500 via-amber-400 to-emerald-500 bg-clip-text text-transparent text-xl font-bold tracking-tight">
+                  CIAR
                 </span>
               </button>
               <Button

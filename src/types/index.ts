@@ -247,3 +247,32 @@ export interface AdminStats {
   propertiesByCountry: Record<string, number>;
   inquiriesByStatus: Record<string, number>;
 }
+
+export interface FeatureToggle {
+  id: string;
+  key: string;
+  name: string;
+  description: string | null;
+  category: string;
+  icon: string | null;
+  isEnabled: boolean;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PropertyReview {
+  id: string;
+  propertyId: string;
+  userId: string | null;
+  name: string;
+  email: string;
+  rating: number;
+  title: string | null;
+  comment: string | null;
+  isVerified: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  user?: User;
+}

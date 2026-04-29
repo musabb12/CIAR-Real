@@ -64,6 +64,7 @@ model User {
   favorites     Favorite[]
   inquiries     Inquiry[]
   agent         Agent?
+  reviews       PropertyReview[]
 }
 
 model Agent {
@@ -186,6 +187,7 @@ model Property {
   amenities     PropertyAmenity[]
   favorites     Favorite[]
   inquiries     Inquiry[]
+  reviews       PropertyReview[]
 }
 
 model PropertyImage {
@@ -276,4 +278,41 @@ model Banner {
   updatedAt     DateTime       @updatedAt
 
   @@index([position])
+}
+
+// ==================== CIAR FEATURES ====================
+
+model FeatureToggle {
+  id            String         @id @default(cuid())
+  key           String         @unique  // feature identifier
+  name          String         // display name
+  description   String?        // feature description
+  category      String         @default("general") // general, analytics, ai, social, tools
+  icon          String?        // lucide icon name
+  isEnabled     Boolean        @default(true)
+  order         Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model PropertyReview {
+  id            String         @id @default(cuid())
+  propertyId    String
+  userId        String?
+  name          String
+  email         String
+  rating        Int            // 1-5
+  title         String?
+  comment       String?
+  isVerified    Boolean        @default(false)
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  property      Property       @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user          User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([propertyId])
+  @@index([userId])
+  @@index([rating])
 }

@@ -26,6 +26,16 @@ import {
   Warehouse,
   Castle,
   Landmark,
+  Brain,
+  Eye,
+  TrendingUp,
+  BarChart3,
+  Flame,
+  Leaf,
+  Wifi,
+  Zap,
+  ShieldAlert,
+  Trophy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -873,6 +883,70 @@ export function HomePage() {
               ))}
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Gradient divider */}
+      <div className="gradient-divider" />
+
+      {/* ================================================================
+          CIAR EXCLUSIVE FEATURES — Bento Grid Showcase
+          ================================================================ */}
+      <section className="relative overflow-hidden bg-muted/30 py-20 sm:py-24">
+        <div className="absolute inset-0 opacity-[0.03]">
+          <div className="absolute right-1/4 top-1/3 h-80 w-80 rounded-full bg-primary blur-3xl" />
+          <div className="absolute left-1/3 bottom-1/4 h-60 w-60 rounded-full bg-amber-500 blur-3xl" />
+        </div>
+
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SectionHeading
+            title="CIAR Exclusive Features"
+            subtitle="30+ smart tools powered by AI and advanced analytics to help you make the best property decisions"
+            centered={true}
+          />
+
+          <motion.div
+            className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-50px' }}
+          >
+            {[
+              { icon: Brain, label: 'AI Valuation', gradient: 'from-violet-500 to-purple-500' },
+              { icon: Eye, label: 'Virtual Tour', gradient: 'from-cyan-500 to-blue-500' },
+              { icon: TrendingUp, label: 'ROI Calculator', gradient: 'from-emerald-500 to-teal-400' },
+              { icon: MapPin, label: 'Neighborhood', gradient: 'from-rose-500 to-pink-500' },
+              { icon: BarChart3, label: 'Price Trends', gradient: 'from-amber-500 to-orange-400' },
+              { icon: Star, label: 'Reviews', gradient: 'from-yellow-500 to-amber-400' },
+              { icon: Flame, label: 'Price Heatmap', gradient: 'from-red-500 to-orange-500' },
+              { icon: Leaf, label: 'Carbon Rating', gradient: 'from-green-500 to-emerald-400' },
+              { icon: Wifi, label: 'Smart Home', gradient: 'from-indigo-500 to-blue-400' },
+              { icon: Zap, label: 'Energy Score', gradient: 'from-yellow-400 to-orange-400' },
+              { icon: ShieldAlert, label: 'Risk Assessment', gradient: 'from-red-600 to-rose-500' },
+              { icon: Trophy, label: 'Gamification', gradient: 'from-amber-400 to-yellow-300' },
+            ].map((feature, i) => (
+              <motion.div key={feature.label} variants={staggerItem}>
+                <div className="group flex flex-col items-center gap-3 rounded-2xl border border-border/50 bg-card/80 p-5 text-center backdrop-blur-sm transition-all duration-300 hover:border-primary/20 hover:shadow-lg hover:-translate-y-1">
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${feature.gradient} shadow-lg transition-transform duration-300 group-hover:scale-110`}>
+                    <feature.icon className="h-6 w-6 text-white" />
+                  </div>
+                  <span className="text-xs font-semibold tracking-tight">{feature.label}</span>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          <motion.div
+            className="mt-10 text-center"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+          >
+            <p className="text-sm text-muted-foreground">
+              ...and 18 more advanced features available on every property page
+            </p>
+          </motion.div>
         </div>
       </section>
 

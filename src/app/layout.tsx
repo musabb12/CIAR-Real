@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
-import { ScrollProgress } from "@/components/ui/scroll-progress";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,17 +15,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PropertyFinder — Global Real Estate Directory",
-  description: "Discover your dream property across 5+ countries. Browse apartments, villas, offices, and more. Buy, rent, or find short-term stays with PropertyFinder.",
-  keywords: ["real estate", "property", "buy home", "rent apartment", "villa", "luxury property", "PropertyFinder"],
-  authors: [{ name: "PropertyFinder" }],
+  title: "CIAR — Global Real Estate Directory",
+  description: "Discover your dream property across 60+ countries with CIAR. Premium real estate platform with AI-powered tools, smart analytics, and verified listings.",
+  keywords: ["real estate", "property", "buy home", "rent apartment", "villa", "luxury property", "CIAR"],
+  authors: [{ name: "CIAR" }],
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
   },
   openGraph: {
-    title: "PropertyFinder — Global Real Estate Directory",
-    description: "Discover your dream property across 5+ countries. Browse, search, and find your perfect home.",
-    siteName: "PropertyFinder",
+    title: "CIAR — Global Real Estate Directory",
+    description: "Discover your dream property across 60+ countries with CIAR. Premium real estate platform with AI-powered tools, smart analytics, and verified listings.",
+    siteName: "CIAR",
     type: "website",
   },
 };
@@ -47,7 +46,6 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ScrollProgress />
           {children}
           <Toaster />
         </ThemeProvider>

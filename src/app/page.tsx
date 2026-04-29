@@ -18,7 +18,7 @@ import { getLocaleDirection } from '@/lib/i18n';
 import { Toaster } from 'sonner';
 
 export default function Home() {
-  const { currentPage, currentUser, isAuthenticated, setFavorites, locale } = useAppStore();
+  const { currentPage, currentUser, isAuthenticated, setFavorites, setFeatures, locale } = useAppStore();
 
   // Load favorites when user logs in
   useEffect(() => {
@@ -31,6 +31,22 @@ export default function Home() {
         .catch(() => {});
     }
   }, [isAuthenticated, currentUser, setFavorites]);
+
+  // Load feature toggles from API
+  useEffect(() => {
+    fetch('/api/features')
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          const featureMap: Record<string, boolean> = {};
+          data.forEach((f: { key: string; isEnabled: boolean }) => {
+            featureMap[f.key] = f.isEnabled;
+          });
+          setFeatures(featureMap);
+        }
+      })
+      .catch(() => {});
+  }, [setFeatures]);
 
   // Update document dir and lang for RTL support
   useEffect(() => {

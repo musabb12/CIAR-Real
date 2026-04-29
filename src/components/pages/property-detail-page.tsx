@@ -40,6 +40,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import type { Property } from '@/types';
+import {
+  AIPropertyValuation, VirtualTourViewer, InvestmentROICalculator,
+  NeighborhoodInsights, WalkabilityTransit, PriceTrendChart,
+  SmartPriceAlerts, PropertyReviews, FloorPlanViewer,
+  PriceHeatmap, SchoolDistrictRatings, CommuteCalculator,
+  CarbonFootprintRating, SmartHomeCompatibility, NoiseLevelAssessment,
+  PetFriendlinessScore, NightlifeProximity, SeasonalPricing,
+  RenovationEstimator, RentalYieldCalculator, LifestyleMatch,
+  DisasterRiskAssessment, AccessibilityScore, FamilyFriendliness,
+  GroceryDelivery, SimilarProperties, PropertyHistoryTimeline,
+  MarketBenchmark, EnergyEfficiency, GamifiedExploration
+} from '@/components/features/ciar-features';
 
 // ============================================================
 // Animation variants
@@ -198,6 +210,7 @@ export function PropertyDetailPage() {
     isFavorite,
     currentUser,
     isAuthenticated,
+    isFeatureEnabled,
   } = useAppStore();
   const { t } = useTranslation();
 
@@ -798,6 +811,58 @@ export function PropertyDetailPage() {
           </Card>
         </motion.div>
       )}
+
+      {/* CIAR SMART TOOLS SECTION */}
+      <motion.div variants={fadeInUp} className="mt-12">
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold gradient-underline">CIAR Smart Tools</h2>
+          <p className="mt-2 text-muted-foreground">Advanced analytics and AI-powered insights</p>
+        </div>
+
+        {/* AI Features */}
+        {isFeatureEnabled('ai_valuation') && <AIPropertyValuation property={property} />}
+
+        {/* Analytics Features */}
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {isFeatureEnabled('roi_calculator') && <InvestmentROICalculator property={property} />}
+          {isFeatureEnabled('neighborhood') && <NeighborhoodInsights property={property} />}
+          {isFeatureEnabled('walkability') && <WalkabilityTransit property={property} />}
+          {isFeatureEnabled('price_trends') && <PriceTrendChart property={property} />}
+          {isFeatureEnabled('schools') && <SchoolDistrictRatings property={property} />}
+          {isFeatureEnabled('carbon') && <CarbonFootprintRating property={property} />}
+          {isFeatureEnabled('noise') && <NoiseLevelAssessment property={property} />}
+          {isFeatureEnabled('nightlife') && <NightlifeProximity property={property} />}
+          {isFeatureEnabled('seasonal') && <SeasonalPricing property={property} />}
+          {isFeatureEnabled('rental_yield') && <RentalYieldCalculator property={property} />}
+          {isFeatureEnabled('disaster') && <DisasterRiskAssessment property={property} />}
+          {isFeatureEnabled('family') && <FamilyFriendliness property={property} />}
+          {isFeatureEnabled('benchmark') && <MarketBenchmark property={property} />}
+          {isFeatureEnabled('energy') && <EnergyEfficiency property={property} />}
+        </div>
+
+        {/* Tools Features */}
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {isFeatureEnabled('virtual_tour') && <VirtualTourViewer property={property} />}
+          {isFeatureEnabled('floor_plan') && <FloorPlanViewer property={property} />}
+          {isFeatureEnabled('commute') && <CommuteCalculator property={property} />}
+          {isFeatureEnabled('smart_home') && <SmartHomeCompatibility property={property} />}
+          {isFeatureEnabled('pet_friendly') && <PetFriendlinessScore property={property} />}
+          {isFeatureEnabled('renovation') && <RenovationEstimator property={property} />}
+          {isFeatureEnabled('accessibility') && <AccessibilityScore property={property} />}
+          {isFeatureEnabled('grocery') && <GroceryDelivery property={property} />}
+          {isFeatureEnabled('heatmap') && <PriceHeatmap property={property} />}
+        </div>
+
+        {/* Social Features */}
+        {isFeatureEnabled('reviews') && <PropertyReviews property={property} />}
+
+        {/* Full-width features */}
+        {isFeatureEnabled('similarity') && <SimilarProperties property={property} />}
+        {isFeatureEnabled('timeline') && <PropertyHistoryTimeline property={property} />}
+        {isFeatureEnabled('lifestyle') && <LifestyleMatch property={property} />}
+        {isFeatureEnabled('price_alerts') && <SmartPriceAlerts property={property} />}
+        {isFeatureEnabled('gamification') && <GamifiedExploration property={property} />}
+      </motion.div>
 
       {/* Bottom spacing */}
       <div className="h-8" />

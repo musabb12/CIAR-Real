@@ -1,4 +1,47 @@
 ---
+Task ID: 2-e
+Agent: Task 2-e Agent
+Task: Add feature toggle loading on mount + CIAR Exclusive Features section + remove duplicate ScrollProgress
+
+Work Log:
+- Added `setFeatures` to useAppStore() destructure in page.tsx
+- Added useEffect to fetch /api/features on mount and populate feature toggle map in Zustand store
+- Removed duplicate `<ScrollProgress />` from layout.tsx (kept the one in page.tsx)
+- Removed unused ScrollProgress import from layout.tsx
+- Added new icon imports to home-page.tsx: Brain, Eye, TrendingUp, BarChart3, Flame, Leaf, Wifi, Zap, ShieldAlert, Trophy
+- Added "CIAR Exclusive Features" bento grid showcase section before CTA section in home-page.tsx
+- Section includes 12 feature cards with gradient icons (AI Valuation, Virtual Tour, ROI Calculator, etc.)
+- Section includes staggered framer-motion animations and responsive grid layout (2-6 cols)
+- Zero lint errors, dev server running cleanly
+
+Stage Summary:
+- Feature toggles now load from /api/features on app mount and populate Zustand store
+- Duplicate ScrollProgress removed from layout.tsx
+- New CIAR Exclusive Features showcase section added to home page with 12 animated feature cards
+
+---
+Task ID: 2-a
+Agent: Rebranding Agent
+Task: Rebrand from PropertyFinder to CIAR + add FeatureToggle/PropertyReview types + feature toggle store
+
+Work Log:
+- Added FeatureToggle interface to types/index.ts (id, key, name, description, category, icon, isEnabled, order, timestamps)
+- Added PropertyReview interface to types/index.ts (id, propertyId, userId, name, email, rating, title, comment, isVerified, isActive, timestamps, user relation)
+- Added features state (Record<string, boolean>) to Zustand store AppState interface
+- Added setFeatures, toggleFeature, isFeatureEnabled actions to store implementation
+- isFeatureEnabled defaults to true when feature map is not yet loaded (graceful fallback)
+- Rebranded layout.tsx metadata: title, description, keywords, authors, openGraph all updated to CIAR
+- Rebranded header.tsx: replaced two-span "Property" + "Finder" brand with single "CIAR" span (gold/emerald gradient) in both desktop header and mobile menu
+- Rebranded footer.tsx: logo text, description paragraph, and copyright line all updated to CIAR
+- Updated globals.css first design system comment from PROPERTYFINDER to CIAR
+- Zero lint errors
+
+Stage Summary:
+- Full rebrand from PropertyFinder to CIAR across layout, header, footer, CSS, and metadata
+- FeatureToggle and PropertyReview types ready for upcoming feature toggle and review system
+- Zustand store extended with feature toggle state management
+
+---
 Task ID: 2
 Agent: Main Orchestrator
 Task: Multi-language support (5 languages), 60 countries with all Arab countries, enhanced admin

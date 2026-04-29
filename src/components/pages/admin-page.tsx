@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAppStore } from '@/store/app-store';
@@ -10,7 +10,10 @@ import type {
   Inquiry, Banner, Amenity, ListingType, PropertyType, PropertyStatus,
 } from '@/types';
 
-// ─── UI Components ──────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// UI COMPONENT IMPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -43,21 +46,34 @@ import {
   Collapsible, CollapsibleContent, CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 
-// ─── Icons ──────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// LUCIDE ICON IMPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 import {
   LayoutDashboard, Building2, Users, MessageSquare, Eye,
   TrendingUp, Plus, Edit, Trash2, Search, BarChart3, MapPin,
   Flag, Image as ImageIcon, ChevronDown, ChevronRight, MoreHorizontal,
   LogIn, ShieldAlert, Star, Globe, Home,
+  // Feature icon imports
+  Brain, Footprints, Bell, LayoutGrid,
+  Flame, GraduationCap, Car, Leaf, Wifi, Volume2, Dog, Music, CalendarDays,
+  Hammer, Coins, Heart, ShieldCheck, Accessibility, ShoppingCart, Copy,
+  History, Gauge, Zap, Trophy, Sparkles, Wrench, Settings,
 } from 'lucide-react';
 
-// ─── Recharts ───────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// RECHARTS IMPORTS
+// ═══════════════════════════════════════════════════════════════════════════════
+
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, PieChart, Pie, Cell,
 } from 'recharts';
 
-// ─── Constants ──────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 const CHART_COLORS = [
   '#14b8a6', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4',
@@ -81,7 +97,38 @@ const BANNER_POSITIONS = ['home', 'search', 'sidebar', 'property', 'footer'] as 
 
 const LOCATION_TYPES = ['Country', 'Region', 'City'] as const;
 
-// ─── API Response Types ────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// DYNAMIC ICON MAP FOR FEATURES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const iconMap: Record<string, React.ElementType> = {
+  Brain, Eye, TrendingUp, MapPin, Footprints, BarChart3, Bell, Star, LayoutGrid,
+  Flame, GraduationCap, Car, Leaf, Wifi, Volume2, Dog, Music, CalendarDays,
+  Hammer, Coins, Heart, ShieldCheck, Accessibility, Users, ShoppingCart, Copy,
+  History, Gauge, Zap, Trophy, Wrench, Sparkles, ShieldAlert,
+};
+
+// Category icon mapping
+const categoryIconMap: Record<string, React.ElementType> = {
+  ai: Brain,
+  analytics: BarChart3,
+  tools: Wrench,
+  social: Users,
+  general: Sparkles,
+};
+
+// Category color mapping
+const categoryColorMap: Record<string, string> = {
+  ai: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
+  analytics: 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400',
+  tools: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+  social: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
+  general: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// API RESPONSE TYPES
+// ═══════════════════════════════════════════════════════════════════════════════
 
 interface StatsResponse {
   totals: {
@@ -102,7 +149,19 @@ interface PropertiesResponse {
   pagination: { page: number; limit: number; total: number; totalPages: number };
 }
 
-// ─── Helper Functions ───────────────────────────────────────────────────────
+interface FeatureItem {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: string;
+  isEnabled: boolean;
+  order: number;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// HELPER FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat('en-US', {
@@ -114,7 +173,9 @@ const formatDate = (dateString: string) =>
     year: 'numeric', month: 'short', day: 'numeric',
   });
 
-// ─── Badge Helpers ──────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// BADGE CLASS HELPERS
+// ═══════════════════════════════════════════════════════════════════════════════
 
 const propertyStatusClasses: Record<string, string> = {
   AVAILABLE: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
@@ -137,7 +198,9 @@ const userRoleClasses: Record<string, string> = {
   GUEST: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
 };
 
-// ─── Default Property Form ──────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// DEFAULT FORM VALUES
+// ═══════════════════════════════════════════════════════════════════════════════
 
 const defaultPropertyForm = {
   title: '',
@@ -161,7 +224,9 @@ const defaultPropertyForm = {
   selectedAmenities: [] as string[],
 };
 
-// ─── Fade-in animation variant ──────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// FADE-IN ANIMATION VARIANT
+// ═══════════════════════════════════════════════════════════════════════════════
 
 const fadeIn = {
   initial: { opacity: 0, y: 12 },
@@ -170,7 +235,7 @@ const fadeIn = {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// MAIN COMPONENT
+// MAIN ADMIN COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function AdminPage() {
@@ -179,14 +244,20 @@ export function AdminPage() {
   const { t } = useTranslation();
   const isAdmin = currentUser?.role === 'ADMIN';
 
-  // ── Tab ───────────────────────────────────────────────────────────────────
+  // ── Active Tab ────────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState('overview');
 
-  // ── Overview State ────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // OVERVIEW STATE
+  // ═══════════════════════════════════════════════════════════════════════════
+
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
 
-  // ── Properties State ──────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROPERTIES STATE
+  // ═══════════════════════════════════════════════════════════════════════════
+
   const [properties, setProperties] = useState<Property[]>([]);
   const [propertiesLoading, setPropertiesLoading] = useState(false);
   const [propSearch, setPropSearch] = useState('');
@@ -198,7 +269,10 @@ export function AdminPage() {
   const [propForm, setPropForm] = useState({ ...defaultPropertyForm });
   const [propSaving, setPropSaving] = useState(false);
 
-  // ── Users State ───────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // USERS STATE
+  // ═══════════════════════════════════════════════════════════════════════════
+
   const [users, setUsers] = useState<User[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [userDialogOpen, setUserDialogOpen] = useState(false);
@@ -206,7 +280,10 @@ export function AdminPage() {
   const [userForm, setUserForm] = useState({ name: '', role: 'USER' as string, isActive: true });
   const [userSaving, setUserSaving] = useState(false);
 
-  // ── Locations State ───────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // LOCATIONS STATE
+  // ═══════════════════════════════════════════════════════════════════════════
+
   const [locations, setLocations] = useState<Country[]>([]);
   const [locationsLoading, setLocationsLoading] = useState(false);
   const [expandedCountries, setExpandedCountries] = useState<Set<string>>(new Set());
@@ -215,14 +292,20 @@ export function AdminPage() {
   const [locForm, setLocForm] = useState({ type: 'Country', name: '', code: '', parentId: '' });
   const [locSaving, setLocSaving] = useState(false);
 
-  // ── Inquiries State ───────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // INQUIRIES STATE
+  // ═══════════════════════════════════════════════════════════════════════════
+
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [inquiriesLoading, setInquiriesLoading] = useState(false);
   const [inqStatusFilter, setInqStatusFilter] = useState('all');
   const [inqViewOpen, setInqViewOpen] = useState(false);
   const [viewingInquiry, setViewingInquiry] = useState<Inquiry | null>(null);
 
-  // ── Banners State ─────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // BANNERS STATE
+  // ═══════════════════════════════════════════════════════════════════════════
+
   const [banners, setBanners] = useState<Banner[]>([]);
   const [bannersLoading, setBannersLoading] = useState(false);
   const [bannerDialogOpen, setBannerDialogOpen] = useState(false);
@@ -233,11 +316,26 @@ export function AdminPage() {
   });
   const [bannerSaving, setBannerSaving] = useState(false);
 
-  // ── Shared Data ───────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // FEATURES STATE (NEW)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const [features, setFeatures] = useState<FeatureItem[]>([]);
+  const [featuresLoading, setFeaturesLoading] = useState(true);
+  const [featureSearch, setFeatureSearch] = useState('');
+  const [featureCategoryFilter, setFeatureCategoryFilter] = useState('all');
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // SHARED DATA
+  // ═══════════════════════════════════════════════════════════════════════════
+
   const [agents, setAgents] = useState<Agent[]>([]);
   const [amenities, setAmenities] = useState<Amenity[]>([]);
 
-  // ── Delete Dialog State ───────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DELETE DIALOG STATE
+  // ═══════════════════════════════════════════════════════════════════════════
+
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: string; label: string } | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -246,6 +344,7 @@ export function AdminPage() {
   // DATA FETCHING
   // ═══════════════════════════════════════════════════════════════════════════
 
+  // ── Fetch Stats ───────────────────────────────────────────────────────────
   const fetchStats = useCallback(async () => {
     setStatsLoading(true);
     try {
@@ -260,6 +359,7 @@ export function AdminPage() {
     }
   }, []);
 
+  // ── Fetch Properties ──────────────────────────────────────────────────────
   const fetchProperties = useCallback(async () => {
     setPropertiesLoading(true);
     try {
@@ -279,6 +379,7 @@ export function AdminPage() {
     }
   }, [propSearch, propListingFilter, propTypeFilter, propStatusFilter]);
 
+  // ── Fetch Users ───────────────────────────────────────────────────────────
   const fetchUsers = useCallback(async () => {
     setUsersLoading(true);
     try {
@@ -293,6 +394,7 @@ export function AdminPage() {
     }
   }, []);
 
+  // ── Fetch Locations ───────────────────────────────────────────────────────
   const fetchLocations = useCallback(async () => {
     setLocationsLoading(true);
     try {
@@ -307,6 +409,7 @@ export function AdminPage() {
     }
   }, []);
 
+  // ── Fetch Inquiries ───────────────────────────────────────────────────────
   const fetchInquiries = useCallback(async () => {
     setInquiriesLoading(true);
     try {
@@ -323,6 +426,7 @@ export function AdminPage() {
     }
   }, [inqStatusFilter]);
 
+  // ── Fetch Banners ─────────────────────────────────────────────────────────
   const fetchBanners = useCallback(async () => {
     setBannersLoading(true);
     try {
@@ -337,6 +441,22 @@ export function AdminPage() {
     }
   }, []);
 
+  // ── Fetch Features (NEW) ──────────────────────────────────────────────────
+  const fetchFeatures = useCallback(async () => {
+    setFeaturesLoading(true);
+    try {
+      const res = await fetch('/api/features');
+      if (!res.ok) throw new Error('Failed to fetch features');
+      const data: FeatureItem[] = await res.json();
+      setFeatures(data);
+    } catch {
+      toast.error('Failed to load features');
+    } finally {
+      setFeaturesLoading(false);
+    }
+  }, []);
+
+  // ── Fetch Agents ──────────────────────────────────────────────────────────
   const fetchAgents = useCallback(async () => {
     try {
       const res = await fetch('/api/agents');
@@ -346,6 +466,7 @@ export function AdminPage() {
     } catch { /* silent */ }
   }, []);
 
+  // ── Fetch Amenities ───────────────────────────────────────────────────────
   const fetchAmenities = useCallback(async () => {
     try {
       const res = await fetch('/api/amenities');
@@ -355,42 +476,47 @@ export function AdminPage() {
     } catch { /* silent */ }
   }, []);
 
-  // ── Effects ───────────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // EFFECTS — Fetch data on tab change
+  // ═══════════════════════════════════════════════════════════════════════════
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
+
   useEffect(() => {
     if (activeTab === 'properties') fetchProperties();
   }, [activeTab, fetchProperties]);
+
   useEffect(() => {
     if (activeTab === 'users') fetchUsers();
   }, [activeTab, fetchUsers]);
+
   useEffect(() => {
     if (activeTab === 'locations') fetchLocations();
   }, [activeTab, fetchLocations]);
+
   useEffect(() => {
     if (activeTab === 'inquiries') fetchInquiries();
   }, [activeTab, fetchInquiries]);
+
   useEffect(() => {
     if (activeTab === 'banners') fetchBanners();
   }, [activeTab, fetchBanners]);
+
+  useEffect(() => {
+    if (activeTab === 'features') fetchFeatures();
+  }, [activeTab, fetchFeatures]);
+
   useEffect(() => { fetchAgents(); fetchAmenities(); fetchLocations(); }, [fetchAgents, fetchAmenities, fetchLocations]);
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // HANDLERS
+  // HANDLERS — Property CRUD
   // ═══════════════════════════════════════════════════════════════════════════
-
-  // ── Property Handlers ─────────────────────────────────────────────────────
 
   const updatePropForm = (field: string, value: unknown) => {
     setPropForm((prev) => {
       const next = { ...prev, [field]: value };
-      // Cascade: country → region → city
-      if (field === 'countryId') {
-        next.regionId = '';
-        next.cityId = '';
-      } else if (field === 'regionId') {
-        next.cityId = '';
-      }
+      if (field === 'countryId') { next.regionId = ''; next.cityId = ''; }
+      else if (field === 'regionId') { next.cityId = ''; }
       return next;
     });
   };
@@ -433,12 +559,8 @@ export function AdminPage() {
     }
     setPropSaving(true);
     try {
-      const imageUrls = propForm.imageUrls
-        .split(',')
-        .map((u) => u.trim())
-        .filter(Boolean);
+      const imageUrls = propForm.imageUrls.split(',').map((u) => u.trim()).filter(Boolean);
       const images = imageUrls.map((url, i) => ({ url, alt: '', isCover: i === 0, order: i }));
-
       const body = {
         ...propForm,
         price: parseFloat(propForm.price) || 0,
@@ -451,16 +573,13 @@ export function AdminPage() {
         images,
         amenityIds: propForm.selectedAmenities,
       };
-
       const url = editingProperty ? `/api/properties/${editingProperty.id}` : '/api/properties';
       const method = editingProperty ? 'PUT' : 'POST';
       const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error || 'Failed to save property');
       }
-
       toast.success(editingProperty ? 'Property updated successfully' : 'Property created successfully');
       setPropDialogOpen(false);
       setEditingProperty(null);
@@ -489,7 +608,9 @@ export function AdminPage() {
     }
   };
 
-  // ── User Handlers ─────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HANDLERS — User Management
+  // ═══════════════════════════════════════════════════════════════════════════
 
   const openUserDialog = (user: User) => {
     setEditingUser(user);
@@ -533,7 +654,9 @@ export function AdminPage() {
     }
   };
 
-  // ── Inquiry Handlers ──────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HANDLERS — Inquiries
+  // ═══════════════════════════════════════════════════════════════════════════
 
   const updateInquiryStatus = async (inquiry: Inquiry, newStatus: string) => {
     try {
@@ -556,26 +679,20 @@ export function AdminPage() {
     setInqViewOpen(true);
   };
 
-  // ── Banner Handlers ───────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HANDLERS — Banners
+  // ═══════════════════════════════════════════════════════════════════════════
 
   const openBannerDialog = (banner?: Banner) => {
     if (banner) {
       setEditingBanner(banner);
       setBannerForm({
-        title: banner.title,
-        subtitle: banner.subtitle || '',
-        image: banner.image || '',
-        link: banner.link || '',
-        position: banner.position,
-        order: banner.order,
-        isActive: banner.isActive,
+        title: banner.title, subtitle: banner.subtitle || '', image: banner.image || '',
+        link: banner.link || '', position: banner.position, order: banner.order, isActive: banner.isActive,
       });
     } else {
       setEditingBanner(null);
-      setBannerForm({
-        title: '', subtitle: '', image: '', link: '',
-        position: 'home', order: banners.length, isActive: true,
-      });
+      setBannerForm({ title: '', subtitle: '', image: '', link: '', position: 'home', order: banners.length, isActive: true });
     }
     setBannerDialogOpen(true);
   };
@@ -586,11 +703,7 @@ export function AdminPage() {
     try {
       const url = editingBanner ? `/api/banners/${editingBanner.id}` : '/api/banners';
       const method = editingBanner ? 'PUT' : 'POST';
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bannerForm),
-      });
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bannerForm) });
       if (!res.ok) throw new Error();
       toast.success(editingBanner ? 'Banner updated' : 'Banner created');
       setBannerDialogOpen(false);
@@ -603,7 +716,9 @@ export function AdminPage() {
     }
   };
 
-  // ── Location Handlers ─────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HANDLERS — Locations
+  // ═══════════════════════════════════════════════════════════════════════════
 
   const toggleCountry = (id: string) => {
     setExpandedCountries((prev) => {
@@ -630,7 +745,6 @@ export function AdminPage() {
     if (!locForm.name) { toast.error('Name is required'); return; }
     setLocSaving(true);
     try {
-      let url = '/api/locations';
       let body: Record<string, unknown> = {};
       if (locForm.type === 'Country') {
         body = { name: locForm.name, code: locForm.code || locForm.name.substring(0, 2).toUpperCase() };
@@ -639,7 +753,7 @@ export function AdminPage() {
       } else {
         body = { name: locForm.name, regionId: locForm.parentId };
       }
-      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const res = await fetch('/api/locations', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       if (!res.ok) throw new Error();
       toast.success(`${locForm.type} created`);
       setLocDialogOpen(false);
@@ -651,7 +765,28 @@ export function AdminPage() {
     }
   };
 
-  // ── Delete Handler ────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HANDLERS — Features Toggle (NEW)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const toggleFeature = async (feature: FeatureItem) => {
+    try {
+      const res = await fetch('/api/features', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: feature.id, isEnabled: !feature.isEnabled }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(`${feature.name} ${feature.isEnabled ? 'disabled' : 'enabled'}`);
+      fetchFeatures();
+    } catch {
+      toast.error(`Failed to toggle ${feature.name}`);
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HANDLERS — Delete
+  // ═══════════════════════════════════════════════════════════════════════════
 
   const confirmDelete = (id: string, type: string, label: string) => {
     setDeleteTarget({ id, type, label });
@@ -668,15 +803,11 @@ export function AdminPage() {
             : deleteTarget.type === 'banner' ? `/api/banners/${deleteTarget.id}`
               : null;
       if (!endpoint) throw new Error('Unknown type');
-
       const res = await fetch(endpoint, { method: 'DELETE' });
       if (!res.ok) throw new Error();
-
       toast.success(`${deleteTarget.label} deleted successfully`);
       setDeleteDialogOpen(false);
       setDeleteTarget(null);
-
-      // Refresh relevant data
       if (deleteTarget.type === 'property') { fetchProperties(); fetchStats(); }
       else if (deleteTarget.type === 'user') fetchUsers();
       else if (deleteTarget.type === 'inquiry') { fetchInquiries(); fetchStats(); }
@@ -688,10 +819,35 @@ export function AdminPage() {
     }
   };
 
-  // ── Computed: cascading location data ─────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════════
+  // COMPUTED — Cascading location data
+  // ═══════════════════════════════════════════════════════════════════════════
 
   const filteredRegions = locations.find((c) => c.id === propForm.countryId)?.regions || [];
   const filteredCities = filteredRegions.find((r) => r.id === propForm.regionId)?.cities || [];
+
+  // Computed — Feature grouping
+  const enabledCount = features.filter((f) => f.isEnabled).length;
+  const disabledCount = features.length - enabledCount;
+
+  const filteredFeatures = features.filter((f) => {
+    if (featureSearch && !f.name.toLowerCase().includes(featureSearch.toLowerCase()) && !f.description.toLowerCase().includes(featureSearch.toLowerCase())) return false;
+    if (featureCategoryFilter !== 'all' && f.category !== featureCategoryFilter) return false;
+    return true;
+  });
+
+  const featuresByCategory = filteredFeatures.reduce<Record<string, FeatureItem[]>>((acc, feature) => {
+    const cat = feature.category || 'general';
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(feature);
+    return acc;
+  }, {});
+
+  const categoryOrder = ['ai', 'analytics', 'tools', 'social', 'general'];
+
+  const uniqueCategories = Object.keys(featuresByCategory).sort((a, b) => {
+    return categoryOrder.indexOf(a) - categoryOrder.indexOf(b);
+  });
 
   // ═══════════════════════════════════════════════════════════════════════════
   // ACCESS DENIED
@@ -715,15 +871,15 @@ export function AdminPage() {
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // OVERVIEW TAB
+  // TAB 1: OVERVIEW
   // ═══════════════════════════════════════════════════════════════════════════
 
   const renderOverview = () => {
     if (statsLoading) {
       return (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            {[...Array(5)].map((_, i) => (
               <Skeleton key={i} className="h-28 w-full rounded-lg" />
             ))}
           </div>
@@ -741,28 +897,29 @@ export function AdminPage() {
     const statCards = [
       { label: t.admin.totalProperties, value: stats.totals.properties, icon: Building2, color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-50 dark:bg-teal-950/50' },
       { label: t.admin.totalUsers, value: stats.totals.users, icon: Users, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/50' },
+      { label: t.admin.totalAgents, value: stats.totals.agents, icon: Star, color: 'text-sky-600 dark:text-sky-400', bg: 'bg-sky-50 dark:bg-sky-950/50' },
       { label: t.admin.totalInquiries, value: stats.totals.inquiries, icon: MessageSquare, color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-950/50' },
       { label: t.admin.totalViews, value: stats.totals.views.toLocaleString(), icon: Eye, color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-50 dark:bg-cyan-950/50' },
     ];
 
     return (
-      <div className="space-y-6">
-        {/* Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <motion.div {...fadeIn} className="space-y-6">
+        {/* ── Stat Cards ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {statCards.map((card, index) => (
             <motion.div
               key={card.label}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.08 }}
+              transition={{ duration: 0.3, delay: index * 0.06 }}
             >
-              <Card>
+              <Card className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4 flex items-center gap-4">
                   <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${card.bg}`}>
                     <card.icon className={`h-6 w-6 ${card.color}`} />
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm text-muted-foreground truncate">{card.label}</p>
+                    <p className="text-xs text-muted-foreground truncate">{card.label}</p>
                     <p className="text-2xl font-bold tracking-tight">{card.value}</p>
                   </div>
                 </CardContent>
@@ -771,9 +928,9 @@ export function AdminPage() {
           ))}
         </div>
 
-        {/* Charts */}
+        {/* ── Charts Row ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Properties by Type */}
+          {/* Properties by Type — Bar Chart */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -788,14 +945,7 @@ export function AdminPage() {
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis dataKey="type" tick={{ fontSize: 11 }} angle={-30} textAnchor="end" height={50} />
                       <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: 'hsl(var(--popover))',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px',
-                          fontSize: '12px',
-                        }}
-                      />
+                      <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }} />
                       <Bar dataKey="count" name="Properties" radius={[4, 4, 0, 0]}>
                         {stats.propertiesByType.map((_, i) => (
                           <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
@@ -810,7 +960,7 @@ export function AdminPage() {
             </CardContent>
           </Card>
 
-          {/* Inquiries by Status */}
+          {/* Inquiries by Status — Bar Chart */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -825,14 +975,7 @@ export function AdminPage() {
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis dataKey="status" tick={{ fontSize: 11 }} />
                       <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: 'hsl(var(--popover))',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px',
-                          fontSize: '12px',
-                        }}
-                      />
+                      <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px' }} />
                       <Bar dataKey="count" name="Inquiries" radius={[4, 4, 0, 0]}>
                         {stats.inquiriesByStatus.map((_, i) => (
                           <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
@@ -848,7 +991,7 @@ export function AdminPage() {
           </Card>
         </div>
 
-        {/* Recent Inquiries Table */}
+        {/* ── Recent Inquiries Table ── */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -870,9 +1013,7 @@ export function AdminPage() {
                 <TableBody>
                   {stats.recentInquiries.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                        No inquiries yet
-                      </TableCell>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">No inquiries yet</TableCell>
                     </TableRow>
                   ) : (
                     stats.recentInquiries.slice(0, 5).map((inq) => (
@@ -881,13 +1022,9 @@ export function AdminPage() {
                         <TableCell className="hidden sm:table-cell text-muted-foreground">{inq.email}</TableCell>
                         <TableCell className="max-w-[180px] truncate">{inq.property?.title || 'N/A'}</TableCell>
                         <TableCell>
-                          <Badge variant="secondary" className={inquiryStatusClasses[inq.status] || ''}>
-                            {inq.status}
-                          </Badge>
+                          <Badge variant="secondary" className={inquiryStatusClasses[inq.status] || ''}>{inq.status}</Badge>
                         </TableCell>
-                        <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
-                          {formatDate(inq.createdAt)}
-                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-muted-foreground text-sm">{formatDate(inq.createdAt)}</TableCell>
                       </TableRow>
                     ))
                   )}
@@ -896,51 +1033,46 @@ export function AdminPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </motion.div>
     );
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // PROPERTIES TAB
+  // TAB 2: PROPERTIES
   // ═══════════════════════════════════════════════════════════════════════════
 
   const renderProperties = () => (
-    <div className="space-y-4">
+    <motion.div {...fadeIn} className="space-y-4">
       {/* Top Bar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search properties..."
-            value={propSearch}
-            onChange={(e) => setPropSearch(e.target.value)}
-            className="pl-9"
-          />
+          <Input placeholder="Search properties..." value={propSearch} onChange={(e) => setPropSearch(e.target.value)} className="pl-9" />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Select value={propListingFilter} onValueChange={setPropListingFilter}>
             <SelectTrigger className="w-[130px]"><SelectValue placeholder="Listing" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Listings</SelectItem>
-              {LISTING_TYPES.map((t) => <SelectItem key={t} value={t}>{t.replace('_', ' ')}</SelectItem>)}
+              {LISTING_TYPES.map((lt) => <SelectItem key={lt} value={lt}>{lt.replace('_', ' ')}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={propTypeFilter} onValueChange={setPropTypeFilter}>
             <SelectTrigger className="w-[140px]"><SelectValue placeholder="Type" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
-              {PROPERTY_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+              {PROPERTY_TYPES.map((pt) => <SelectItem key={pt} value={pt}>{pt.charAt(0) + pt.slice(1).toLowerCase()}</SelectItem>)}
             </SelectContent>
           </Select>
           <Select value={propStatusFilter} onValueChange={setPropStatusFilter}>
             <SelectTrigger className="w-[130px]"><SelectValue placeholder="Status" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
-              {PROPERTY_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+              {PROPERTY_STATUSES.map((ps) => <SelectItem key={ps} value={ps}>{ps.charAt(0) + ps.slice(1).toLowerCase()}</SelectItem>)}
             </SelectContent>
           </Select>
-          <Button className="gap-2" onClick={() => openPropertyDialog()}>
-            <Plus className="h-4 w-4" /> Add Property
+          <Button size="sm" onClick={() => openPropertyDialog()}>
+            <Plus className="mr-1 h-4 w-4" /> {t.admin.add}
           </Button>
         </div>
       </div>
@@ -948,665 +1080,144 @@ export function AdminPage() {
       {/* Table */}
       <Card>
         <CardContent className="p-0">
-          {propertiesLoading ? (
-            <div className="space-y-3 p-4">
-              {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
+          <div className="overflow-x-auto max-h-[480px] overflow-y-auto">
+            {propertiesLoading ? (
+              <div className="p-6 space-y-3">
+                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
+              </div>
+            ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="min-w-[200px]">Title</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead className="hidden lg:table-cell">Location</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="hidden md:table-cell">Featured</TableHead>
-                    <TableHead className="hidden md:table-cell">Views</TableHead>
-                    <TableHead className="w-[50px]">Actions</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead className="hidden md:table-cell">{t.admin.price}</TableHead>
+                    <TableHead className="hidden sm:table-cell">{t.admin.status}</TableHead>
+                    <TableHead className="hidden lg:table-cell">{t.admin.featured}</TableHead>
+                    <TableHead className="hidden lg:table-cell">Views</TableHead>
+                    <TableHead className="text-right">{t.admin.actions}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {properties.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                        No properties found
-                      </TableCell>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">{t.admin.noData}</TableCell>
                     </TableRow>
                   ) : (
                     properties.map((property) => (
                       <TableRow key={property.id}>
-                        <TableCell className="font-medium max-w-[240px] truncate">{property.title}</TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="text-xs">{property.propertyType}</Badge>
-                        </TableCell>
-                        <TableCell className="font-semibold">{formatPrice(property.price)}</TableCell>
-                        <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">
-                          {property.city?.name}{property.country?.name ? `, ${property.country.name}` : ''}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className={propertyStatusClasses[property.status] || ''}>
-                            {property.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell">
-                          <Switch
-                            checked={property.isFeatured}
-                            onCheckedChange={() => toggleFeatured(property)}
-                          />
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell text-muted-foreground">{property.views}</TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem className="gap-2" onClick={() => openPropertyDialog(property)}>
-                                <Edit className="h-4 w-4" /> Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="gap-2 text-destructive focus:text-destructive"
-                                onClick={() => confirmDelete(property.id, 'property', property.title)}
-                              >
-                                <Trash2 className="h-4 w-4" /> Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // USERS TAB
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  const renderUsers = () => (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Manage Users ({users.length})</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {usersLoading ? (
-            <div className="space-y-3 p-4">
-              {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead className="hidden sm:table-cell">Email</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="hidden md:table-cell">Joined</TableHead>
-                    <TableHead className="w-[50px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                        No users found
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    users.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">{user.name || 'Unnamed'}</TableCell>
-                        <TableCell className="hidden sm:table-cell text-muted-foreground">{user.email}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className={userRoleClasses[user.role] || ''}>
-                            {user.role}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Switch
-                            checked={user.isActive}
-                            onCheckedChange={() => toggleUserActive(user)}
-                          />
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
-                          {formatDate(user.createdAt)}
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem className="gap-2" onClick={() => openUserDialog(user)}>
-                                <Edit className="h-4 w-4" /> Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="gap-2 text-destructive focus:text-destructive"
-                                onClick={() => confirmDelete(user.id, 'user', user.name || user.email)}
-                              >
-                                <Trash2 className="h-4 w-4" /> Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
-  );
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // LOCATIONS TAB
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  const renderLocations = () => (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold">Location Tree</h3>
-        <Button className="gap-2" onClick={() => openLocationDialog('Country')}>
-          <Plus className="h-4 w-4" /> Add Country
-        </Button>
-      </div>
-
-      {locationsLoading ? (
-        <div className="space-y-3">
-          {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
-        </div>
-      ) : locations.length === 0 ? (
-        <Card><CardContent className="py-8 text-center text-muted-foreground">No locations found</CardContent></Card>
-      ) : (
-        <div className="space-y-2">
-          {locations.map((country) => (
-            <Collapsible
-              key={country.id}
-              open={expandedCountries.has(country.id)}
-              onOpenChange={() => toggleCountry(country.id)}
-            >
-              <Card>
-                <CollapsibleTrigger asChild>
-                  <button className="flex w-full items-center gap-3 p-4 text-left hover:bg-muted/50 transition-colors rounded-lg">
-                    {expandedCountries.has(country.id) ? (
-                      <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    )}
-                    {country.flag && <span className="text-lg">{country.flag}</span>}
-                    <div className="flex-1 min-w-0">
-                      <span className="font-medium">{country.name}</span>
-                      <span className="ml-2 text-sm text-muted-foreground">
-                        ({country.regions?.length || 0} regions)
-                      </span>
-                    </div>
-                    <Badge variant="outline" className="text-xs">{country.code}</Badge>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 gap-1 text-xs shrink-0"
-                      onClick={(e) => { e.stopPropagation(); openLocationDialog('Region', country.id); }}
-                    >
-                      <Plus className="h-3 w-3" /> Region
-                    </Button>
-                  </button>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <div className="border-t px-4 pb-3 pt-1 space-y-1">
-                    {(!country.regions || country.regions.length === 0) ? (
-                      <p className="py-2 pl-7 text-sm text-muted-foreground">No regions</p>
-                    ) : (
-                      country.regions.map((region) => (
-                        <Collapsible
-                          key={region.id}
-                          open={expandedRegions.has(region.id)}
-                          onOpenChange={() => toggleRegion(region.id)}
-                        >
-                          <CollapsibleTrigger asChild>
-                            <button className="flex w-full items-center gap-2 py-2 pl-7 text-left hover:bg-muted/50 rounded-md transition-colors">
-                              {expandedRegions.has(region.id) ? (
-                                <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                              ) : (
-                                <ChevronRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                              )}
-                              <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                              <span className="text-sm font-medium flex-1">{region.name}</span>
-                              <span className="text-xs text-muted-foreground">
-                                ({region.cities?.length || 0} cities)
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 gap-1 text-xs shrink-0"
-                                onClick={(e) => { e.stopPropagation(); openLocationDialog('City', region.id); }}
-                              >
-                                <Plus className="h-3 w-3" /> City
-                              </Button>
-                            </button>
-                          </CollapsibleTrigger>
-                          <CollapsibleContent>
-                            <div className="pl-14 space-y-0.5">
-                              {(!region.cities || region.cities.length === 0) ? (
-                                <p className="py-1 text-xs text-muted-foreground">No cities</p>
-                              ) : (
-                                region.cities.map((city) => (
-                                  <div key={city.id} className="flex items-center gap-2 py-1 text-sm text-muted-foreground">
-                                    <Home className="h-3 w-3" />
-                                    {city.name}
-                                  </div>
-                                ))
-                              )}
-                            </div>
-                          </CollapsibleContent>
-                        </Collapsible>
-                      ))
-                    )}
-                  </div>
-                </CollapsibleContent>
-              </Card>
-            </Collapsible>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // INQUIRIES TAB
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  const renderInquiries = () => (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h3 className="text-base font-semibold">Inquiries ({inquiries.length})</h3>
-        <Select value={inqStatusFilter} onValueChange={setInqStatusFilter}>
-          <SelectTrigger className="w-[150px]"><SelectValue placeholder="Filter status" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            {INQUIRY_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <Card>
-        <CardContent className="p-0">
-          {inquiriesLoading ? (
-            <div className="space-y-3 p-4">
-              {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="hidden lg:table-cell">ID</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead className="hidden sm:table-cell">Email</TableHead>
-                    <TableHead>Property</TableHead>
-                    <TableHead className="hidden md:table-cell">Message</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="hidden md:table-cell">Date</TableHead>
-                    <TableHead className="w-[80px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {inquiries.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
-                        No inquiries found
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    inquiries.map((inq) => (
-                      <TableRow key={inq.id}>
-                        <TableCell className="hidden lg:table-cell text-xs text-muted-foreground font-mono">
-                          {inq.id.substring(0, 8)}
-                        </TableCell>
-                        <TableCell className="font-medium">{inq.name}</TableCell>
-                        <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">{inq.email}</TableCell>
-                        <TableCell className="max-w-[140px] truncate text-sm">{inq.property?.title || 'N/A'}</TableCell>
-                        <TableCell className="hidden md:table-cell max-w-[180px] truncate text-sm text-muted-foreground">
-                          {inq.message}
-                        </TableCell>
-                        <TableCell>
-                          <Select
-                            value={inq.status}
-                            onValueChange={(val) => updateInquiryStatus(inq, val)}
-                          >
-                            <SelectTrigger className="w-[110px] h-7 text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {INQUIRY_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell className="hidden md:table-cell text-muted-foreground text-sm">
-                          {formatDate(inq.createdAt)}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => viewInquiry(inq)}>
-                              <Eye className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-7 w-7 text-destructive hover:text-destructive"
-                              onClick={() => confirmDelete(inq.id, 'inquiry', `Inquiry from ${inq.name}`)}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
+                          <div>
+                            <p className="font-medium truncate max-w-[200px]">{property.title}</p>
+                            <p className="text-xs text-muted-foreground">{property.propertyType}</p>
                           </div>
                         </TableCell>
+                        <TableCell className="hidden md:table-cell">{formatPrice(property.price)}</TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <Badge variant="secondary" className={propertyStatusClasses[property.status] || ''}>{property.status}</Badge>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          {property.isFeatured && <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"><Star className="mr-1 h-3 w-3" />Featured</Badge>}
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell text-muted-foreground">{property.views}</TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm"><MoreHorizontal className="h-4 w-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => openPropertyDialog(property)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => toggleFeatured(property)}><Star className="mr-2 h-4 w-4" />{property.isFeatured ? 'Unfeature' : 'Feature'}</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-destructive" onClick={() => confirmDelete(property.id, 'property', property.title)}><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
                 </TableBody>
               </Table>
-            </div>
-          )}
+            )}
+          </div>
         </CardContent>
       </Card>
-    </div>
-  );
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // BANNERS TAB
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  const renderBanners = () => (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold">Banners ({banners.length})</h3>
-        <Button className="gap-2" onClick={() => openBannerDialog()}>
-          <Plus className="h-4 w-4" /> Add Banner
-        </Button>
-      </div>
-
-      {bannersLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-48 w-full rounded-lg" />)}
-        </div>
-      ) : banners.length === 0 ? (
-        <Card><CardContent className="py-8 text-center text-muted-foreground">No banners found</CardContent></Card>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {banners.map((banner) => (
-            <motion.div key={banner.id} {...fadeIn}>
-              <Card className={`overflow-hidden transition-opacity ${!banner.isActive ? 'opacity-60' : ''}`}>
-                {banner.image ? (
-                  <div className="aspect-video bg-muted relative overflow-hidden">
-                    <img
-                      src={banner.image}
-                      alt={banner.title}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="aspect-video bg-muted flex items-center justify-center">
-                    <ImageIcon className="h-8 w-8 text-muted-foreground/40" />
-                  </div>
-                )}
-                <CardContent className="p-4 space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <h4 className="font-medium truncate">{banner.title}</h4>
-                      {banner.subtitle && (
-                        <p className="text-sm text-muted-foreground truncate">{banner.subtitle}</p>
-                      )}
-                    </div>
-                    <Badge variant="outline" className="text-xs shrink-0">{banner.position}</Badge>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>Order: {banner.order}</span>
-                      <Separator orientation="vertical" className="h-3" />
-                      <span>{banner.isActive ? 'Active' : 'Inactive'}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Switch
-                        checked={banner.isActive}
-                        onCheckedChange={async () => {
-                          try {
-                            const res = await fetch(`/api/banners/${banner.id}`, {
-                              method: 'PUT',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ isActive: !banner.isActive }),
-                            });
-                            if (!res.ok) throw new Error();
-                            toast.success('Banner updated');
-                            fetchBanners();
-                          } catch {
-                            toast.error('Failed to update banner');
-                          }
-                        }}
-                      />
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7">
-                            <MoreHorizontal className="h-3.5 w-3.5" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem className="gap-2" onClick={() => openBannerDialog(banner)}>
-                            <Edit className="h-4 w-4" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="gap-2 text-destructive focus:text-destructive"
-                            onClick={() => confirmDelete(banner.id, 'banner', banner.title)}
-                          >
-                            <Trash2 className="h-4 w-4" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-
-  // ═══════════════════════════════════════════════════════════════════════════
-  // MAIN RENDER
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        {/* Header */}
-        <motion.div {...fadeIn} className="mb-6">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl flex items-center gap-3">
-            <LayoutDashboard className="h-7 w-7" />
-            Admin Dashboard
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            Manage properties, users, locations, inquiries, and banners.
-          </p>
-        </motion.div>
-
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <div className="overflow-x-auto pb-2 -mb-2">
-            <TabsList className="w-auto">
-              <TabsTrigger value="overview" className="gap-1.5">
-                <LayoutDashboard className="h-4 w-4" /> {t.admin.overview}
-              </TabsTrigger>
-              <TabsTrigger value="properties" className="gap-1.5">
-                <Building2 className="h-4 w-4" /> {t.admin.properties}
-              </TabsTrigger>
-              <TabsTrigger value="users" className="gap-1.5">
-                <Users className="h-4 w-4" /> {t.admin.users}
-              </TabsTrigger>
-              <TabsTrigger value="locations" className="gap-1.5">
-                <Globe className="h-4 w-4" /> {t.admin.locations}
-              </TabsTrigger>
-              <TabsTrigger value="inquiries" className="gap-1.5">
-                <MessageSquare className="h-4 w-4" /> {t.admin.inquiries}
-              </TabsTrigger>
-              <TabsTrigger value="banners" className="gap-1.5">
-                <ImageIcon className="h-4 w-4" /> {t.admin.banners}
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent value="overview">{renderOverview()}</TabsContent>
-          <TabsContent value="properties">{renderProperties()}</TabsContent>
-          <TabsContent value="users">{renderUsers()}</TabsContent>
-          <TabsContent value="locations">{renderLocations()}</TabsContent>
-          <TabsContent value="inquiries">{renderInquiries()}</TabsContent>
-          <TabsContent value="banners">{renderBanners()}</TabsContent>
-        </Tabs>
-      </div>
-
-      {/* ═══════════════════════════════════════════════════════════════════════
-          DIALOGS
-          ═══════════════════════════════════════════════════════════════════════ */}
-
-      {/* ── Property Form Dialog ─────────────────────────────────────────── */}
-      <Dialog
-        open={propDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) { setPropDialogOpen(false); setEditingProperty(null); }
-        }}
-      >
+      {/* ── Property Add/Edit Dialog ── */}
+      <Dialog open={propDialogOpen} onOpenChange={setPropDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingProperty ? 'Edit Property' : 'Add New Property'}</DialogTitle>
-            <DialogDescription className="sr-only">
-              {editingProperty ? 'Edit property details' : 'Create a new property listing'}
-            </DialogDescription>
+            <DialogDescription>Fill in the property details below.</DialogDescription>
           </DialogHeader>
-
-          <div className="grid gap-4 py-2">
-            {/* Title & Description */}
-            <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="prop-title">Title *</Label>
-                <Input
-                  id="prop-title"
-                  placeholder="Property title"
-                  value={propForm.title}
-                  onChange={(e) => updatePropForm('title', e.target.value)}
-                />
+                <Input id="prop-title" value={propForm.title} onChange={(e) => updatePropForm('title', e.target.value)} placeholder="Property title" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="prop-price">Price (USD) *</Label>
-                <Input
-                  id="prop-price"
-                  type="number"
-                  placeholder="0"
-                  value={propForm.price}
-                  onChange={(e) => updatePropForm('price', e.target.value)}
-                />
+                <Label htmlFor="prop-price">Price *</Label>
+                <Input id="prop-price" type="number" value={propForm.price} onChange={(e) => updatePropForm('price', e.target.value)} placeholder="0" />
               </div>
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="prop-desc">Description</Label>
-              <Textarea
-                id="prop-desc"
-                placeholder="Property description..."
-                rows={3}
-                value={propForm.description}
-                onChange={(e) => updatePropForm('description', e.target.value)}
-              />
+              <Textarea id="prop-desc" value={propForm.description} onChange={(e) => updatePropForm('description', e.target.value)} placeholder="Property description..." rows={3} />
             </div>
-
-            {/* Listing Type, Property Type, Status */}
-            <div className="grid gap-4 grid-cols-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="space-y-2">
                 <Label>Listing Type</Label>
                 <Select value={propForm.listingType} onValueChange={(v) => updatePropForm('listingType', v)}>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {LISTING_TYPES.map((t) => <SelectItem key={t} value={t}>{t.replace('_', ' ')}</SelectItem>)}
-                  </SelectContent>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{LISTING_TYPES.map((lt) => <SelectItem key={lt} value={lt}>{lt.replace('_', ' ')}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Property Type</Label>
                 <Select value={propForm.propertyType} onValueChange={(v) => updatePropForm('propertyType', v)}>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {PROPERTY_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                  </SelectContent>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{PROPERTY_TYPES.map((pt) => <SelectItem key={pt} value={pt}>{pt.charAt(0) + pt.slice(1).toLowerCase()}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
                 <Select value={propForm.status} onValueChange={(v) => updatePropForm('status', v)}>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {PROPERTY_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  </SelectContent>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{PROPERTY_STATUSES.map((ps) => <SelectItem key={ps} value={ps}>{ps.charAt(0) + ps.slice(1).toLowerCase()}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-            </div>
-
-            {/* Area, Bedrooms, Bathrooms, Floors, Year Built */}
-            <div className="grid gap-4 grid-cols-2 sm:grid-cols-5">
               <div className="space-y-2">
-                <Label htmlFor="prop-area">Area (sqm)</Label>
-                <Input id="prop-area" type="number" placeholder="0" value={propForm.area}
-                  onChange={(e) => updatePropForm('area', e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="prop-beds">Bedrooms</Label>
-                <Input id="prop-beds" type="number" placeholder="0" value={propForm.bedrooms}
-                  onChange={(e) => updatePropForm('bedrooms', e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="prop-baths">Bathrooms</Label>
-                <Input id="prop-baths" type="number" placeholder="0" value={propForm.bathrooms}
-                  onChange={(e) => updatePropForm('bathrooms', e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="prop-floors">Floors</Label>
-                <Input id="prop-floors" type="number" placeholder="0" value={propForm.floors}
-                  onChange={(e) => updatePropForm('floors', e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="prop-year">Year Built</Label>
-                <Input id="prop-year" type="number" placeholder="2024" value={propForm.yearBuilt}
-                  onChange={(e) => updatePropForm('yearBuilt', e.target.value)} />
+                <Label>Area (sqm)</Label>
+                <Input type="number" value={propForm.area} onChange={(e) => updatePropForm('area', e.target.value)} placeholder="0" />
               </div>
             </div>
-
-            {/* Location Cascading Selects */}
-            <Separator />
-            <h4 className="font-medium text-sm flex items-center gap-2">
-              <MapPin className="h-4 w-4" /> Location
-            </h4>
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="space-y-2">
+                <Label>Bedrooms</Label>
+                <Input type="number" value={propForm.bedrooms} onChange={(e) => updatePropForm('bedrooms', e.target.value)} placeholder="—" />
+              </div>
+              <div className="space-y-2">
+                <Label>Bathrooms</Label>
+                <Input type="number" value={propForm.bathrooms} onChange={(e) => updatePropForm('bathrooms', e.target.value)} placeholder="—" />
+              </div>
+              <div className="space-y-2">
+                <Label>Floors</Label>
+                <Input type="number" value={propForm.floors} onChange={(e) => updatePropForm('floors', e.target.value)} placeholder="—" />
+              </div>
+              <div className="space-y-2">
+                <Label>Year Built</Label>
+                <Input type="number" value={propForm.yearBuilt} onChange={(e) => updatePropForm('yearBuilt', e.target.value)} placeholder="—" />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Address</Label>
+              <Input value={propForm.address} onChange={(e) => updatePropForm('address', e.target.value)} placeholder="Full address" />
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Country *</Label>
                 <Select value={propForm.countryId} onValueChange={(v) => updatePropForm('countryId', v)}>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Select country" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select country" /></SelectTrigger>
                   <SelectContent>
                     {locations.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                   </SelectContent>
@@ -1614,8 +1225,8 @@ export function AdminPage() {
               </div>
               <div className="space-y-2">
                 <Label>Region *</Label>
-                <Select value={propForm.regionId} onValueChange={(v) => updatePropForm('regionId', v)} disabled={!propForm.countryId}>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Select region" /></SelectTrigger>
+                <Select value={propForm.regionId} onValueChange={(v) => updatePropForm('regionId', v)}>
+                  <SelectTrigger><SelectValue placeholder="Select region" /></SelectTrigger>
                   <SelectContent>
                     {filteredRegions.map((r) => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
                   </SelectContent>
@@ -1623,350 +1234,797 @@ export function AdminPage() {
               </div>
               <div className="space-y-2">
                 <Label>City *</Label>
-                <Select value={propForm.cityId} onValueChange={(v) => updatePropForm('cityId', v)} disabled={!propForm.regionId}>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Select city" /></SelectTrigger>
+                <Select value={propForm.cityId} onValueChange={(v) => updatePropForm('cityId', v)}>
+                  <SelectTrigger><SelectValue placeholder="Select city" /></SelectTrigger>
                   <SelectContent>
                     {filteredCities.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
             </div>
-
-            {/* Address & Agent */}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="prop-address">Address</Label>
-                <Input id="prop-address" placeholder="Street address" value={propForm.address}
-                  onChange={(e) => updatePropForm('address', e.target.value)} />
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Agent</Label>
                 <Select value={propForm.agentId} onValueChange={(v) => updatePropForm('agentId', v)}>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Select agent" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="No agent" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">No Agent</SelectItem>
-                    {agents.map((a) => (
-                      <SelectItem key={a.id} value={a.userId}>
-                        {a.user?.name || a.user?.email || 'Unknown'}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="">No agent</SelectItem>
+                    {agents.map((a) => <SelectItem key={a.id} value={a.id}>{a.user?.name || a.title || 'Agent'}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
+              <div className="flex items-center gap-2 pt-6">
+                <Switch checked={propForm.isFeatured} onCheckedChange={(v) => updatePropForm('isFeatured', v)} />
+                <Label>Featured</Label>
+              </div>
             </div>
-
-            {/* Featured & Image URLs */}
-            <Separator />
-            <div className="flex items-center gap-3">
-              <Switch
-                checked={propForm.isFeatured}
-                onCheckedChange={(v) => updatePropForm('isFeatured', v)}
-                id="prop-featured"
-              />
-              <Label htmlFor="prop-featured" className="flex items-center gap-1.5">
-                <Star className="h-4 w-4 text-amber-500" /> Featured Property
-              </Label>
-            </div>
-
             <div className="space-y-2">
-              <Label htmlFor="prop-images">Image URLs (comma-separated)</Label>
-              <Textarea
-                id="prop-images"
-                placeholder="https://example.com/image1.jpg, https://example.com/image2.jpg"
-                rows={2}
-                value={propForm.imageUrls}
-                onChange={(e) => updatePropForm('imageUrls', e.target.value)}
-              />
+              <Label>Image URLs (comma separated)</Label>
+              <Textarea value={propForm.imageUrls} onChange={(e) => updatePropForm('imageUrls', e.target.value)} placeholder="https://example.com/image1.jpg, https://..." rows={2} />
             </div>
-
-            {/* Amenities */}
-            {amenities.length > 0 && (
-              <>
-                <Separator />
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">Amenities</Label>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-36 overflow-y-auto rounded-md border p-3">
-                    {amenities.map((am) => (
-                      <label key={am.id} className="flex items-center gap-2 cursor-pointer text-sm">
-                        <Checkbox
-                          checked={propForm.selectedAmenities.includes(am.id)}
-                          onCheckedChange={(checked) => {
-                            if (checked === true) {
-                              updatePropForm('selectedAmenities', [...propForm.selectedAmenities, am.id]);
-                            } else {
-                              updatePropForm('selectedAmenities', propForm.selectedAmenities.filter((id) => id !== am.id));
-                            }
-                          }}
-                        />
-                        <span className="truncate">{am.name}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
           </div>
-
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setPropDialogOpen(false); setEditingProperty(null); }}>
-              Cancel
-            </Button>
-            <Button onClick={saveProperty} disabled={propSaving}>
-              {propSaving ? 'Saving...' : editingProperty ? 'Update Property' : 'Create Property'}
-            </Button>
+            <Button variant="outline" onClick={() => setPropDialogOpen(false)}>{t.admin.cancel}</Button>
+            <Button onClick={saveProperty} disabled={propSaving}>{propSaving ? 'Saving...' : t.admin.save}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </motion.div>
+  );
 
-      {/* ── User Edit Dialog ────────────────────────────────────────────── */}
-      <Dialog open={userDialogOpen} onOpenChange={(open) => { if (!open) setUserDialogOpen(false); }}>
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TAB 3: USERS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const renderUsers = () => (
+    <motion.div {...fadeIn} className="space-y-4">
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base">User Management ({users.length})</CardTitle>
+          </div>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto max-h-[480px] overflow-y-auto">
+            {usersLoading ? (
+              <div className="p-6 space-y-3">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t.admin.name}</TableHead>
+                    <TableHead className="hidden sm:table-cell">{t.admin.email}</TableHead>
+                    <TableHead>{t.admin.role}</TableHead>
+                    <TableHead>{t.admin.status}</TableHead>
+                    <TableHead className="hidden md:table-cell">Joined</TableHead>
+                    <TableHead className="text-right">{t.admin.actions}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.length === 0 ? (
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">{t.admin.noData}</TableCell></TableRow>
+                  ) : (
+                    users.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">{user.name || '—'}</TableCell>
+                        <TableCell className="hidden sm:table-cell text-muted-foreground">{user.email}</TableCell>
+                        <TableCell>
+                          <Badge variant="secondary" className={userRoleClasses[user.role] || ''}>{user.role}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={user.isActive ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-gray-400 text-gray-500 dark:text-gray-400'}>
+                            {user.isActive ? t.admin.active : t.admin.inactive}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-muted-foreground text-sm">{formatDate(user.createdAt)}</TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm"><MoreHorizontal className="h-4 w-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => openUserDialog(user)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => toggleUserActive(user)}>
+                                <Switch className="mr-2" checked={!user.isActive} />
+                                {user.isActive ? 'Deactivate' : 'Activate'}
+                              </DropdownMenuItem>
+                              {user.role !== 'ADMIN' && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem className="text-destructive" onClick={() => confirmDelete(user.id, 'user', user.name || user.email)}><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                                </>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── User Edit Dialog ── */}
+      <Dialog open={userDialogOpen} onOpenChange={setUserDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
-            <DialogDescription className="sr-only">Edit user details and role</DialogDescription>
+            <DialogDescription>Update user information.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-2">
+          <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="user-name">Name</Label>
-              <Input
-                id="user-name"
-                value={userForm.name}
-                onChange={(e) => setUserForm((p) => ({ ...p, name: e.target.value }))}
-              />
+              <Input id="user-name" value={userForm.name} onChange={(e) => setUserForm((p) => ({ ...p, name: e.target.value }))} />
             </div>
             <div className="space-y-2">
               <Label>Role</Label>
               <Select value={userForm.role} onValueChange={(v) => setUserForm((p) => ({ ...p, role: v }))}>
-                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {USER_ROLES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex items-center gap-3">
-              <Switch
-                checked={userForm.isActive}
-                onCheckedChange={(v) => setUserForm((p) => ({ ...p, isActive: v }))}
-                id="user-active"
-              />
-              <Label htmlFor="user-active">Active Account</Label>
+            <div className="flex items-center gap-2">
+              <Switch checked={userForm.isActive} onCheckedChange={(v) => setUserForm((p) => ({ ...p, isActive: v }))} />
+              <Label>Active</Label>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setUserDialogOpen(false)}>Cancel</Button>
-            <Button onClick={saveUser} disabled={userSaving}>
-              {userSaving ? 'Saving...' : 'Save Changes'}
-            </Button>
+            <Button variant="outline" onClick={() => setUserDialogOpen(false)}>{t.admin.cancel}</Button>
+            <Button onClick={saveUser} disabled={userSaving}>{userSaving ? 'Saving...' : t.admin.save}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </motion.div>
+  );
 
-      {/* ── Inquiry View Dialog ─────────────────────────────────────────── */}
-      <Dialog open={inqViewOpen} onOpenChange={(open) => { if (!open) { setInqViewOpen(false); setViewingInquiry(null); } }}>
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TAB 4: LOCATIONS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const renderLocations = () => (
+    <motion.div {...fadeIn} className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm text-muted-foreground">{locations.length} countries</h3>
+        <Button size="sm" onClick={() => openLocationDialog('Country')}>
+          <Plus className="mr-1 h-4 w-4" /> {t.admin.addCountry}
+        </Button>
+      </div>
+      <Card>
+        <CardContent className="p-0">
+          <div className="max-h-[560px] overflow-y-auto">
+            {locationsLoading ? (
+              <div className="p-6 space-y-3">{[...Array(6)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+            ) : (
+              <div className="divide-y">
+                {locations.map((country) => (
+                  <Collapsible key={country.id} open={expandedCountries.has(country.id)} onOpenChange={() => toggleCountry(country.id)}>
+                    <CollapsibleTrigger className="flex w-full items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
+                      <ChevronRight className={`h-4 w-4 shrink-0 transition-transform ${expandedCountries.has(country.id) ? 'rotate-90' : ''}`} />
+                      <Flag className="h-4 w-4 text-amber-500 shrink-0" />
+                      <span className="font-medium flex-1">{country.name}</span>
+                      <span className="text-xs text-muted-foreground">{country.code}</span>
+                      <Badge variant="outline" className="text-xs">{country.regions?.length || 0} regions</Badge>
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={(e) => { e.stopPropagation(); openLocationDialog('Region', country.id); }}>
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      {country.regions?.map((region) => (
+                        <Collapsible key={region.id} open={expandedRegions.has(region.id)} onOpenChange={() => toggleRegion(region.id)}>
+                          <CollapsibleTrigger className="flex w-full items-center gap-3 pl-12 pr-4 py-2.5 hover:bg-muted/50 transition-colors">
+                            <ChevronRight className={`h-4 w-4 shrink-0 transition-transform ${expandedRegions.has(region.id) ? 'rotate-90' : ''}`} />
+                            <MapPin className="h-4 w-4 text-teal-500 shrink-0" />
+                            <span className="text-sm flex-1">{region.name}</span>
+                            <Badge variant="outline" className="text-xs">{region.cities?.length || 0} cities</Badge>
+                            <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={(e) => { e.stopPropagation(); openLocationDialog('City', region.id); }}>
+                              <Plus className="h-3 w-3" />
+                            </Button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            {region.cities?.map((city) => (
+                              <div key={city.id} className="flex items-center gap-3 pl-24 pr-4 py-2 hover:bg-muted/30 transition-colors">
+                                <Home className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                <span className="text-sm text-muted-foreground">{city.name}</span>
+                              </div>
+                            )) || <p className="pl-24 pr-4 py-2 text-xs text-muted-foreground">No cities</p>}
+                          </CollapsibleContent>
+                        </Collapsible>
+                      )) || <p className="pl-12 pr-4 py-2 text-xs text-muted-foreground">No regions</p>}
+                    </CollapsibleContent>
+                  </Collapsible>
+                ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Location Add Dialog ── */}
+      <Dialog open={locDialogOpen} onOpenChange={setLocDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add {locForm.type}</DialogTitle>
+            <DialogDescription>Create a new {locForm.type.toLowerCase()}.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {locForm.type === 'Country' && (
+              <div className="space-y-2">
+                <Label>Code</Label>
+                <Input value={locForm.code} onChange={(e) => setLocForm((p) => ({ ...p, code: e.target.value }))} placeholder="e.g. US" maxLength={2} />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>{locForm.type} Name *</Label>
+              <Input value={locForm.name} onChange={(e) => setLocForm((p) => ({ ...p, name: e.target.value }))} placeholder={`${locForm.type} name`} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setLocDialogOpen(false)}>{t.admin.cancel}</Button>
+            <Button onClick={saveLocation} disabled={locSaving}>{locSaving ? 'Saving...' : t.admin.save}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </motion.div>
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TAB 5: INQUIRIES
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const renderInquiries = () => (
+    <motion.div {...fadeIn} className="space-y-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <Select value={inqStatusFilter} onValueChange={setInqStatusFilter}>
+            <SelectTrigger className="w-[150px]"><SelectValue placeholder="All Statuses" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              {INQUIRY_STATUSES.map((s) => <SelectItem key={s} value={s}>{s.charAt(0) + s.slice(1).toLowerCase()}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <span className="text-sm text-muted-foreground">{inquiries.length} inquiries</span>
+        </div>
+      </div>
+
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto max-h-[480px] overflow-y-auto">
+            {inquiriesLoading ? (
+              <div className="p-6 space-y-3">{[...Array(5)].map((_, i) => <Skeleton key={i} className="h-12 w-full" />)}</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t.admin.name}</TableHead>
+                    <TableHead className="hidden sm:table-cell">{t.admin.email}</TableHead>
+                    <TableHead>Property</TableHead>
+                    <TableHead>{t.admin.status}</TableHead>
+                    <TableHead className="hidden md:table-cell">Date</TableHead>
+                    <TableHead className="text-right">{t.admin.actions}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {inquiries.length === 0 ? (
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">{t.admin.noData}</TableCell></TableRow>
+                  ) : (
+                    inquiries.map((inq) => (
+                      <TableRow key={inq.id}>
+                        <TableCell className="font-medium">{inq.name}</TableCell>
+                        <TableCell className="hidden sm:table-cell text-muted-foreground">{inq.email}</TableCell>
+                        <TableCell className="max-w-[160px] truncate">{inq.property?.title || 'N/A'}</TableCell>
+                        <TableCell>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className="cursor-pointer">
+                                <Badge variant="secondary" className={inquiryStatusClasses[inq.status] || ''}>{inq.status}</Badge>
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              {INQUIRY_STATUSES.map((s) => (
+                                <DropdownMenuItem key={s} onClick={() => updateInquiryStatus(inq, s)} disabled={s === inq.status}>
+                                  {s.charAt(0) + s.slice(1).toLowerCase()}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell text-muted-foreground text-sm">{formatDate(inq.createdAt)}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button variant="ghost" size="sm" onClick={() => viewInquiry(inq)}><Eye className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="sm" className="text-destructive" onClick={() => confirmDelete(inq.id, 'inquiry', inq.name)}><Trash2 className="h-4 w-4" /></Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Inquiry View Dialog ── */}
+      <Dialog open={inqViewOpen} onOpenChange={setInqViewOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Inquiry Details</DialogTitle>
-            <DialogDescription className="sr-only">View full inquiry details</DialogDescription>
+            <DialogDescription>View the full inquiry message.</DialogDescription>
           </DialogHeader>
           {viewingInquiry && (
             <div className="space-y-4 py-2">
-              <div className="grid gap-3 grid-cols-2 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Name</span>
-                  <p className="font-medium">{viewingInquiry.name}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Email</span>
-                  <p className="font-medium">{viewingInquiry.email}</p>
-                </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div><p className="text-xs text-muted-foreground">{t.admin.name}</p><p className="font-medium">{viewingInquiry.name}</p></div>
+                <div><p className="text-xs text-muted-foreground">{t.admin.email}</p><p className="font-medium">{viewingInquiry.email}</p></div>
                 {viewingInquiry.phone && (
-                  <div>
-                    <span className="text-muted-foreground">Phone</span>
-                    <p className="font-medium">{viewingInquiry.phone}</p>
-                  </div>
+                  <div><p className="text-xs text-muted-foreground">{t.admin.phone}</p><p className="font-medium">{viewingInquiry.phone}</p></div>
                 )}
-                <div>
-                  <span className="text-muted-foreground">Status</span>
-                  <div className="mt-0.5">
-                    <Badge variant="secondary" className={inquiryStatusClasses[viewingInquiry.status] || ''}>
-                      {viewingInquiry.status}
-                    </Badge>
-                  </div>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Date</span>
-                  <p className="font-medium">{formatDate(viewingInquiry.createdAt)}</p>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Property</span>
-                  <p className="font-medium">{viewingInquiry.property?.title || 'N/A'}</p>
-                </div>
+                <div><p className="text-xs text-muted-foreground">Property</p><p className="font-medium truncate">{viewingInquiry.property?.title || 'N/A'}</p></div>
+                <div><p className="text-xs text-muted-foreground">{t.admin.status}</p><Badge variant="secondary" className={inquiryStatusClasses[viewingInquiry.status] || ''}>{viewingInquiry.status}</Badge></div>
+                <div><p className="text-xs text-muted-foreground">Date</p><p className="font-medium text-sm">{formatDate(viewingInquiry.createdAt)}</p></div>
               </div>
               <Separator />
               <div>
-                <span className="text-sm text-muted-foreground">Message</span>
-                <div className="mt-1 rounded-md border bg-muted/30 p-3 text-sm whitespace-pre-wrap max-h-48 overflow-y-auto">
-                  {viewingInquiry.message}
-                </div>
+                <p className="text-xs text-muted-foreground mb-1">Message</p>
+                <p className="text-sm whitespace-pre-wrap bg-muted/50 rounded-lg p-3">{viewingInquiry.message}</p>
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setInqViewOpen(false); setViewingInquiry(null); }}>
-              Close
-            </Button>
+            <Select value={viewingInquiry?.status || ''} onValueChange={(v) => { if (viewingInquiry) { updateInquiryStatus(viewingInquiry, v); setInqViewOpen(false); } }}>
+              <SelectTrigger className="w-[160px]"><SelectValue placeholder="Change status" /></SelectTrigger>
+              <SelectContent>{INQUIRY_STATUSES.map((s) => <SelectItem key={s} value={s}>{s.charAt(0) + s.slice(1).toLowerCase()}</SelectItem>)}</SelectContent>
+            </Select>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </motion.div>
+  );
 
-      {/* ── Banner Form Dialog ──────────────────────────────────────────── */}
-      <Dialog open={bannerDialogOpen} onOpenChange={(open) => { if (!open) { setBannerDialogOpen(false); setEditingBanner(null); } }}>
-        <DialogContent className="max-w-lg">
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TAB 6: BANNERS
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const renderBanners = () => (
+    <motion.div {...fadeIn} className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm text-muted-foreground">{banners.length} banners</h3>
+        <Button size="sm" onClick={() => openBannerDialog()}><Plus className="mr-1 h-4 w-4" /> {t.admin.add}</Button>
+      </div>
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto max-h-[480px] overflow-y-auto">
+            {bannersLoading ? (
+              <div className="p-6 space-y-3">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t.admin.name}</TableHead>
+                    <TableHead className="hidden sm:table-cell">Position</TableHead>
+                    <TableHead className="hidden md:table-cell">Order</TableHead>
+                    <TableHead>{t.admin.status}</TableHead>
+                    <TableHead className="hidden lg:table-cell">{t.admin.image}</TableHead>
+                    <TableHead className="text-right">{t.admin.actions}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {banners.length === 0 ? (
+                    <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground py-8">{t.admin.noData}</TableCell></TableRow>
+                  ) : (
+                    banners.map((banner) => (
+                      <TableRow key={banner.id}>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">{banner.title}</p>
+                            {banner.subtitle && <p className="text-xs text-muted-foreground">{banner.subtitle}</p>}
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell"><Badge variant="outline">{banner.position}</Badge></TableCell>
+                        <TableCell className="hidden md:table-cell text-muted-foreground">{banner.order}</TableCell>
+                        <TableCell>
+                          <Badge variant={banner.isActive ? 'default' : 'secondary'} className={banner.isActive ? 'bg-emerald-600 hover:bg-emerald-700' : ''}>{banner.isActive ? 'Active' : 'Inactive'}</Badge>
+                        </TableCell>
+                        <TableCell className="hidden lg:table-cell">
+                          {banner.image ? (
+                            <div className="h-8 w-16 rounded overflow-hidden bg-muted">
+                              <img src={banner.image} alt={banner.title} className="h-full w-full object-cover" />
+                            </div>
+                          ) : <span className="text-muted-foreground text-xs">No image</span>}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm"><MoreHorizontal className="h-4 w-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => openBannerDialog(banner)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-destructive" onClick={() => confirmDelete(banner.id, 'banner', banner.title)}><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── Banner Add/Edit Dialog ── */}
+      <Dialog open={bannerDialogOpen} onOpenChange={setBannerDialogOpen}>
+        <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingBanner ? 'Edit Banner' : 'Add New Banner'}</DialogTitle>
-            <DialogDescription className="sr-only">
-              {editingBanner ? 'Edit banner details' : 'Create a new banner'}
-            </DialogDescription>
+            <DialogTitle>{editingBanner ? 'Edit Banner' : 'Add Banner'}</DialogTitle>
+            <DialogDescription>Configure banner display settings.</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-2">
+          <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="banner-title">Title *</Label>
-              <Input id="banner-title" placeholder="Banner title" value={bannerForm.title}
-                onChange={(e) => setBannerForm((p) => ({ ...p, title: e.target.value }))} />
+              <Input id="banner-title" value={bannerForm.title} onChange={(e) => setBannerForm((p) => ({ ...p, title: e.target.value }))} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="banner-subtitle">Subtitle</Label>
-              <Input id="banner-subtitle" placeholder="Banner subtitle" value={bannerForm.subtitle}
-                onChange={(e) => setBannerForm((p) => ({ ...p, subtitle: e.target.value }))} />
+              <Input id="banner-subtitle" value={bannerForm.subtitle} onChange={(e) => setBannerForm((p) => ({ ...p, subtitle: e.target.value }))} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="banner-image">Image URL</Label>
-              <Input id="banner-image" placeholder="https://example.com/banner.jpg" value={bannerForm.image}
-                onChange={(e) => setBannerForm((p) => ({ ...p, image: e.target.value }))} />
-              {bannerForm.image && (
-                <div className="aspect-video bg-muted rounded-md overflow-hidden border">
-                  <img src={bannerForm.image} alt="Preview" className="h-full w-full object-cover" />
-                </div>
-              )}
+              <Label htmlFor="banner-image">{t.admin.image} URL</Label>
+              <Input id="banner-image" value={bannerForm.image} onChange={(e) => setBannerForm((p) => ({ ...p, image: e.target.value }))} placeholder="https://..." />
             </div>
             <div className="space-y-2">
               <Label htmlFor="banner-link">Link URL</Label>
-              <Input id="banner-link" placeholder="https://example.com" value={bannerForm.link}
-                onChange={(e) => setBannerForm((p) => ({ ...p, link: e.target.value }))} />
+              <Input id="banner-link" value={bannerForm.link} onChange={(e) => setBannerForm((p) => ({ ...p, link: e.target.value }))} placeholder="https://..." />
             </div>
-            <div className="grid gap-4 grid-cols-2">
+            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Position</Label>
                 <Select value={bannerForm.position} onValueChange={(v) => setBannerForm((p) => ({ ...p, position: v }))}>
-                  <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {BANNER_POSITIONS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                  </SelectContent>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>{BANNER_POSITIONS.map((bp) => <SelectItem key={bp} value={bp}>{bp.charAt(0).toUpperCase() + bp.slice(1)}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="banner-order">Order</Label>
-                <Input id="banner-order" type="number" value={bannerForm.order}
-                  onChange={(e) => setBannerForm((p) => ({ ...p, order: parseInt(e.target.value, 10) || 0 }))} />
+                <Label>Order</Label>
+                <Input type="number" value={bannerForm.order} onChange={(e) => setBannerForm((p) => ({ ...p, order: parseInt(e.target.value, 10) || 0 }))} />
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Switch checked={bannerForm.isActive}
-                onCheckedChange={(v) => setBannerForm((p) => ({ ...p, isActive: v }))} id="banner-active" />
-              <Label htmlFor="banner-active">Active</Label>
+            <div className="flex items-center gap-2">
+              <Switch checked={bannerForm.isActive} onCheckedChange={(v) => setBannerForm((p) => ({ ...p, isActive: v }))} />
+              <Label>Active</Label>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setBannerDialogOpen(false); setEditingBanner(null); }}>
-              Cancel
-            </Button>
-            <Button onClick={saveBanner} disabled={bannerSaving}>
-              {bannerSaving ? 'Saving...' : editingBanner ? 'Update Banner' : 'Create Banner'}
-            </Button>
+            <Button variant="outline" onClick={() => setBannerDialogOpen(false)}>{t.admin.cancel}</Button>
+            <Button onClick={saveBanner} disabled={bannerSaving}>{bannerSaving ? 'Saving...' : t.admin.save}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </motion.div>
+  );
 
-      {/* ── Location Form Dialog ────────────────────────────────────────── */}
-      <Dialog open={locDialogOpen} onOpenChange={(open) => { if (!open) setLocDialogOpen(false); }}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add {locForm.type}</DialogTitle>
-            <DialogDescription className="sr-only">Add a new location entry</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-2">
-            <div className="space-y-2">
-              <Label>Type</Label>
-              <Select value={locForm.type} onValueChange={(v) => setLocForm((p) => ({ ...p, type: v, parentId: '' }))}>
-                <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {LOCATION_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="loc-name">Name *</Label>
-              <Input id="loc-name" placeholder="Name" value={locForm.name}
-                onChange={(e) => setLocForm((p) => ({ ...p, name: e.target.value }))} />
-            </div>
-            {locForm.type === 'Country' && (
-              <div className="space-y-2">
-                <Label htmlFor="loc-code">Country Code</Label>
-                <Input id="loc-code" placeholder="US, AE, GB..." maxLength={2} value={locForm.code}
-                  onChange={(e) => setLocForm((p) => ({ ...p, code: e.target.value.toUpperCase() }))} />
-              </div>
-            )}
-            {locForm.type === 'Region' && (
-              <div className="space-y-2">
-                <Label>Parent Country</Label>
-                <Select value={locForm.parentId} onValueChange={(v) => setLocForm((p) => ({ ...p, parentId: v }))}>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Select country" /></SelectTrigger>
-                  <SelectContent>
-                    {locations.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            {locForm.type === 'City' && (
-              <div className="space-y-2">
-                <Label>Parent Region</Label>
-                <Select value={locForm.parentId} onValueChange={(v) => setLocForm((p) => ({ ...p, parentId: v }))}>
-                  <SelectTrigger className="w-full"><SelectValue placeholder="Select region" /></SelectTrigger>
-                  <SelectContent>
-                    {locations.flatMap((c) => c.regions || []).map((r) => (
-                      <SelectItem key={r.id} value={r.id}>{r.name} ({locations.find((c) => c.id === r.countryId)?.name})</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+  // ═══════════════════════════════════════════════════════════════════════════
+  // TAB 7: FEATURES (NEW — MOST IMPORTANT)
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const renderFeatures = () => {
+    if (featuresLoading) {
+      return (
+        <motion.div {...fadeIn} className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-24 w-full rounded-lg" />)}
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setLocDialogOpen(false)}>Cancel</Button>
-            <Button onClick={saveLocation} disabled={locSaving}>
-              {locSaving ? 'Saving...' : `Add ${locForm.type}`}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-32 w-full rounded-lg" />)}
+          </div>
+        </motion.div>
+      );
+    }
 
-      {/* ── Delete Confirmation Dialog ──────────────────────────────────── */}
+    return (
+      <motion.div {...fadeIn} className="space-y-6">
+        {/* ── Summary Cards ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
+            <Card className="border-emerald-200 dark:border-emerald-800">
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-emerald-50 dark:bg-emerald-950/50">
+                  <Sparkles className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Total Features</p>
+                  <p className="text-2xl font-bold tracking-tight">{features.length}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
+            <Card className="border-emerald-200 dark:border-emerald-800">
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/50">
+                  <Zap className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Enabled</p>
+                  <p className="text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">{enabledCount}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <Card className="border-gray-200 dark:border-gray-700">
+              <CardContent className="p-4 flex items-center gap-4">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
+                  <Settings className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Disabled</p>
+                  <p className="text-2xl font-bold tracking-tight text-gray-500 dark:text-gray-400">{disabledCount}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+
+        {/* ── Search & Filter Bar ── */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search features..."
+              value={featureSearch}
+              onChange={(e) => setFeatureSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={featureCategoryFilter} onValueChange={setFeatureCategoryFilter}>
+            <SelectTrigger className="w-[160px]"><SelectValue placeholder="All Categories" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {categoryOrder.map((cat) => (
+                <SelectItem key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* ── Progress Bar ── */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>Feature Adoption</span>
+            <span>{features.length > 0 ? Math.round((enabledCount / features.length) * 100) : 0}% enabled</span>
+          </div>
+          <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+            <motion.div
+              className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500"
+              initial={{ width: 0 }}
+              animate={{ width: `${features.length > 0 ? (enabledCount / features.length) * 100 : 0}%` }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+            />
+          </div>
+        </div>
+
+        {/* ── Feature Cards Grouped by Category ── */}
+        {uniqueCategories.map((category) => {
+          const CatIcon = categoryIconMap[category] || Sparkles;
+          const catFeatures = featuresByCategory[category];
+          const catEnabled = catFeatures.filter((f) => f.isEnabled).length;
+
+          return (
+            <div key={category} className="space-y-3">
+              {/* Category Header */}
+              <div className="flex items-center gap-3">
+                <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${categoryColorMap[category] || ''}`}>
+                  <CatIcon className="h-4 w-4" />
+                </div>
+                <h3 className="text-sm font-semibold uppercase tracking-wider">{category}</h3>
+                <Badge variant="secondary" className="text-xs">{catEnabled}/{catFeatures.length} enabled</Badge>
+              </div>
+
+              {/* Feature Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {catFeatures.map((feature, idx) => {
+                  const FeatureIcon = iconMap[feature.icon] || Sparkles;
+                  const isEnabled = feature.isEnabled;
+
+                  return (
+                    <motion.div
+                      key={feature.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2, delay: idx * 0.03 }}
+                    >
+                      <Card
+                        className={`relative overflow-hidden transition-all duration-200 hover:shadow-md ${
+                          isEnabled
+                            ? 'border-emerald-300 dark:border-emerald-700 bg-gradient-to-br from-emerald-50/50 to-white dark:from-emerald-950/20 dark:to-background'
+                            : 'border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/30'
+                        }`}
+                      >
+                        {/* Subtle status indicator bar */}
+                        <div className={`absolute top-0 left-0 right-0 h-0.5 ${
+                          isEnabled
+                            ? 'bg-gradient-to-r from-emerald-400 to-teal-400'
+                            : 'bg-gray-200 dark:bg-gray-700'
+                        }`} />
+
+                        <CardContent className="p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-start gap-3 min-w-0 flex-1">
+                              {/* Feature Icon */}
+                              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                                isEnabled
+                                  ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400'
+                                  : 'bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500'
+                              }`}>
+                                <FeatureIcon className="h-5 w-5" />
+                              </div>
+
+                              {/* Feature Info */}
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-2">
+                                  <h4 className={`font-medium text-sm truncate ${isEnabled ? '' : 'text-muted-foreground'}`}>
+                                    {feature.name}
+                                  </h4>
+                                  {/* Category Badge */}
+                                  <Badge variant="secondary" className={`text-[10px] px-1.5 py-0 shrink-0 ${categoryColorMap[feature.category] || ''}`}>
+                                    {feature.category}
+                                  </Badge>
+                                </div>
+                                <p className={`text-xs mt-0.5 line-clamp-2 ${isEnabled ? 'text-muted-foreground' : 'text-muted-foreground/60'}`}>
+                                  {feature.description}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Toggle Switch */}
+                            <Switch
+                              checked={isEnabled}
+                              onCheckedChange={() => toggleFeature(feature)}
+                              className="shrink-0 mt-0.5"
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Empty State */}
+        {!featuresLoading && filteredFeatures.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16">
+            <Sparkles className="h-12 w-12 text-muted-foreground/40 mb-3" />
+            <p className="text-muted-foreground">No features found</p>
+            <p className="text-sm text-muted-foreground/60 mt-1">Try adjusting your search or filter</p>
+          </div>
+        )}
+      </motion.div>
+    );
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MAIN RENDER — Tab Layout
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  return (
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+        <div className="container mx-auto max-w-7xl px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <motion.h1
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="text-2xl font-bold tracking-tight"
+              >
+                CIAR {t.admin.dashboard}
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.1 }}
+                className="text-sm text-muted-foreground mt-0.5"
+              >
+                Manage your platform from one place
+              </motion.p>
+            </div>
+            <motion.div
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-2"
+            >
+              <Badge variant="outline" className="hidden sm:flex items-center gap-1">
+                <ShieldAlert className="h-3 w-3" /> Admin
+              </Badge>
+            </motion.div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tab Navigation & Content */}
+      <div className="container mx-auto max-w-7xl px-4 py-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          {/* Tab List */}
+          <motion.div
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-muted/50 p-1 rounded-lg">
+              <TabsTrigger value="overview" className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <LayoutDashboard className="h-4 w-4" />
+                <span className="hidden sm:inline">{t.admin.overview}</span>
+              </TabsTrigger>
+              <TabsTrigger value="properties" className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <Building2 className="h-4 w-4" />
+                <span className="hidden sm:inline">{t.admin.properties}</span>
+              </TabsTrigger>
+              <TabsTrigger value="users" className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <Users className="h-4 w-4" />
+                <span className="hidden sm:inline">{t.admin.users}</span>
+              </TabsTrigger>
+              <TabsTrigger value="locations" className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <Globe className="h-4 w-4" />
+                <span className="hidden sm:inline">{t.admin.locations}</span>
+              </TabsTrigger>
+              <TabsTrigger value="inquiries" className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <MessageSquare className="h-4 w-4" />
+                <span className="hidden sm:inline">{t.admin.inquiries}</span>
+              </TabsTrigger>
+              <TabsTrigger value="banners" className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <ImageIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">{t.admin.banners}</span>
+              </TabsTrigger>
+              <TabsTrigger value="features" className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <Sparkles className="h-4 w-4 text-amber-500" />
+                <span className="hidden sm:inline font-semibold">Features</span>
+              </TabsTrigger>
+            </TabsList>
+          </motion.div>
+
+          {/* Tab Contents */}
+          <TabsContent value="overview">{renderOverview()}</TabsContent>
+          <TabsContent value="properties">{renderProperties()}</TabsContent>
+          <TabsContent value="users">{renderUsers()}</TabsContent>
+          <TabsContent value="locations">{renderLocations()}</TabsContent>
+          <TabsContent value="inquiries">{renderInquiries()}</TabsContent>
+          <TabsContent value="banners">{renderBanners()}</TabsContent>
+          <TabsContent value="features">{renderFeatures()}</TabsContent>
+        </Tabs>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════ */}
+      {/* DELETE CONFIRMATION DIALOG (shared)                                  */}
+      {/* ═══════════════════════════════════════════════════════════════════ */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>{t.admin.confirmDelete}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete &quot;{deleteTarget?.label}&quot;. This action cannot be undone.
+              Are you sure you want to delete &quot;{deleteTarget?.label}&quot;? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>{t.admin.cancel}</AlertDialogCancel>
             <AlertDialogAction
               onClick={executeDelete}
               disabled={deleting}
-              className="bg-destructive text-white hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleting ? 'Deleting...' : 'Delete'}
+              {deleting ? 'Deleting...' : t.admin.delete}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

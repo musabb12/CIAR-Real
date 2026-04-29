@@ -875,25 +875,23 @@ export function SearchPage() {
               </Sheet>
 
               {/* Results count */}
-              <div>
-                <p className="text-sm text-muted-foreground">
-                  {loading ? (
-                    <Skeleton className="inline-block h-4 w-32" />
-                  ) : (
-                    <>
-                      <span className="font-semibold text-foreground">
-                        {totalResults}
-                      </span>{' '}
-                      {totalResults === 1 ? 'property' : 'properties'} found
-                      {!loading && totalResults > 0 && (
-                        <span className="hidden sm:inline">
-                          {' '}
-                          &middot; {t.search.showing} {resultsFrom}&ndash;{resultsTo}
-                        </span>
-                      )}
-                    </>
-                  )}
-                </p>
+              <div className="text-sm text-muted-foreground">
+                {loading ? (
+                  <Skeleton className="inline-block h-4 w-32" />
+                ) : (
+                  <>
+                    <span className="font-semibold text-foreground">
+                      {totalResults}
+                    </span>{' '}
+                    {totalResults === 1 ? 'property' : 'properties'} found
+                    {!loading && totalResults > 0 && (
+                      <span className="hidden sm:inline">
+                        {' '}
+                        &middot; {t.search.showing} {resultsFrom}&ndash;{resultsTo}
+                      </span>
+                    )}
+                  </>
+                )}
               </div>
             </div>
 

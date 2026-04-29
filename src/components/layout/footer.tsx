@@ -465,7 +465,7 @@ export function Footer() {
               </button>
               <span className="h-3 w-px bg-amber-500/20" />
               <button
-                onClick={() => setCurrentPage('home')}
+                onClick={() => setCurrentPage('contact')}
                 className="text-xs text-gray-500 transition-colors duration-300 hover:text-amber-300"
               >
                 {t.common.contact}

@@ -221,6 +221,7 @@ export type AppPage =
   | 'property-detail'
   | 'agents'
   | 'favorites'
+  | 'contact'
   | 'admin'
   | 'admin-login';
 

@@ -6,6 +6,7 @@ export interface Translations {
     home: string;
     properties: string;
     agents: string;
+    contact: string;
     favorites: string;
     admin: string;
     signIn: string;
@@ -282,6 +283,50 @@ export interface Translations {
     rented: string;
     pending: string;
   };
+  // Contact Page
+  contactPage: {
+    title: string;
+    subtitle: string;
+    getInTouch: string;
+    getInTouchDesc: string;
+    name: string;
+    namePlaceholder: string;
+    email: string;
+    emailPlaceholder: string;
+    phone: string;
+    phonePlaceholder: string;
+    subject: string;
+    subjectPlaceholder: string;
+    message: string;
+    messagePlaceholder: string;
+    send: string;
+    sending: string;
+    success: string;
+    successDesc: string;
+    error: string;
+    errorDesc: string;
+    officeInfo: string;
+    officeInfoDesc: string;
+    address: string;
+    addressText: string;
+    emailLabel: string;
+    emailText: string;
+    phoneLabel: string;
+    phoneText: string;
+    workHours: string;
+    workHoursText: string;
+    socialMedia: string;
+    faq: string;
+    faqSubtitle: string;
+    faq1q: string;
+    faq1a: string;
+    faq2q: string;
+    faq2a: string;
+    faq3q: string;
+    faq3a: string;
+    faq4q: string;
+    faq4a: string;
+  };
 }
 
 export const translations: Record<Locale, Translations> = {
@@ -290,6 +335,7 @@ export const translations: Record<Locale, Translations> = {
       home: 'Home',
       properties: 'Properties',
       agents: 'Agents',
+      contact: 'Contact',
       favorites: 'Favorites',
       admin: 'Admin',
       signIn: 'Sign In',
@@ -552,6 +598,49 @@ export const translations: Record<Locale, Translations> = {
       rented: 'Rented',
       pending: 'Pending',
     },
+    contactPage: {
+      title: 'Contact Us',
+      subtitle: 'We would love to hear from you. Our team is always ready to help.',
+      getInTouch: 'Get In Touch',
+      getInTouchDesc: 'Fill out the form below and we will get back to you as soon as possible.',
+      name: 'Full Name',
+      namePlaceholder: 'Enter your full name',
+      email: 'Email Address',
+      emailPlaceholder: 'Enter your email address',
+      phone: 'Phone Number',
+      phonePlaceholder: 'Enter your phone number',
+      subject: 'Subject',
+      subjectPlaceholder: 'What is this about?',
+      message: 'Message',
+      messagePlaceholder: 'Write your message here...',
+      send: 'Send Message',
+      sending: 'Sending...',
+      success: 'Message Sent!',
+      successDesc: 'Thank you for contacting us. We will respond within 24 hours.',
+      error: 'Failed to Send',
+      errorDesc: 'Something went wrong. Please try again or contact us directly.',
+      officeInfo: 'Office Information',
+      officeInfoDesc: 'Visit us at our headquarters or reach out through any of the channels below.',
+      address: 'Address',
+      addressText: '123 Luxury Tower, Business Bay, Dubai, UAE',
+      emailLabel: 'Email',
+      emailText: 'info@ciar.com',
+      phoneLabel: 'Phone',
+      phoneText: '+971 4 123 4567',
+      workHours: 'Working Hours',
+      workHoursText: 'Sun - Thu: 9:00 AM - 6:00 PM',
+      socialMedia: 'Social Media',
+      faq: 'Frequently Asked Questions',
+      faqSubtitle: 'Find quick answers to common questions',
+      faq1q: 'How do I list my property on CIAR?',
+      faq1a: 'Create an agent account, verify your identity, and you can start listing properties immediately. Our team reviews each listing within 24 hours.',
+      faq2q: 'Is it free to search for properties?',
+      faq2a: 'Yes, searching and browsing properties on CIAR is completely free for all users. No registration required.',
+      faq3q: 'How do I contact a property agent?',
+      faq3a: 'Click on any property to view details, then use the "Contact Agent" button to send a message directly to the listing agent.',
+      faq4q: 'Which countries does CIAR operate in?',
+      faq4a: 'CIAR operates in over 60 countries worldwide. You can use our location filters to find properties in your preferred destination.',
+    },
   },
 
   ar: {
@@ -559,6 +648,7 @@ export const translations: Record<Locale, Translations> = {
       home: 'الرئيسية',
       properties: 'العقارات',
       agents: 'الوكلاء',
+      contact: 'تواصل',
       favorites: 'المفضلة',
       admin: 'لوحة التحكم',
       signIn: 'تسجيل الدخول',
@@ -821,6 +911,49 @@ export const translations: Record<Locale, Translations> = {
       rented: 'مؤجر',
       pending: 'قيد الانتظار',
     },
+    contactPage: {
+      title: 'تواصل معنا',
+      subtitle: 'يسعدنا سماع رأيك. فريقنا جاهز دائماً لمساعدتك.',
+      getInTouch: 'تواصل معنا',
+      getInTouchDesc: 'املأ النموذج أدناه وسنعود إليك في أقرب وقت ممكن.',
+      name: 'الاسم الكامل',
+      namePlaceholder: 'أدخل اسمك الكامل',
+      email: 'البريد الإلكتروني',
+      emailPlaceholder: 'أدخل بريدك الإلكتروني',
+      phone: 'رقم الهاتف',
+      phonePlaceholder: 'أدخل رقم هاتفك',
+      subject: 'الموضوع',
+      subjectPlaceholder: 'ما هو موضوع رسالتك؟',
+      message: 'الرسالة',
+      messagePlaceholder: 'اكتب رسالتك هنا...',
+      send: 'إرسال الرسالة',
+      sending: 'جاري الإرسال...',
+      success: 'تم الإرسال بنجاح!',
+      successDesc: 'شكراً لتواصلك معنا. سنرد خلال 24 ساعة.',
+      error: 'فشل الإرسال',
+      errorDesc: 'حدث خطأ ما. يرجى المحاولة مرة أخرى أو التواصل معنا مباشرة.',
+      officeInfo: 'معلومات المكتب',
+      officeInfoDesc: 'زرنا في مقرنا الرئيسي أو تواصل معنا عبر أي من القنوات أدناه.',
+      address: 'العنوان',
+      addressText: 'برج الفخامة 123، خليج الأعمال، دبي، الإمارات',
+      emailLabel: 'البريد الإلكتروني',
+      emailText: 'info@ciar.com',
+      phoneLabel: 'الهاتف',
+      phoneText: '+971 4 123 4567',
+      workHours: 'ساعات العمل',
+      workHoursText: 'الأحد - الخميس: 9:00 ص - 6:00 م',
+      socialMedia: 'وسائل التواصل الاجتماعي',
+      faq: 'الأسئلة الشائعة',
+      faqSubtitle: 'اعثر على إجابات سريعة للأسئلة المتكررة',
+      faq1q: 'كيف أضيف عقاري على CIAR؟',
+      faq1a: 'أنشئ حساب وكيل، تحقق من هويتك، ويمكنك البدء في إضافة العقارات فوراً. يراجع فريقنا كل قائمة خلال 24 ساعة.',
+      faq2q: 'هل البحث عن العقارات مجاني؟',
+      faq2a: 'نعم، البحث وتصفح العقارات على CIAR مجاني تماماً لجميع المستخدمين. لا يتطلب التسجيل.',
+      faq3q: 'كيف أتواصل مع وكيل عقاري؟',
+      faq3a: 'انقر على أي عقار لعرض التفاصيل، ثم استخدم زر "تواصل مع الوكيل" لإرسال رسالة مباشرة.',
+      faq4q: 'في أي دول يعمل CIAR؟',
+      faq4a: 'يعمل CIAR في أكثر من 60 دولة حول العالم. يمكنك استخدام فلاتر الموقع للعثور على عقارات في وجهتك المفضلة.',
+    },
   },
 
   fr: {
@@ -828,6 +961,7 @@ export const translations: Record<Locale, Translations> = {
       home: 'Accueil',
       properties: 'Propriétés',
       agents: 'Agents',
+      contact: 'Contact',
       favorites: 'Favoris',
       admin: 'Administration',
       signIn: 'Connexion',
@@ -1090,6 +1224,49 @@ export const translations: Record<Locale, Translations> = {
       rented: 'Loué',
       pending: 'En attente',
     },
+    contactPage: {
+      title: 'Contactez-nous',
+      subtitle: 'Nous serions ravis de vous entendre. Notre équipe est toujours prête à vous aider.',
+      getInTouch: 'Nous Contacter',
+      getInTouchDesc: 'Remplissez le formulaire ci-dessous et nous vous répondrons dans les plus brefs délais.',
+      name: 'Nom Complet',
+      namePlaceholder: 'Entrez votre nom complet',
+      email: 'Adresse E-mail',
+      emailPlaceholder: 'Entrez votre adresse e-mail',
+      phone: 'Numéro de Téléphone',
+      phonePlaceholder: 'Entrez votre numéro de téléphone',
+      subject: 'Sujet',
+      subjectPlaceholder: 'Quel est le sujet?',
+      message: 'Message',
+      messagePlaceholder: 'Écrivez votre message ici...',
+      send: 'Envoyer le Message',
+      sending: 'Envoi en cours...',
+      success: 'Message Envoyé!',
+      successDesc: 'Merci de nous avoir contactés. Nous répondrons sous 24 heures.',
+      error: 'Échec de l\'envoi',
+      errorDesc: 'Une erreur est survenue. Veuillez réessayer ou nous contacter directement.',
+      officeInfo: 'Informations du Bureau',
+      officeInfoDesc: 'Visitez-nous à notre siège ou contactez-nous via l\'un des canaux ci-dessous.',
+      address: 'Adresse',
+      addressText: '123 Luxury Tower, Business Bay, Dubaï, EAU',
+      emailLabel: 'E-mail',
+      emailText: 'info@ciar.com',
+      phoneLabel: 'Téléphone',
+      phoneText: '+971 4 123 4567',
+      workHours: 'Heures d\'Ouverture',
+      workHoursText: 'Dim - Jeu: 9h00 - 18h00',
+      socialMedia: 'Réseaux Sociaux',
+      faq: 'Questions Fréquentes',
+      faqSubtitle: 'Trouvez des réponses rapides aux questions courantes',
+      faq1q: 'Comment lister ma propriété sur CIAR?',
+      faq1a: 'Créez un compte agent, vérifiez votre identité, et vous pouvez commencer à lister des propriétés immédiatement. Notre équipe examine chaque annonce sous 24 heures.',
+      faq2q: 'La recherche de propriétés est-elle gratuite?',
+      faq2a: 'Oui, la recherche et la navigation sur CIAR sont entièrement gratuites pour tous les utilisateurs. Aucune inscription requise.',
+      faq3q: 'Comment contacter un agent immobilier?',
+      faq3a: 'Cliquez sur n\'importe quelle propriété pour voir les détails, puis utilisez le bouton "Contacter l\'agent" pour envoyer un message directement.',
+      faq4q: 'Dans quels pays CIAR opère-t-il?',
+      faq4a: 'CIAR opère dans plus de 60 pays dans le monde. Utilisez nos filtres de localisation pour trouver des propriétés dans votre destination préférée.',
+    },
   },
 
   es: {
@@ -1097,6 +1274,7 @@ export const translations: Record<Locale, Translations> = {
       home: 'Inicio',
       properties: 'Propiedades',
       agents: 'Agentes',
+      contact: 'Contacto',
       favorites: 'Favoritos',
       admin: 'Admin',
       signIn: 'Iniciar sesión',
@@ -1359,6 +1537,49 @@ export const translations: Record<Locale, Translations> = {
       rented: 'Alquilado',
       pending: 'Pendiente',
     },
+    contactPage: {
+      title: 'Contáctenos',
+      subtitle: 'Nos encantaría saber de usted. Nuestro equipo siempre está listo para ayudar.',
+      getInTouch: 'Contáctenos',
+      getInTouchDesc: 'Complete el formulario a continuación y le responderemos lo antes posible.',
+      name: 'Nombre Completo',
+      namePlaceholder: 'Ingrese su nombre completo',
+      email: 'Correo Electrónico',
+      emailPlaceholder: 'Ingrese su correo electrónico',
+      phone: 'Número de Teléfono',
+      phonePlaceholder: 'Ingrese su número de teléfono',
+      subject: 'Asunto',
+      subjectPlaceholder: '¿Cuál es el asunto?',
+      message: 'Mensaje',
+      messagePlaceholder: 'Escriba su mensaje aquí...',
+      send: 'Enviar Mensaje',
+      sending: 'Enviando...',
+      success: 'Mensaje Enviado!',
+      successDesc: 'Gracias por contactarnos. Responderemos dentro de 24 horas.',
+      error: 'Error al Enviar',
+      errorDesc: 'Algo salió mal. Por favor, inténtelo de nuevo o contáctenos directamente.',
+      officeInfo: 'Información de la Oficina',
+      officeInfoDesc: 'Visítenos en nuestra sede o comuníquese a través de cualquiera de los canales a continuación.',
+      address: 'Dirección',
+      addressText: '123 Luxury Tower, Business Bay, Dubái, EAU',
+      emailLabel: 'Correo',
+      emailText: 'info@ciar.com',
+      phoneLabel: 'Teléfono',
+      phoneText: '+971 4 123 4567',
+      workHours: 'Horario de Atención',
+      workHoursText: 'Dom - Jue: 9:00 AM - 6:00 PM',
+      socialMedia: 'Redes Sociales',
+      faq: 'Preguntas Frecuentes',
+      faqSubtitle: 'Encuentre respuestas rápidas a preguntas comunes',
+      faq1q: '¿Cómo publico mi propiedad en CIAR?',
+      faq1a: 'Cree una cuenta de agente, verifique su identidad y podrá comenzar a publicar propiedades inmediatamente. Nuestro equipo revisa cada anuncio en 24 horas.',
+      faq2q: '¿Es gratis buscar propiedades?',
+      faq2a: 'Sí, buscar y navegar propiedades en CIAR es completamente gratis para todos los usuarios. No requiere registro.',
+      faq3q: '¿Cómo contacto a un agente inmobiliario?',
+      faq3a: 'Haga clic en cualquier propiedad para ver los detalles, luego use el botón "Contactar agente" para enviar un mensaje directamente.',
+      faq4q: '¿En qué países opera CIAR?',
+      faq4a: 'CIAR opera en más de 60 países en todo el mundo. Puede usar nuestros filtros de ubicación para encontrar propiedades en su destino preferido.',
+    },
   },
 
   tr: {
@@ -1366,6 +1587,7 @@ export const translations: Record<Locale, Translations> = {
       home: 'Ana Sayfa',
       properties: 'Emlaklar',
       agents: 'Danışmanlar',
+      contact: 'İletişim',
       favorites: 'Favoriler',
       admin: 'Yönetim',
       signIn: 'Giriş Yap',
@@ -1627,6 +1849,49 @@ export const translations: Record<Locale, Translations> = {
       sold: 'Satıldı',
       rented: 'Kiralık',
       pending: 'Beklemede',
+    },
+    contactPage: {
+      title: 'Bize Ulasin',
+      subtitle: 'Sizden haber almaktan mutluluk duyariz. Ekibimiz her zaman yardima hazirdir.',
+      getInTouch: 'Iletisime Gecin',
+      getInTouchDesc: 'Asagidaki formu doldurun, size en kisa surede donecegiz.',
+      name: 'Ad Soyad',
+      namePlaceholder: 'Adinizi ve soyadinizi girin',
+      email: 'E-posta Adresi',
+      emailPlaceholder: 'E-posta adresinizi girin',
+      phone: 'Telefon Numarasi',
+      phonePlaceholder: 'Telefon numaranizi girin',
+      subject: 'Konu',
+      subjectPlaceholder: 'Konu nedir?',
+      message: 'Mesaj',
+      messagePlaceholder: 'Mesajinizi buraya yazin...',
+      send: 'Mesaj Gonder',
+      sending: 'Gonderiliyor...',
+      success: 'Mesaj Gonderildi!',
+      successDesc: 'Bize ulastiginiz icin tesekkurler. 24 saat icinde yanit verecegiz.',
+      error: 'Gonderme Basarisiz',
+      errorDesc: 'Birseyler ters gitti. Lutfen tekrar deneyin veya dogrudan bize ulasin.',
+      officeInfo: 'Ofis Bilgileri',
+      officeInfoDesc: 'Merkezimizi ziyaret edin veya asagidaki kanallardan bize ulasin.',
+      address: 'Adres',
+      addressText: '123 Luxury Tower, Business Bay, Dubai, BAE',
+      emailLabel: 'E-posta',
+      emailText: 'info@ciar.com',
+      phoneLabel: 'Telefon',
+      phoneText: '+971 4 123 4567',
+      workHours: 'Calisma Saatleri',
+      workHoursText: 'Paz - Per: 09:00 - 18:00',
+      socialMedia: 'Sosyal Medya',
+      faq: 'Sikca Sorulan Sorular',
+      faqSubtitle: 'Yaygin sorulara hizli cevaplar bulun',
+      faq1q: 'Mulkumu CIAR\'a nasil eklerim?',
+      faq1a: 'Bir danisman hesabi olusturun, kimliginizi dogrulayin ve hemen mulk eklemeye baslayabilirsiniz. Ekibimiz her ilani 24 saat icinde inceler.',
+      faq2q: 'Mulk aramasi ucretsiz mi?',
+      faq2a: 'Evet, CIAR\'da mulk aramak ve gezinmek tum kullanicilar icin tamamen ucretsizdir. Kayit gerekmez.',
+      faq3q: 'Bir emlak danismanina nasil ulasirim?',
+      faq3a: 'Herhangi bir mulke tiklayin, detaylari goruntuleyin, ardindan "Danismanla Iletisim" butonunu kullanarak dogrudan mesaj gonderin.',
+      faq4q: 'CIAR hangi ulkelerde faaliyet gosteriyor?',
+      faq4a: 'CIAR dunya capinda 60\'tan fazla ulkede faaliyet gosteriyor. Konum filtrelerimizi kullanarak tercih ettiginiz varil noktada mulk bulabilirsiniz.',
     },
   },
 };

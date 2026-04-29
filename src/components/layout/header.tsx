@@ -24,6 +24,7 @@ import {
   Phone,
   Lock,
   Loader2,
+  MessageSquare,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -38,13 +39,14 @@ import { locales, type Locale } from '@/lib/i18n';
 
 const navConfig: {
   page: AppPage;
-  labelKey: 'home' | 'properties' | 'agents' | 'favorites' | 'admin';
+  labelKey: 'home' | 'properties' | 'agents' | 'contact' | 'favorites' | 'admin';
   icon: React.ReactNode;
   showAdmin?: boolean;
 }[] = [
   { page: 'home', labelKey: 'home', icon: <Building2 className="h-4 w-4" /> },
   { page: 'search', labelKey: 'properties', icon: <Search className="h-4 w-4" /> },
   { page: 'agents', labelKey: 'agents', icon: <Users className="h-4 w-4" /> },
+  { page: 'contact', labelKey: 'contact', icon: <MessageSquare className="h-4 w-4" /> },
   { page: 'favorites', labelKey: 'favorites', icon: <Heart className="h-4 w-4" /> },
   { page: 'admin', labelKey: 'admin', icon: <LayoutDashboard className="h-4 w-4" />, showAdmin: true },
 ];

@@ -12,6 +12,7 @@ import { AgentsPage } from '@/components/pages/agents-page';
 import { FavoritesPage } from '@/components/pages/favorites-page';
 import { AdminPage } from '@/components/pages/admin-page';
 import { AdminLoginPage } from '@/components/pages/admin-login-page';
+import { ContactPage } from '@/components/pages/contact-page';
 import { ScrollProgress } from '@/components/ui/scroll-progress';
 import { AIChatbot } from '@/components/feature/ai-chatbot';
 import { PropertyComparison } from '@/components/feature/property-comparison';
@@ -67,6 +68,8 @@ export default function Home() {
         return <PropertyDetailPage />;
       case 'agents':
         return <AgentsPage />;
+      case 'contact':
+        return <ContactPage />;
       case 'favorites':
         return <FavoritesPage />;
       case 'admin':

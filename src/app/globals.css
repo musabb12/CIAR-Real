@@ -1303,19 +1303,21 @@ html[dir="rtl"] ::-webkit-scrollbar {
   width: 8px;
 }
 
-/* Elegant heading font */
+/* Elegant heading font — Latin languages */
 .font-heading {
   font-family: var(--font-playfair), 'Playfair Display', Georgia, 'Times New Roman', serif;
 }
 
-/* Smooth font for Arabic */
+/* Arabic/RTL body font */
 html[dir="rtl"] body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, var(--font-geist-sans);
+  font-family: var(--font-tajawal), 'Tajawal', 'Segoe UI', Tahoma, sans-serif;
 }
 
+/* Arabic/RTL heading font — Tajawal Bold */
 html[dir="rtl"] .font-heading {
-  font-family: 'Tajawal', 'Segoe UI', Tahoma, sans-serif;
-  font-weight: 700;
+  font-family: var(--font-tajawal), 'Tajawal', sans-serif;
+  font-weight: 800;
+  letter-spacing: 0;
 }
 
 /* RTL micro-interaction corrections */

@@ -231,12 +231,6 @@ export function Header() {
 
   const isDark = theme === 'dark';
 
-  const headerBg = scrolled
-    ? isDark
-      ? 'bg-gray-950/80 border-b border-white/[0.06]'
-      : 'bg-white/80 border-b border-gray-200/50'
-    : 'bg-transparent border-b border-transparent';
-
   const headerShadow = scrolled
     ? 'shadow-[0_1px_0_0_rgba(0,0,0,0.04),0_8px_40px_rgba(0,0,0,0.06)]'
     : 'shadow-none';
@@ -279,7 +273,7 @@ export function Header() {
       {/* ============================================================ */}
       <header
         dir={rtl ? 'rtl' : 'ltr'}
-        className={`sticky top-0 z-50 w-full transition-all duration-500 ease-out ${headerBg} ${headerShadow} backdrop-blur-xl`}
+        className={`sticky top-0 z-50 w-full transition-all duration-500 ease-out glass-nav ${headerShadow}`}
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* ---- Logo ---- */}
@@ -403,7 +397,7 @@ export function Header() {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -8, scale: 0.96 }}
                     transition={{ duration: 0.2, ease: 'easeOut' }}
-                    className="absolute end-0 top-full mt-2 w-44 overflow-hidden rounded-xl border border-gray-200/60 bg-white/95 p-1 shadow-xl shadow-black/[0.08] backdrop-blur-2xl dark:border-white/10 dark:bg-gray-900/95"
+                    className="absolute end-0 top-full mt-2 w-44 overflow-hidden glass-deep rounded-xl p-1"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {locales.map((l) => (
@@ -500,7 +494,7 @@ export function Header() {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: -8, scale: 0.96 }}
                       transition={{ duration: 0.2, ease: 'easeOut' }}
-                      className="absolute end-0 top-full mt-2 w-60 overflow-hidden rounded-xl border border-gray-200/60 bg-white/95 p-1 shadow-xl shadow-black/[0.08] backdrop-blur-2xl dark:border-white/10 dark:bg-gray-900/95"
+                      className="absolute end-0 top-full mt-2 w-60 overflow-hidden glass-deep rounded-xl p-1"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <div className="border-b border-gray-100 px-3 py-3 dark:border-white/5">
@@ -605,7 +599,7 @@ export function Header() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-40 flex flex-col bg-white/[0.97] backdrop-blur-2xl dark:bg-gray-950/[0.97] lg:hidden"
+            className="fixed inset-0 z-40 flex flex-col glass-deep lg:hidden"
           >
             {/* Mobile Menu Header */}
             <div className="flex h-16 items-center justify-between border-b border-gray-100 px-4 sm:px-6 dark:border-white/5">
@@ -758,7 +752,7 @@ export function Header() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 16 }}
               transition={{ duration: 0.35, ease: [0.19, 1, 0.22, 1] }}
-              className="relative w-full max-w-md overflow-hidden rounded-2xl border border-white/20 bg-white/90 shadow-2xl shadow-black/[0.12] backdrop-blur-2xl dark:border-white/10 dark:bg-gray-900/90"
+              className="relative w-full max-w-md overflow-hidden glass-deep rounded-2xl shadow-2xl shadow-black/[0.12]"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Decorative gradient top bar */}

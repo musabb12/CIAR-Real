@@ -99,7 +99,7 @@ function TrustBadge({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay }}
-      className="flex flex-col items-center gap-2.5 rounded-xl border border-amber-500/10 bg-white/[0.03] px-4 py-5 backdrop-blur-sm transition-all duration-500 hover:border-amber-500/30 hover:bg-white/[0.06]"
+      className="glass-stat rounded-xl flex flex-col items-center gap-2.5 px-4 py-5"
     >
       <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-amber-500/15 to-amber-700/10 ring-1 ring-amber-500/10">
         <Icon className="h-5 w-5 text-amber-400" />
@@ -282,7 +282,7 @@ export function Footer() {
                     aria-label={s.label}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-amber-500/15 text-gray-500 transition-all duration-300 hover:border-amber-500/40 hover:text-amber-400 hover:shadow-lg hover:shadow-amber-500/10 hover:bg-amber-500/5"
+                    className="glass-badge flex h-10 w-10 items-center justify-center rounded-full text-gray-500 transition-all duration-300 hover:text-amber-400 hover:shadow-lg hover:shadow-amber-500/10"
                   >
                     <s.icon className="h-4 w-4" />
                   </motion.button>
@@ -363,7 +363,7 @@ export function Footer() {
               {!subscribed ? (
                 <form
                   onSubmit={handleSubscribe}
-                  className="relative flex items-stretch gap-0 overflow-hidden rounded-xl border border-amber-500/15 bg-white/[0.03] backdrop-blur-sm focus-within:border-amber-500/40 focus-within:ring-1 focus-within:ring-amber-500/20 transition-all duration-300"
+                  className="glass-input rounded-xl relative flex items-stretch gap-0 overflow-hidden"
                 >
                   <input
                     type="email"
@@ -387,7 +387,7 @@ export function Footer() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-5 py-3.5"
+                  className="glass-badge rounded-xl flex items-center gap-3 px-5 py-3.5"
                 >
                   <CheckCircle className="h-5 w-5 text-amber-400" />
                   <span className="text-sm text-amber-200">

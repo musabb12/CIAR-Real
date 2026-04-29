@@ -913,7 +913,7 @@ export function AdminPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: index * 0.06 }}
             >
-              <Card className="hover:shadow-md transition-shadow">
+              <Card className="glass-stat rounded-xl hover:shadow-md transition-shadow">
                 <CardContent className="p-4 flex items-center gap-4">
                   <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-lg ${card.bg}`}>
                     <card.icon className={`h-6 w-6 ${card.color}`} />
@@ -931,7 +931,7 @@ export function AdminPage() {
         {/* ── Charts Row ── */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Properties by Type — Bar Chart */}
-          <Card>
+        <Card className="glass-card rounded-xl">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base font-heading">
                 <BarChart3 className="h-4 w-4" /> {t.admin.propertiesByType}
@@ -962,7 +962,7 @@ export function AdminPage() {
           </Card>
 
           {/* Inquiries by Status — Bar Chart */}
-          <Card>
+          <Card className="glass-card rounded-xl">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base font-heading">
                 <MessageSquare className="h-4 w-4" /> Inquiries by Status
@@ -994,7 +994,7 @@ export function AdminPage() {
         </div>
 
         {/* ── Recent Inquiries Table ── */}
-        <Card>
+        <Card className="glass-card rounded-xl">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base font-heading">
               <TrendingUp className="h-4 w-4" /> {t.admin.recentInquiries}
@@ -1081,7 +1081,7 @@ export function AdminPage() {
       </div>
 
       {/* Table */}
-      <Card>
+      <Card className="glass-panel rounded-xl">
         <CardContent className="p-0">
           <div className="overflow-x-auto max-h-[480px] overflow-y-auto">
             {propertiesLoading ? (
@@ -1281,7 +1281,7 @@ export function AdminPage() {
 
   const renderUsers = () => (
     <motion.div {...fadeIn} className="space-y-4">
-      <Card>
+      <Card className="glass-panel rounded-xl">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div>
@@ -1400,7 +1400,7 @@ export function AdminPage() {
           <Plus className="mr-1 h-4 w-4" /> {t.admin.addCountry}
         </Button>
       </div>
-      <Card>
+      <Card className="glass-panel rounded-xl">
         <CardContent className="p-0">
           <div className="max-h-[560px] overflow-y-auto">
             {locationsLoading ? (
@@ -1497,7 +1497,7 @@ export function AdminPage() {
         </div>
       </div>
 
-      <Card>
+      <Card className="glass-panel rounded-xl">
         <CardContent className="p-0">
           <div className="overflow-x-auto max-h-[480px] overflow-y-auto">
             {inquiriesLoading ? (
@@ -1977,7 +1977,7 @@ export function AdminPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
           >
-            <TabsList className="w-full flex flex-wrap h-auto gap-1 bg-muted/50 p-1 rounded-lg">
+            <TabsList className="glass-nav w-full flex flex-wrap h-auto gap-1 p-1 rounded-lg">
               <TabsTrigger value="overview" className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
                 <LayoutDashboard className="h-4 w-4" />
                 <span className="hidden sm:inline">{t.admin.overview}</span>

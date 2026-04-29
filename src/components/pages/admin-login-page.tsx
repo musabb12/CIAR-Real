@@ -81,7 +81,7 @@ export function AdminLoginPage() {
         transition={{ duration: 0.5, ease: 'easeOut' }}
         className="relative z-10 mx-4 w-full max-w-md"
       >
-        <Card className="border-white/[0.08] bg-white/[0.06] shadow-2xl shadow-black/40 backdrop-blur-2xl">
+        <Card className="glass-deep rounded-2xl border-white/[0.08] shadow-2xl shadow-black/40 backdrop-blur-2xl">
           <CardHeader className="flex flex-col items-center gap-4 pb-2">
             {/* Shield icon */}
             <motion.div
@@ -127,7 +127,7 @@ export function AdminLoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
                   disabled={isLoading}
-                  className="h-11 border-white/[0.08] bg-white/[0.04] text-sm text-white placeholder-gray-500 backdrop-blur-sm transition-all duration-300 focus:border-amber-500/40 focus:bg-white/[0.06] focus:ring-1 focus:ring-amber-500/20"
+                  className="glass-input rounded-xl h-11 border-white/[0.08] text-sm text-white placeholder-gray-500"
                 />
               </div>
 
@@ -148,7 +148,7 @@ export function AdminLoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     autoComplete="current-password"
                     disabled={isLoading}
-                    className="h-11 border-white/[0.08] bg-white/[0.04] pr-11 text-sm text-white placeholder-gray-500 backdrop-blur-sm transition-all duration-300 focus:border-amber-500/40 focus:bg-white/[0.06] focus:ring-1 focus:ring-amber-500/20"
+                    className="glass-input rounded-xl h-11 border-white/[0.08] pr-11 text-sm text-white placeholder-gray-500"
                   />
                   <button
                     type="button"

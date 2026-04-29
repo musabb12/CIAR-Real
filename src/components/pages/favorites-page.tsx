@@ -151,7 +151,7 @@ function FavoritePropertyCard({
 
   return (
     <motion.div variants={fadeInUp} layout>
-      <Card className="overflow-hidden group hover:shadow-lg transition-all h-full flex flex-col">
+      <Card className="glass-card rounded-xl overflow-hidden group h-full flex flex-col">
         {/* Image */}
         <div className="relative overflow-hidden">
           <img
@@ -167,7 +167,7 @@ function FavoritePropertyCard({
               e.stopPropagation();
               onRemove(property.id);
             }}
-            className="absolute top-3 right-3 rounded-full bg-white/90 hover:bg-white shadow-md border-0"
+            className="glass-badge absolute top-3 right-3 rounded-full bg-white/90 hover:bg-white shadow-md border-0"
           >
             <Heart size={16} className="fill-red-500 text-red-500" />
           </Button>

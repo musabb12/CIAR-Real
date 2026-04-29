@@ -851,7 +851,7 @@ export function SearchPage() {
       </div>
 
       {/* Top Bar */}
-      <div className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="sticky top-0 z-30 border-b glass-nav">
         <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             {/* Left: Mobile filter button + Results count */}
@@ -985,7 +985,7 @@ export function SearchPage() {
         <div className="flex gap-8">
           {/* Desktop Sidebar Filters */}
           <aside className="hidden w-72 shrink-0 lg:block">
-            <div className="sticky top-[130px] rounded-xl border bg-card p-5 shadow-sm">
+            <div className="sticky top-[130px] glass-panel rounded-xl p-5">
               <div className="mb-4 flex items-center gap-2">
                 <SlidersHorizontal className="size-4 text-primary" />
                 <h2 className="font-heading font-semibold">{t.search.filters}</h2>

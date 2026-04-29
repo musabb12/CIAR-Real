@@ -176,7 +176,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
         onMouseEnter={handleMouseEnter}
       >
         <Card
-          className="group gradient-border cursor-pointer overflow-hidden rounded-xl border-0 py-0 shadow-md dark:shadow-gray-900/40"
+          className="group glass-card cursor-pointer overflow-hidden rounded-xl border-0 py-0 shadow-md dark:shadow-gray-900/40"
           onClick={handleCardClick}
         >
           {/* ================================================================
@@ -263,7 +263,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             {/* ------ TOP-RIGHT: Favorite heart button ------ */}
             <motion.button
               onClick={handleFavoriteClick}
-              className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/30 backdrop-blur-md transition-colors hover:bg-black/50"
+              className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center glass-badge rounded-full transition-colors hover:bg-black/50"
               whileTap={{ scale: 0.8 }}
               animate={heartBurst ? { scale: [1, 1.3, 1] } : { scale: 1 }}
               transition={{ duration: 0.35 }}
@@ -281,7 +281,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             {/* ------ BOTTOM-RIGHT: Price tag with glass + Image counter ------ */}
             <div className="absolute right-3 bottom-3 flex flex-col items-end gap-1.5">
               {/* Glass price tag */}
-              <div className="rounded-xl bg-white/15 px-3 py-1.5 shadow-lg backdrop-blur-xl border border-white/20">
+              <div className="glass-badge rounded-xl px-3 py-1.5">
                 <span className="text-lg font-extrabold tracking-tight text-white drop-shadow-sm">
                   {currency}
                   {formatPrice(property.price)}
@@ -295,7 +295,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
 
               {/* Image counter */}
               {imageCount > 1 && (
-                <div className="flex items-center gap-1 rounded-lg bg-black/40 px-2 py-0.5 backdrop-blur-sm">
+                <div className="flex items-center gap-1 glass-badge rounded-lg px-2 py-0.5">
                   <Eye className="h-3 w-3 text-white/70" />
                   <span className="text-[10px] font-medium text-white/70">
                     {imageCount} {imageCount === 1 ? 'photo' : 'photos'}

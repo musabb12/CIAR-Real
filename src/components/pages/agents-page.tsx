@@ -197,19 +197,19 @@ function AgentDetailDialog({
         <div className="space-y-4 mt-2">
           {/* Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="text-center p-3 rounded-lg bg-muted/50">
+            <div className="glass-stat rounded-lg text-center p-3">
               <div className="text-lg font-bold">{agent.totalListings}</div>
               <div className="text-xs text-muted-foreground">{t.agents.listings}</div>
             </div>
-            <div className="text-center p-3 rounded-lg bg-muted/50">
+            <div className="glass-stat rounded-lg text-center p-3">
               <div className="text-lg font-bold">{agent.totalSales}</div>
               <div className="text-xs text-muted-foreground">{t.agents.sales}</div>
             </div>
-            <div className="text-center p-3 rounded-lg bg-muted/50">
+            <div className="glass-stat rounded-lg text-center p-3">
               <StarRating rating={agent.rating} size={12} />
               <div className="text-xs text-muted-foreground mt-1">{t.agents.rating}</div>
             </div>
-            <div className="text-center p-3 rounded-lg bg-muted/50">
+            <div className="glass-stat rounded-lg text-center p-3">
               <div className="text-lg font-bold">{agent.experience || '-'}</div>
               <div className="text-xs text-muted-foreground">{t.agents.years}</div>
             </div>
@@ -331,7 +331,7 @@ function AgentDetailDialog({
                   {properties.map((prop) => (
                     <div
                       key={prop.id}
-                      className="flex gap-3 p-2 rounded-lg border hover:bg-muted/50 cursor-pointer transition-colors"
+                      className="glass-card rounded-lg flex gap-3 p-2 cursor-pointer"
                       onClick={() => {
                         onOpenChange(false);
                         const store = useAppStore.getState();
@@ -507,7 +507,7 @@ export function AgentsPage() {
                 placeholder={t.search.title}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-white/10 pl-9 pr-9 text-white placeholder:text-white/60 border-white/20 backdrop-blur-sm"
+                className="glass-input rounded-xl bg-white/10 pl-9 pr-9 text-white placeholder:text-white/60 border-white/20"
               />
               {searchQuery && (
                 <button
@@ -555,7 +555,7 @@ export function AgentsPage() {
 
               return (
                 <motion.div key={agent.id} variants={fadeInUp}>
-                  <Card className="h-full flex flex-col hover:shadow-md transition-shadow">
+                  <Card className="glass-card rounded-xl h-full flex flex-col">
                     <CardContent className="pt-6 flex-1">
                       <div className="flex items-start gap-4">
                         <Avatar className="h-16 w-16 flex-shrink-0">

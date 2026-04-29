@@ -470,7 +470,7 @@ export function PropertyDetailPage() {
                 <ChevronRight size={20} />
               </Button>
               {/* Image counter */}
-              <div className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
+              <div className="absolute bottom-3 right-3 glass-badge bg-black/60 text-white text-xs px-2 py-1 rounded-full">
                 {activeImageIndex + 1} / {images.length}
               </div>
             </>
@@ -567,11 +567,11 @@ export function PropertyDetailPage() {
 
       {/* Key Details Grid */}
       <motion.div variants={fadeInUp}>
-        <Card>
+        <Card className="glass-card rounded-xl">
           <CardContent className="pt-6">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
               {property.bedrooms !== null && (
-                <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-muted/50">
+                <div className="glass-stat rounded-lg flex flex-col items-center gap-2 p-3">
                   <Bed size={22} className="text-primary" />
                   <div className="text-center">
                     <div className="text-lg font-semibold">{property.bedrooms}</div>
@@ -580,7 +580,7 @@ export function PropertyDetailPage() {
                 </div>
               )}
               {property.bathrooms !== null && (
-                <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-muted/50">
+                <div className="glass-stat rounded-lg flex flex-col items-center gap-2 p-3">
                   <Bath size={22} className="text-primary" />
                   <div className="text-center">
                     <div className="text-lg font-semibold">{property.bathrooms}</div>
@@ -588,7 +588,7 @@ export function PropertyDetailPage() {
                   </div>
                 </div>
               )}
-              <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-muted/50">
+              <div className="glass-stat rounded-lg flex flex-col items-center gap-2 p-3">
                 <Maximize size={22} className="text-primary" />
                 <div className="text-center">
                   <div className="text-lg font-semibold">{property.area}</div>
@@ -596,7 +596,7 @@ export function PropertyDetailPage() {
                 </div>
               </div>
               {property.yearBuilt && (
-                <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-muted/50">
+                <div className="glass-stat rounded-lg flex flex-col items-center gap-2 p-3">
                   <Calendar size={22} className="text-primary" />
                   <div className="text-center">
                     <div className="text-lg font-semibold">{property.yearBuilt}</div>
@@ -605,7 +605,7 @@ export function PropertyDetailPage() {
                 </div>
               )}
               {property.floors && (
-                <div className="flex flex-col items-center gap-2 p-3 rounded-lg bg-muted/50">
+                <div className="glass-stat rounded-lg flex flex-col items-center gap-2 p-3">
                   <Building size={22} className="text-primary" />
                   <div className="text-center">
                     <div className="text-lg font-semibold">{property.floors}</div>
@@ -620,7 +620,7 @@ export function PropertyDetailPage() {
 
       {/* Description */}
       <motion.div variants={fadeInUp}>
-        <Card>
+        <Card className="glass-card rounded-xl">
           <CardHeader>
             <CardTitle className="font-heading">{t.property.description}</CardTitle>
           </CardHeader>
@@ -635,7 +635,7 @@ export function PropertyDetailPage() {
       {/* Amenities */}
       {property.amenities && property.amenities.length > 0 && (
         <motion.div variants={fadeInUp}>
-          <Card>
+          <Card className="glass-card rounded-xl">
             <CardHeader>
               <CardTitle className="font-heading">{t.property.amenities}</CardTitle>
               <CardDescription>
@@ -647,7 +647,7 @@ export function PropertyDetailPage() {
                 {property.amenities.map((pa) => (
                   <div
                     key={pa.id}
-                    className="flex items-center gap-2 p-2.5 rounded-lg bg-muted/50 text-sm"
+                    className="glass-dense rounded-lg flex items-center gap-2 p-2.5 text-sm"
                   >
                     <Check size={14} className="text-emerald-500 flex-shrink-0" />
                     <span className="truncate">
@@ -665,7 +665,7 @@ export function PropertyDetailPage() {
       <motion.div variants={fadeInUp} className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Agent Card */}
         {agent && (
-          <Card className="flex flex-col">
+          <Card className="glass-card rounded-xl flex flex-col">
             <CardHeader>
               <CardTitle className="font-heading">{t.property.listingAgent}</CardTitle>
             </CardHeader>
@@ -746,7 +746,7 @@ export function PropertyDetailPage() {
         )}
 
         {/* Contact Form */}
-        <Card className="flex flex-col">
+        <Card className="glass-card rounded-xl flex flex-col">
           <CardHeader>
             <CardTitle className="font-heading">{t.property.contactAgent}</CardTitle>
             <CardDescription>
@@ -822,7 +822,7 @@ export function PropertyDetailPage() {
       {/* Location Map Placeholder */}
       {property.latitude && property.longitude && (
         <motion.div variants={fadeInUp}>
-          <Card>
+          <Card className="glass-card rounded-xl">
             <CardHeader>
               <CardTitle className="font-heading flex items-center gap-2">
                 <MapPin size={18} />

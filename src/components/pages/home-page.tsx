@@ -500,11 +500,11 @@ export function HomePage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.4 }}
           >
-            <div className="rounded-2xl border border-white/20 bg-white/10 p-3 shadow-2xl backdrop-blur-xl sm:p-4">
+            <div className="glass-hero rounded-2xl p-3 shadow-2xl sm:p-4">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {/* Country select */}
                 <Select value={searchCountry} onValueChange={setSearchCountry}>
-                  <SelectTrigger className="w-full border-white/20 bg-white/10 text-white backdrop-blur-sm focus:ring-primary/30">
+                  <SelectTrigger className="glass-input w-full text-white">
                     <SelectValue placeholder={t.search.allCountries} />
                   </SelectTrigger>
                   <SelectContent>
@@ -520,7 +520,7 @@ export function HomePage() {
 
                 {/* Property type select */}
                 <Select value={searchPropertyType} onValueChange={setSearchPropertyType}>
-                  <SelectTrigger className="w-full border-white/20 bg-white/10 text-white backdrop-blur-sm focus:ring-primary/30">
+                  <SelectTrigger className="glass-input w-full text-white">
                     <SelectValue placeholder={t.propertyTypes.apartment} />
                   </SelectTrigger>
                   <SelectContent>
@@ -546,7 +546,7 @@ export function HomePage() {
 
                 {/* Listing type select */}
                 <Select value={searchListingType} onValueChange={setSearchListingType}>
-                  <SelectTrigger className="w-full border-white/20 bg-white/10 text-white backdrop-blur-sm focus:ring-primary/30">
+                  <SelectTrigger className="glass-input w-full text-white">
                     <SelectValue placeholder={t.property.forRent} />
                   </SelectTrigger>
                   <SelectContent>
@@ -583,6 +583,7 @@ export function HomePage() {
                 variants={staggerItem}
                 className="group text-center"
               >
+                <div className="glass-stat rounded-xl p-4">
                 <div className={`mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${stat.color} shadow-lg transition-transform group-hover:scale-110`}>
                   <stat.icon className="h-5 w-5 text-white" />
                 </div>
@@ -590,6 +591,7 @@ export function HomePage() {
                   <AnimatedCounter value={stat.value} suffix={stat.suffix} />
                 </div>
                 <div className="mt-0.5 text-xs text-white/60 sm:text-sm">{stat.label}</div>
+                </div>
               </motion.div>
             ))}
           </motion.div>
@@ -699,7 +701,7 @@ export function HomePage() {
       {/* ================================================================
           3. HOW IT WORKS — Horizontal Steps with Connecting Lines
           ================================================================ */}
-      <section className="relative overflow-hidden bg-muted/20 py-20 sm:py-24">
+      <section className="relative overflow-hidden bg-gradient-to-b from-muted/30 via-muted/10 to-muted/30 backdrop-blur-sm py-20 sm:py-24">
         {/* Background decoration */}
         <div className="absolute inset-0 opacity-[0.03]">
           <div className="absolute left-1/4 top-1/4 h-64 w-64 rounded-full bg-primary blur-3xl" />
@@ -736,7 +738,7 @@ export function HomePage() {
                 variants={staggerItem}
                 className={`relative ${idx < steps.length - 1 ? 'step-connector-dot hidden sm:block' : ''}`}
               >
-                <div className="card-luxury group relative rounded-2xl bg-card p-8 text-center shadow-sm transition-all hover:shadow-lg">
+                <div className="glass-card rounded-2xl p-8 text-center transition-all hover:shadow-lg">
                   {/* Step number badge */}
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <div className={`flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-r ${step.gradient} text-xs font-bold text-white shadow-lg`}>
@@ -794,7 +796,7 @@ export function HomePage() {
             >
               <button
                 onClick={() => handlePropertyTypeClick(pt.type)}
-                className="property-type-card w-full cursor-pointer p-5 text-center"
+                className="glass-card rounded-2xl w-full cursor-pointer p-5 text-center"
               >
                 <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 transition-colors group-hover:from-primary/20 group-hover:to-primary/10">
                   <pt.icon className="h-6 w-6 text-primary" />
@@ -817,7 +819,7 @@ export function HomePage() {
       {/* ================================================================
           5. TESTIMONIALS — Auto-carousel
           ================================================================ */}
-      <section className="relative overflow-hidden bg-muted/20 py-20 sm:py-24">
+      <section className="relative overflow-hidden bg-gradient-to-b from-muted/30 via-muted/10 to-muted/30 backdrop-blur-sm py-20 sm:py-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
             className="mx-auto max-w-2xl text-center"
@@ -845,7 +847,7 @@ export function HomePage() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -60 }}
                   transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
-                  className="rounded-2xl bg-gradient-to-br from-card via-card to-primary/[0.03] border p-8 shadow-lg sm:p-10"
+                  className="glass-card rounded-2xl p-8 shadow-lg sm:p-10"
                 >
                   <div className="flex flex-col items-center text-center">
                     {/* Quote icon */}
@@ -902,7 +904,7 @@ export function HomePage() {
       {/* ================================================================
           CIAR EXCLUSIVE FEATURES — Bento Grid Showcase
           ================================================================ */}
-      <section className="relative overflow-hidden bg-muted/30 py-20 sm:py-24">
+      <section className="relative overflow-hidden bg-gradient-to-b from-muted/40 via-muted/10 to-muted/40 backdrop-blur-sm py-20 sm:py-24">
         <div className="absolute inset-0 opacity-[0.03]">
           <div className="absolute right-1/4 top-1/3 h-80 w-80 rounded-full bg-primary blur-3xl" />
           <div className="absolute left-1/3 bottom-1/4 h-60 w-60 rounded-full bg-amber-500 blur-3xl" />
@@ -937,7 +939,7 @@ export function HomePage() {
               { icon: Trophy, label: 'Gamification', gradient: 'from-amber-400 to-yellow-300' },
             ].map((feature) => (
               <motion.div key={feature.label} variants={staggerItem}>
-                <div className="group flex flex-col items-center gap-3 rounded-2xl border border-border/50 bg-card/80 p-5 text-center backdrop-blur-sm transition-all duration-300 hover:border-primary/20 hover:shadow-lg hover:-translate-y-1">
+                <div className="glass-card rounded-2xl group flex flex-col items-center gap-3 p-5 text-center transition-all duration-300 hover:-translate-y-1">
                   <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${feature.gradient} shadow-lg transition-transform duration-300 group-hover:scale-110`}>
                     <feature.icon className="h-6 w-6 text-white" />
                   </div>
@@ -1013,6 +1015,7 @@ export function HomePage() {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
+            <div className="glass-hero rounded-2xl p-6">
               <Button
                 size="lg"
                 onClick={() => {
@@ -1032,6 +1035,7 @@ export function HomePage() {
               >
                 {t.cta.findAgents}
               </Button>
+            </div>
             </motion.div>
           </div>
         </div>
@@ -1108,7 +1112,7 @@ export function HomePage() {
       {/* ================================================================
           RECENT LISTINGS — Additional Properties
           ================================================================ */}
-      <section className="bg-muted/20 py-20 sm:py-24">
+      <section className="bg-gradient-to-b from-muted/30 via-muted/10 to-muted/30 py-20 sm:py-24">
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeading
             title={t.property.recentProperties}

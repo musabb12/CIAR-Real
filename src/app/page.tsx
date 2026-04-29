@@ -10,6 +10,9 @@ import { PropertyDetailPage } from '@/components/pages/property-detail-page';
 import { AgentsPage } from '@/components/pages/agents-page';
 import { FavoritesPage } from '@/components/pages/favorites-page';
 import { AdminPage } from '@/components/pages/admin-page';
+import { ScrollProgress } from '@/components/ui/scroll-progress';
+import { AIChatbot } from '@/components/feature/ai-chatbot';
+import { PropertyComparison } from '@/components/feature/property-comparison';
 import { useAppStore } from '@/store/app-store';
 import { getLocaleDirection } from '@/lib/i18n';
 import { Toaster } from 'sonner';
@@ -57,6 +60,7 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen flex-col">
+      <ScrollProgress />
       <Header />
       <main className="flex-1">
         <AnimatePresence mode="wait">
@@ -72,6 +76,8 @@ export default function Home() {
         </AnimatePresence>
       </main>
       <Footer />
+      <AIChatbot />
+      <PropertyComparison />
       <Toaster position="top-right" richColors closeButton />
     </div>
   );

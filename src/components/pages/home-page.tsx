@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search,
   PhoneCall,
@@ -15,6 +15,17 @@ import {
   Star,
   ChevronRight,
   Loader2,
+  Quote,
+  CheckCircle,
+  Shield,
+  Bed,
+  Bath,
+  Maximize,
+  Building,
+  Layers,
+  Warehouse,
+  Castle,
+  Landmark,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -37,21 +48,36 @@ import type { Property, Country } from '@/types';
 // ============================================================
 
 const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] } },
 };
 
 const staggerContainer = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.1, delayChildren: 0.1 },
+    transition: { staggerChildren: 0.12, delayChildren: 0.1 },
   },
 };
 
 const staggerItem = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] } },
+};
+
+const scaleIn = {
+  hidden: { opacity: 0, scale: 0.9 },
+  visible: { opacity: 1, scale: 1, transition: { duration: 0.5 } },
+};
+
+const slideInLeft = {
+  hidden: { opacity: 0, x: -40 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.6 } },
+};
+
+const slideInRight = {
+  hidden: { opacity: 0, x: 40 },
+  visible: { opacity: 1, x: 0, transition: { duration: 0.6 } },
 };
 
 // ============================================================
@@ -62,7 +88,7 @@ const staggerItem = {
 function PropertyCardSkeleton() {
   return (
     <div className="space-y-3">
-      <Skeleton className="h-48 w-full rounded-xl" />
+      <Skeleton className="h-52 w-full rounded-xl" />
       <div className="space-y-2 px-1">
         <Skeleton className="h-4 w-3/4" />
         <Skeleton className="h-3 w-1/2" />
@@ -76,41 +102,124 @@ function PropertyCardSkeleton() {
   );
 }
 
-/** Section heading with optional "View All" link */
+/** Animated stat counter that counts up on mount */
+function AnimatedCounter({ value, suffix = '', duration = 2000 }: { value: number; suffix?: string; duration?: number }) {
+  const [count, setCount] = useState(0);
+  const ref = useRef<HTMLSpanElement>(null);
+  const hasAnimated = useRef(false);
+
+  useEffect(() => {
+    if (hasAnimated.current) return;
+    hasAnimated.current = true;
+    const startTime = Date.now();
+    const step = () => {
+      const now = Date.now();
+      const progress = Math.min((now - startTime) / duration, 1);
+      // Ease out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(eased * value));
+      if (now < startTime + duration) requestAnimationFrame(step);
+      else setCount(value);
+    };
+    requestAnimationFrame(step);
+  }, [value, duration]);
+
+  return (
+    <span ref={ref} className="stat-value-animated tabular-nums">
+      {count}{suffix}
+    </span>
+  );
+}
+
+/** Section heading with gradient underline */
 function SectionHeading({
   title,
   subtitle,
   viewAllLabel,
   onViewAll,
+  centered = false,
 }: {
   title: string;
   subtitle?: string;
   viewAllLabel?: string;
   onViewAll?: () => void;
+  centered?: boolean;
 }) {
   return (
     <motion.div
-      className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between"
+      className={`flex flex-col gap-3 ${centered ? 'items-center text-center' : ''} sm:flex-row sm:items-end sm:justify-between`}
       variants={fadeInUp}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: '-50px' }}
     >
       <div>
-        <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{title}</h2>
+        <h2 className={`text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl ${centered ? 'gradient-underline gradient-underline-center' : 'gradient-underline'}`}>
+          {title}
+        </h2>
         {subtitle && (
-          <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+          <p className="mt-3 text-sm text-muted-foreground sm:text-base max-w-lg">
+            {subtitle}
+          </p>
         )}
       </div>
       {onViewAll && (
         <button
           onClick={onViewAll}
-          className="mt-2 flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary/80 sm:mt-0"
+          className="group mt-2 flex items-center gap-1.5 text-sm font-medium text-primary transition-all hover:gap-2.5 sm:mt-0"
         >
           {viewAllLabel}
-          <ChevronRight className="h-4 w-4" />
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
         </button>
       )}
     </motion.div>
   );
 }
+
+// ============================================================
+// Property Types Data
+// ============================================================
+
+const propertyTypesData = [
+  { type: 'APARTMENT', icon: Building2, count: 156 },
+  { type: 'VILLA', icon: Castle, count: 89 },
+  { type: 'HOUSE', icon: Home, count: 203 },
+  { type: 'LAND', icon: MapPin, count: 67 },
+  { type: 'OFFICE', icon: Building, count: 124 },
+  { type: 'COMMERCIAL', icon: Warehouse, count: 95 },
+  { type: 'STUDIO', icon: Layers, count: 78 },
+  { type: 'PENTHOUSE', icon: Landmark, count: 45 },
+  { type: 'TOWNHOUSE', icon: Home, count: 112 },
+  { type: 'DUPLEX', icon: Layers, count: 56 },
+];
+
+// ============================================================
+// Testimonials Data
+// ============================================================
+
+const testimonials = [
+  {
+    name: 'Sarah Mitchell',
+    role: 'Homeowner',
+    rating: 5,
+    text: 'Found our dream villa in less than a week! The platform made the entire process seamless. The search filters helped us narrow down exactly what we were looking for.',
+    avatar: 'SM',
+  },
+  {
+    name: 'Ahmed Al-Rashid',
+    role: 'Property Investor',
+    rating: 5,
+    text: 'As an international investor, this platform connected me with verified agents across multiple countries. Exceptional service and premium property listings.',
+    avatar: 'AR',
+  },
+  {
+    name: 'Elena Kowalski',
+    role: 'First-time Buyer',
+    rating: 5,
+    text: 'The step-by-step guidance from search to settlement was invaluable. I never felt overwhelmed. The agent connections were professional and responsive.',
+    avatar: 'EK',
+  },
+];
 
 // ============================================================
 // Main Component
@@ -134,6 +243,13 @@ export function HomePage() {
   const [searchCountry, setSearchCountry] = useState<string>('');
   const [searchPropertyType, setSearchPropertyType] = useState<string>('');
   const [searchListingType, setSearchListingType] = useState<string>('');
+
+  // ---- Testimonial carousel state ----
+  const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const testimonialInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // ---- Subtitle typing state ----
+  const [showSubtitle, setShowSubtitle] = useState(false);
 
   // ============================================================
   // Data fetching
@@ -189,6 +305,22 @@ export function HomePage() {
     fetchLocations();
   }, [fetchFeatured, fetchRecent, fetchLocations]);
 
+  // ---- Subtitle fade-in after hero loads ----
+  useEffect(() => {
+    const timer = setTimeout(() => setShowSubtitle(true), 600);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // ---- Testimonial auto-rotation ----
+  useEffect(() => {
+    testimonialInterval.current = setInterval(() => {
+      setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
+    }, 5000);
+    return () => {
+      if (testimonialInterval.current) clearInterval(testimonialInterval.current);
+    };
+  }, []);
+
   // ============================================================
   // Handlers
   // ============================================================
@@ -221,6 +353,12 @@ export function HomePage() {
     setCurrentPage('search');
   };
 
+  const handlePropertyTypeClick = (type: string) => {
+    resetFilters();
+    setFilters({ propertyType: type });
+    setCurrentPage('search');
+  };
+
   // ============================================================
   // How It Works data
   // ============================================================
@@ -230,19 +368,22 @@ export function HomePage() {
       icon: Search,
       title: t.howItWorks.step1Title,
       description: t.howItWorks.step1Desc,
-      color: 'bg-primary/10 text-primary',
+      gradient: 'from-emerald-500 to-teal-400',
+      bgLight: 'bg-emerald-50 dark:bg-emerald-950/30',
     },
     {
       icon: PhoneCall,
       title: t.howItWorks.step2Title,
       description: t.howItWorks.step2Desc,
-      color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+      gradient: 'from-amber-500 to-orange-400',
+      bgLight: 'bg-amber-50 dark:bg-amber-950/30',
     },
     {
       icon: Home,
       title: t.howItWorks.step3Title,
       description: t.howItWorks.step3Desc,
-      color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+      gradient: 'from-teal-500 to-emerald-400',
+      bgLight: 'bg-teal-50 dark:bg-teal-950/30',
     },
   ];
 
@@ -251,11 +392,28 @@ export function HomePage() {
   // ============================================================
 
   const stats = [
-    { icon: Globe, value: '60+', label: t.hero.countries },
-    { icon: Building2, value: '30+', label: t.hero.propertiesCount },
-    { icon: Users, value: '6+', label: t.hero.agentsCount },
-    { icon: Briefcase, value: '5+', label: t.hero.companiesCount },
+    { icon: Globe, value: 60, suffix: '+', label: t.hero.countries, color: 'from-emerald-500 to-teal-400' },
+    { icon: Building2, value: 30, suffix: '+', label: t.hero.propertiesCount, color: 'from-amber-500 to-orange-400' },
+    { icon: Users, value: 6, suffix: '+', label: t.hero.agentsCount, color: 'from-teal-500 to-cyan-400' },
+    { icon: Briefcase, value: 5, suffix: '+', label: t.hero.companiesCount, color: 'from-emerald-600 to-emerald-400' },
   ];
+
+  // ============================================================
+  // Property type label mapping
+  // ============================================================
+
+  const propertyTypeLabels: Record<string, string> = {
+    APARTMENT: t.propertyTypes.apartment,
+    VILLA: t.propertyTypes.villa,
+    HOUSE: t.propertyTypes.house,
+    LAND: t.propertyTypes.land,
+    OFFICE: t.propertyTypes.office,
+    COMMERCIAL: t.propertyTypes.commercial,
+    STUDIO: t.propertyTypes.studio,
+    PENTHOUSE: t.propertyTypes.penthouse,
+    TOWNHOUSE: t.propertyTypes.townhouse,
+    DUPLEX: t.propertyTypes.duplex,
+  };
 
   // ============================================================
   // Render
@@ -263,56 +421,69 @@ export function HomePage() {
 
   return (
     <div className="flex flex-col">
+
       {/* ================================================================
-          HERO SECTION
+          1. HERO SECTION — Full Viewport with Animated Gradient Mesh
           ================================================================ */}
-      <section className="relative overflow-hidden">
-        {/* Background image */}
-        <div className="absolute inset-0">
-          <img
-            src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1920&h=800&fit=crop"
-            alt="Luxury real estate"
-            className="h-full w-full object-cover"
-          />
-          {/* Dark gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80" />
+      <section className="animated-gradient-mesh relative flex min-h-[100dvh] flex-col items-center justify-center px-4 py-20 sm:px-6 lg:px-8">
+        {/* Decorative floating orbs */}
+        <div className="particles-layer">
+          <div className="particle" />
+          <div className="particle" />
+          <div className="particle" />
+          <div className="particle" />
+          <div className="particle" />
         </div>
 
         {/* Content */}
-        <div className="relative z-10 mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28 lg:px-8 lg:py-36">
+        <div className="relative z-10 mx-auto w-full max-w-5xl text-center">
+          {/* Badge */}
           <motion.div
-            className="mx-auto max-w-3xl text-center"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
+            initial={{ opacity: 0, y: -20, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
           >
-            {/* Badge */}
             <Badge
               variant="secondary"
-              className="mb-6 border-0 bg-white/15 px-4 py-1.5 text-sm text-white backdrop-blur-sm"
+              className="mb-6 border border-primary/20 bg-primary/5 px-5 py-2 text-sm font-medium text-primary backdrop-blur-sm"
             >
-              <Star className="mr-1.5 h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+              <Shield className="mr-2 h-3.5 w-3.5" />
               {t.hero.subtitle}
             </Badge>
-
-            {/* Heading */}
-            <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
-              {t.hero.title}
-            </h1>
           </motion.div>
 
-          {/* Search bar — glass morphism */}
+          {/* Main Heading — Gradient Text */}
+          <motion.h1
+            className="text-gradient-luxury text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
+          >
+            {t.hero.title}
+          </motion.h1>
+
+          {/* Subtitle — Fade In */}
+          <motion.p
+            className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground sm:text-lg md:text-xl"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: showSubtitle ? 1 : 0, y: showSubtitle ? 0 : 20 }}
+            transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
+          >
+            {t.hero.subtitle}
+          </motion.p>
+
+          {/* Search Bar — Glass Morphism */}
           <motion.div
             className="mx-auto mt-10 max-w-4xl"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
+            transition={{ duration: 0.7, delay: 0.4 }}
           >
-            <div className="rounded-2xl border border-white/20 bg-white/10 p-3 shadow-2xl backdrop-blur-xl sm:p-4">
+            <div className="glass-card rounded-2xl p-3 shadow-2xl sm:p-4">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {/* Country select */}
                 <Select value={searchCountry} onValueChange={setSearchCountry}>
-                  <SelectTrigger className="w-full border-white/20 bg-white/15 text-white placeholder:text-white/60 focus:ring-white/30">
+                  <SelectTrigger className="w-full border-white/20 bg-white/10 backdrop-blur-sm focus:ring-primary/30">
                     <SelectValue placeholder={t.search.allCountries} />
                   </SelectTrigger>
                   <SelectContent>
@@ -327,11 +498,8 @@ export function HomePage() {
                 </Select>
 
                 {/* Property type select */}
-                <Select
-                  value={searchPropertyType}
-                  onValueChange={setSearchPropertyType}
-                >
-                  <SelectTrigger className="w-full border-white/20 bg-white/15 text-white placeholder:text-white/60 focus:ring-white/30">
+                <Select value={searchPropertyType} onValueChange={setSearchPropertyType}>
+                  <SelectTrigger className="w-full border-white/20 bg-white/10 backdrop-blur-sm focus:ring-primary/30">
                     <SelectValue placeholder={t.propertyTypes.apartment} />
                   </SelectTrigger>
                   <SelectContent>
@@ -356,11 +524,8 @@ export function HomePage() {
                 </Select>
 
                 {/* Listing type select */}
-                <Select
-                  value={searchListingType}
-                  onValueChange={setSearchListingType}
-                >
-                  <SelectTrigger className="w-full border-white/20 bg-white/15 text-white placeholder:text-white/60 focus:ring-white/30">
+                <Select value={searchListingType} onValueChange={setSearchListingType}>
+                  <SelectTrigger className="w-full border-white/20 bg-white/10 backdrop-blur-sm focus:ring-primary/30">
                     <SelectValue placeholder={t.property.forRent} />
                   </SelectTrigger>
                   <SelectContent>
@@ -374,7 +539,7 @@ export function HomePage() {
                 {/* Search button */}
                 <Button
                   onClick={handleSearch}
-                  className="w-full bg-primary hover:bg-primary/90"
+                  className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:from-emerald-500 hover:to-teal-400"
                   size="lg"
                 >
                   <Search className="mr-2 h-4 w-4" />
@@ -384,9 +549,9 @@ export function HomePage() {
             </div>
           </motion.div>
 
-          {/* Stats counters */}
+          {/* Animated Floating Stat Counters */}
           <motion.div
-            className="mx-auto mt-12 grid max-w-2xl grid-cols-2 gap-6 sm:grid-cols-4"
+            className="mx-auto mt-14 grid max-w-3xl grid-cols-2 gap-6 sm:grid-cols-4 sm:gap-8"
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
@@ -395,23 +560,47 @@ export function HomePage() {
               <motion.div
                 key={stat.label}
                 variants={staggerItem}
-                className="text-center"
+                className="group text-center"
               >
-                <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm">
-                  <stat.icon className="h-5 w-5 text-amber-400" />
+                <div className={`mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${stat.color} shadow-lg transition-transform group-hover:scale-110`}>
+                  <stat.icon className="h-5 w-5 text-white" />
                 </div>
-                <div className="text-2xl font-bold text-white">{stat.value}</div>
-                <div className="text-xs text-white/60">{stat.label}</div>
+                <div className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                  <AnimatedCounter value={stat.value} suffix={stat.suffix} />
+                </div>
+                <div className="mt-0.5 text-xs text-muted-foreground sm:text-sm">{stat.label}</div>
               </motion.div>
             ))}
           </motion.div>
         </div>
+
+        {/* Bottom scroll hint */}
+        <motion.div
+          className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.5 }}
+        >
+          <div className="flex flex-col items-center gap-1 text-muted-foreground/50">
+            <span className="text-xs tracking-widest uppercase">Scroll</span>
+            <motion.div
+              animate={{ y: [0, 6, 0] }}
+              transition={{ repeat: Infinity, duration: 1.5 }}
+              className="h-6 w-4 rounded-full border-2 border-muted-foreground/30 p-0.5"
+            >
+              <div className="h-1.5 w-full rounded-full bg-muted-foreground/40" />
+            </motion.div>
+          </div>
+        </motion.div>
       </section>
 
+      {/* Gradient divider */}
+      <div className="gradient-divider" />
+
       {/* ================================================================
-          FEATURED PROPERTIES
+          2. FEATURED PROPERTIES — Bento Grid
           ================================================================ */}
-      <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <section className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
         <SectionHeading
           title={t.property.featured}
           subtitle={t.hero.subtitle}
@@ -419,7 +608,7 @@ export function HomePage() {
           onViewAll={handleViewAllFeatured}
         />
 
-        <div className="mt-8">
+        <div className="mt-10">
           {featuredLoading ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -432,44 +621,74 @@ export function HomePage() {
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
-              className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center"
+              className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-20 text-center"
             >
-              <Building2 className="mb-3 h-10 w-10 text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">
-                {t.property.noProperties}
-              </p>
+              <Building2 className="mb-4 h-12 w-12 text-muted-foreground/30" />
+              <p className="text-sm text-muted-foreground">{t.property.noProperties}</p>
               <Button
                 variant="outline"
                 size="sm"
-                className="mt-4"
+                className="mt-5"
                 onClick={handleViewAllFeatured}
               >
                 {t.common.viewAll}
               </Button>
             </motion.div>
           ) : (
-            <motion.div
-              className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: '-50px' }}
-            >
-              {featuredProperties.map((property) => (
-                <motion.div key={property.id} variants={staggerItem}>
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {/* First card spans 2 columns on desktop */}
+              <motion.div
+                className="sm:col-span-2 lg:col-span-2"
+                variants={scaleIn}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+              >
+                <PropertyCard property={featuredProperties[0]} />
+              </motion.div>
+              {featuredProperties.slice(1, 4).map((property, i) => (
+                <motion.div
+                  key={property.id}
+                  variants={staggerItem}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                >
                   <PropertyCard property={property} />
                 </motion.div>
               ))}
-            </motion.div>
+              {featuredProperties.slice(4).map((property, i) => (
+                <motion.div
+                  key={property.id}
+                  variants={staggerItem}
+                  initial="hidden"
+                  whileInView="visible"
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <PropertyCard property={property} />
+                </motion.div>
+              ))}
+            </div>
           )}
         </div>
       </section>
 
+      {/* Gradient divider */}
+      <div className="gradient-divider" />
+
       {/* ================================================================
-          HOW IT WORKS
+          3. HOW IT WORKS — Horizontal Steps with Connecting Lines
           ================================================================ */}
-      <section className="border-y bg-muted/30">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <section className="relative overflow-hidden bg-muted/20 py-20 sm:py-24">
+        {/* Background decoration */}
+        <div className="absolute inset-0 opacity-[0.03]">
+          <div className="absolute left-1/4 top-1/4 h-64 w-64 rounded-full bg-primary blur-3xl" />
+          <div className="absolute bottom-1/4 right-1/4 h-48 w-48 rounded-full bg-amber-500 blur-3xl" />
+        </div>
+
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
             className="mx-auto max-w-2xl text-center"
             initial={{ opacity: 0, y: 20 }}
@@ -477,47 +696,51 @@ export function HomePage() {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            <h2 className="gradient-underline gradient-underline-center text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
               {t.howItWorks.title}
             </h2>
-            <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+            <p className="mt-4 text-sm text-muted-foreground sm:text-base">
               {t.hero.subtitle}
             </p>
           </motion.div>
 
           <motion.div
-            className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-3"
+            className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-3 sm:gap-6 lg:gap-12"
             variants={staggerContainer}
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true }}
+            viewport={{ once: true, margin: '-80px' }}
           >
             {steps.map((step, idx) => (
-              <motion.div key={step.title} variants={staggerItem}>
-                <div className="group relative rounded-2xl border bg-card p-6 text-center shadow-sm transition-all hover:shadow-md">
-                  {/* Step number */}
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-lg font-bold text-primary">
-                    {idx + 1}
+              <motion.div
+                key={step.title}
+                variants={staggerItem}
+                className={`relative ${idx < steps.length - 1 ? 'step-connector-dot hidden sm:block' : ''}`}
+              >
+                <div className="card-luxury group relative rounded-2xl bg-card p-8 text-center shadow-sm transition-all hover:shadow-lg">
+                  {/* Step number badge */}
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <div className={`flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-r ${step.gradient} text-xs font-bold text-white shadow-lg`}>
+                      {idx + 1}
+                    </div>
                   </div>
 
                   {/* Icon */}
-                  <div
-                    className={`mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl ${step.color}`}
-                  >
-                    <step.icon className="h-7 w-7" />
+                  <div className={`mx-auto mt-4 mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${step.gradient} shadow-lg transition-transform group-hover:scale-110 group-hover:shadow-xl`}>
+                    <step.icon className="h-8 w-8 text-white" />
                   </div>
 
-                  <h3 className="text-lg font-semibold">{step.title}</h3>
+                  {/* Content */}
+                  <h3 className="text-lg font-bold tracking-tight">{step.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                     {step.description}
                   </p>
 
-                  {/* Connector arrow (hidden on last item and mobile) */}
-                  {idx < steps.length - 1 && (
-                    <div className="absolute -right-4 top-1/2 hidden -translate-y-1/2 sm:block">
-                      <ArrowRight className="h-5 w-5 text-muted-foreground/30" />
-                    </div>
-                  )}
+                  {/* Checkmark badge */}
+                  <div className="mt-4 inline-flex items-center gap-1 rounded-full bg-primary/5 px-3 py-1 text-xs font-medium text-primary">
+                    <CheckCircle className="h-3 w-3" />
+                    {idx === 0 ? 'Free' : idx === 1 ? 'Verified' : 'Secure'}
+                  </div>
                 </div>
               </motion.div>
             ))}
@@ -525,60 +748,58 @@ export function HomePage() {
         </div>
       </section>
 
+      {/* Gradient divider */}
+      <div className="gradient-divider" />
+
       {/* ================================================================
-          RECENT LISTINGS
+          4. PROPERTY TYPES — Icon Grid
           ================================================================ */}
-      <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <section className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
         <SectionHeading
-          title={t.search.sortNewest}
-          subtitle={t.hero.subtitle}
-          viewAllLabel={t.common.viewAll}
-          onViewAll={handleViewAllRecent}
+          title={t.search.allTypes}
+          subtitle="Explore diverse property categories to find exactly what you need"
+          centered={true}
         />
 
-        <div className="mt-8">
-          {recentLoading ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <PropertyCardSkeleton key={i} />
-              ))}
-            </div>
-          ) : recentProperties.length === 0 ? (
+        <motion.div
+          className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-50px' }}
+        >
+          {propertyTypesData.map((pt) => (
             <motion.div
-              variants={fadeInUp}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              className="flex flex-col items-center justify-center rounded-xl border border-dashed py-16 text-center"
+              key={pt.type}
+              variants={staggerItem}
             >
-              <Building2 className="mb-3 h-10 w-10 text-muted-foreground/40" />
-              <p className="text-sm text-muted-foreground">
-                {t.property.noProperties}
-              </p>
+              <button
+                onClick={() => handlePropertyTypeClick(pt.type)}
+                className="property-type-card w-full cursor-pointer p-5 text-center"
+              >
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 transition-colors group-hover:from-primary/20 group-hover:to-primary/10">
+                  <pt.icon className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-sm font-semibold tracking-tight">
+                  {propertyTypeLabels[pt.type]}
+                </h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {pt.count} properties
+                </p>
+              </button>
             </motion.div>
-          ) : (
-            <motion.div
-              className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, margin: '-50px' }}
-            >
-              {recentProperties.map((property) => (
-                <motion.div key={property.id} variants={staggerItem}>
-                  <PropertyCard property={property} />
-                </motion.div>
-              ))}
-            </motion.div>
-          )}
-        </div>
+          ))}
+        </motion.div>
       </section>
 
+      {/* Gradient divider */}
+      <div className="gradient-divider" />
+
       {/* ================================================================
-          POPULAR LOCATIONS
+          5. TESTIMONIALS — Auto-carousel
           ================================================================ */}
-      <section className="border-t bg-muted/30">
-        <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+      <section className="relative overflow-hidden bg-muted/20 py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div
             className="mx-auto max-w-2xl text-center"
             initial={{ opacity: 0, y: 20 }}
@@ -586,101 +807,142 @@ export function HomePage() {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              {t.footer.topLocations}
+            <h2 className="gradient-underline gradient-underline-center text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
+              What Our Clients Say
             </h2>
-            <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-              {t.hero.subtitle}
+            <p className="mt-4 text-sm text-muted-foreground sm:text-base">
+              Trusted by thousands of property seekers worldwide
             </p>
           </motion.div>
 
-          <div className="mt-10">
-            {locationsLoading ? (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Skeleton key={i} className="h-32 rounded-xl" />
-                ))}
-              </div>
-            ) : countries.length === 0 ? (
-              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-12 text-center">
-                <Globe className="mb-3 h-10 w-10 text-muted-foreground/40" />
-                <p className="text-sm text-muted-foreground">
-                  {t.property.noProperties}
-                </p>
-              </div>
-            ) : (
-              <motion.div
-                className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
-                variants={staggerContainer}
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true }}
-              >
-                {countries.map((country) => {
-                  const propertyCount = (country as unknown as { _count?: { properties: number } })._count?.properties ?? 0;
-                  return (
-                    <motion.div key={country.id} variants={staggerItem}>
-                      <Card
-                        className="group cursor-pointer overflow-hidden border-0 py-0 shadow-sm transition-all hover:shadow-md"
-                        onClick={() => handleLocationClick(country.id)}
-                      >
-                        <CardContent className="flex items-center gap-4 p-4">
-                          {/* Country flag */}
-                          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-2xl">
-                            {country.flag ?? '🌍'}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <h3 className="truncate text-sm font-semibold">
-                              {country.name}
-                            </h3>
-                            <p className="mt-0.5 text-xs text-muted-foreground">
-                              {propertyCount}{' '}
-                              {t.hero.propertiesCount.replace('+','')}
-                            </p>
-                          </div>
-                          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
-            )}
+          <div className="relative mt-12 max-w-3xl mx-auto">
+            {/* Testimonial cards carousel */}
+            <div className="overflow-hidden rounded-2xl">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTestimonial}
+                  initial={{ opacity: 0, x: 60 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -60 }}
+                  transition={{ duration: 0.5, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  className="rounded-2xl bg-gradient-to-br from-card via-card to-primary/[0.03] border p-8 shadow-lg sm:p-10"
+                >
+                  <div className="flex flex-col items-center text-center">
+                    {/* Quote icon */}
+                    <div className="mb-6 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-primary/5">
+                      <Quote className="h-7 w-7 text-primary" />
+                    </div>
+
+                    {/* Stars */}
+                    <div className="mb-5 flex gap-1">
+                      {Array.from({ length: testimonials[activeTestimonial].rating }).map((_, i) => (
+                        <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
+                      ))}
+                    </div>
+
+                    {/* Quote text */}
+                    <p className="text-base leading-relaxed text-foreground/90 sm:text-lg">
+                      &ldquo;{testimonials[activeTestimonial].text}&rdquo;
+                    </p>
+
+                    {/* Author info */}
+                    <div className="mt-6 flex items-center gap-3">
+                      {/* Avatar placeholder */}
+                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-primary to-teal-400 text-sm font-bold text-white shadow-md">
+                        {testimonials[activeTestimonial].avatar}
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-semibold">{testimonials[activeTestimonial].name}</p>
+                        <p className="text-xs text-muted-foreground">{testimonials[activeTestimonial].role}</p>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Dots navigation */}
+            <div className="mt-8 flex justify-center gap-3">
+              {testimonials.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setActiveTestimonial(idx)}
+                  className={`testimonial-dot ${idx === activeTestimonial ? 'active' : ''}`}
+                  aria-label={`Go to testimonial ${idx + 1}`}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      {/* ================================================================
-          CTA BANNER
-          ================================================================ */}
-      <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <motion.div
-          className="relative overflow-hidden rounded-2xl bg-primary px-6 py-12 text-center text-primary-foreground sm:px-12 sm:py-16"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-        >
-          {/* Decorative circles */}
-          <div className="absolute -left-20 -top-20 h-60 w-60 rounded-full bg-white/5" />
-          <div className="absolute -bottom-10 -right-10 h-40 w-40 rounded-full bg-white/5" />
+      {/* Gradient divider */}
+      <div className="gradient-divider" />
 
-          <div className="relative z-10">
-            <h2 className="text-2xl font-bold sm:text-3xl">
+      {/* ================================================================
+          6. CTA SECTION — Full-width Gradient
+          ================================================================ */}
+      <section className="relative overflow-hidden">
+        <div className="relative bg-gradient-to-br from-emerald-600 via-teal-500 to-emerald-700 px-6 py-16 sm:px-12 sm:py-20 lg:py-24">
+          {/* Decorative shapes */}
+          <div
+            className="cta-shape absolute -left-16 -top-16 h-64 w-64 bg-white/5"
+            style={{ animation: 'ctaFloat1 12s ease-in-out infinite' }}
+          />
+          <div
+            className="cta-shape absolute -bottom-12 -right-12 h-48 w-48 bg-white/5"
+            style={{ animation: 'ctaFloat2 10s ease-in-out infinite' }}
+          />
+          <div
+            className="cta-shape absolute left-1/3 top-1/4 h-32 w-32 rounded-full border border-white/10"
+            style={{ animation: 'ctaFloat1 15s ease-in-out infinite reverse' }}
+          />
+          <div
+            className="cta-shape absolute bottom-1/4 right-1/3 h-24 w-24 bg-white/[0.03]"
+            style={{ animation: 'ctaFloat2 8s ease-in-out infinite' }}
+          />
+
+          {/* Decorative grid pattern */}
+          <div className="absolute inset-0 opacity-[0.04]" style={{
+            backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
+            backgroundSize: '32px 32px',
+          }} />
+
+          <div className="relative z-10 mx-auto max-w-3xl text-center">
+            <motion.h2
+              className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            >
               {t.cta.title}
-            </h2>
-            <p className="mx-auto mt-3 max-w-xl text-sm text-primary-foreground/80 sm:text-base">
+            </motion.h2>
+
+            <motion.p
+              className="mx-auto mt-4 max-w-xl text-base text-white/80 sm:text-lg"
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
               {t.cta.subtitle}
-            </p>
-            <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+            </motion.p>
+
+            <motion.div
+              className="mt-8 flex flex-col items-center gap-4 sm:flex-row sm:justify-center"
+              initial={{ opacity: 0, y: 15 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
               <Button
                 size="lg"
-                variant="secondary"
                 onClick={() => {
                   resetFilters();
                   setCurrentPage('search');
                 }}
-                className="min-w-[160px]"
+                className="min-w-[180px] bg-white text-emerald-700 shadow-xl shadow-black/10 hover:bg-white/90 hover:text-emerald-800"
               >
                 {t.cta.browseProperties}
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -688,14 +950,131 @@ export function HomePage() {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground min-w-[160px]"
+                className="min-w-[180px] border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white"
                 onClick={() => setCurrentPage('agents')}
               >
                 {t.cta.findAgents}
               </Button>
-            </div>
+            </motion.div>
           </div>
-        </motion.div>
+        </div>
+      </section>
+
+      {/* ================================================================
+          7. POPULAR LOCATIONS — Grid with Country Flags
+          ================================================================ */}
+      <section className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+        <SectionHeading
+          title={t.footer.topLocations}
+          subtitle="Browse properties in the most popular destinations"
+          centered={true}
+        />
+
+        <div className="mt-10">
+          {locationsLoading ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-32 rounded-xl" />
+              ))}
+            </div>
+          ) : countries.length === 0 ? (
+            <motion.div
+              variants={fadeInUp}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16 text-center"
+            >
+              <Globe className="mb-4 h-12 w-12 text-muted-foreground/30" />
+              <p className="text-sm text-muted-foreground">{t.property.noProperties}</p>
+            </motion.div>
+          ) : (
+            <motion.div
+              className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+            >
+              {countries.map((country) => {
+                const propertyCount = (country as unknown as { _count?: { properties: number } })._count?.properties ?? 0;
+                return (
+                  <motion.div key={country.id} variants={staggerItem}>
+                    <div
+                      className="location-card group cursor-pointer p-5"
+                      onClick={() => handleLocationClick(country.id)}
+                    >
+                      <div className="flex items-center gap-4">
+                        {/* Country flag */}
+                        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 text-3xl shadow-sm transition-all group-hover:from-primary/20 group-hover:to-primary/10 group-hover:shadow-md">
+                          {country.flag ?? '🌍'}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="truncate text-sm font-bold tracking-tight">
+                            {country.name}
+                          </h3>
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {propertyCount} {t.hero.propertiesCount.replace('+', '')}
+                          </p>
+                        </div>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/30 transition-all group-hover:translate-x-1 group-hover:text-primary" />
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          )}
+        </div>
+      </section>
+
+      {/* ================================================================
+          RECENT LISTINGS — Additional Properties
+          ================================================================ */}
+      <section className="bg-muted/20 py-20 sm:py-24">
+        <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SectionHeading
+            title={t.search.sortNewest}
+            subtitle="Stay updated with the latest property listings"
+            viewAllLabel={t.common.viewAll}
+            onViewAll={handleViewAllRecent}
+          />
+
+          <div className="mt-10">
+            {recentLoading ? (
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <PropertyCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : recentProperties.length === 0 ? (
+              <motion.div
+                variants={fadeInUp}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                className="flex flex-col items-center justify-center rounded-2xl border border-dashed py-16 text-center"
+              >
+                <Building2 className="mb-4 h-12 w-12 text-muted-foreground/30" />
+                <p className="text-sm text-muted-foreground">{t.property.noProperties}</p>
+              </motion.div>
+            ) : (
+              <motion.div
+                className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+                variants={staggerContainer}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: '-50px' }}
+              >
+                {recentProperties.map((property) => (
+                  <motion.div key={property.id} variants={staggerItem}>
+                    <PropertyCard property={property} />
+                  </motion.div>
+                ))}
+              </motion.div>
+            )}
+          </div>
+        </div>
       </section>
     </div>
   );

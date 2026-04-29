@@ -1,7 +1,7 @@
 'use client';
 
 import { useTheme } from 'next-themes';
-import { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
+import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Building2,
@@ -90,6 +90,9 @@ export function Header() {
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerForm, setRegisterForm] = useState({ name: '', email: '', password: '', phone: '' });
   const [registerError, setRegisterError] = useState('');
+  const [registerSuccess, setRegisterSuccess] = useState(false);
+  const registerFormRef = useRef(registerForm);
+  registerFormRef.current = registerForm;
 
   // ---- Store & i18n ----
   const { t, locale, rtl, setLocale } = useTranslation();
@@ -176,25 +179,36 @@ export function Header() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    const formData = registerFormRef.current;
     setRegisterError('');
+    setRegisterSuccess(false);
     setRegisterLoading(true);
     try {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(registerForm),
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.trim().toLowerCase(),
+          password: formData.password,
+          phone: formData.phone.trim() || undefined,
+        }),
       });
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
-        login(data.user);
-        setShowLoginDialog(false);
+        setRegisterSuccess(true);
         setRegisterForm({ name: '', email: '', password: '', phone: '' });
+        // Auto-login after short delay to show success
+        setTimeout(() => {
+          login(data.user);
+          setShowLoginDialog(false);
+          setRegisterSuccess(false);
+        }, 1200);
       } else {
-        const data = await res.json();
         setRegisterError(data.error || 'Registration failed');
       }
     } catch (err) {
-      setRegisterError('An unexpected error occurred');
+      setRegisterError('Network error. Please check your connection and try again.');
     } finally {
       setRegisterLoading(false);
     }
@@ -867,11 +881,19 @@ export function Header() {
                     <p className="mb-4 mt-1 text-center text-sm text-gray-500 dark:text-gray-400">
                       {t.auth.registerSubtitle}
                     </p>
-                    <form onSubmit={handleRegister} className="space-y-4">
+                    <form onSubmit={handleRegister} className={`space-y-4 ${registerSuccess ? 'pointer-events-none opacity-60' : ''}`}>
                       {/* Error message */}
                       {registerError && (
                         <div className="rounded-lg border border-rose-200/60 bg-rose-50/80 px-3 py-2.5 text-[13px] font-medium text-rose-600 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-400">
                           {registerError}
+                        </div>
+                      )}
+
+                      {/* Success message */}
+                      {registerSuccess && (
+                        <div className="rounded-lg border border-emerald-200/60 bg-emerald-50/80 px-4 py-3 text-center text-[13px] font-medium text-emerald-600 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400">
+                          <Loader2 className="mx-auto mb-1 h-4 w-4 animate-spin" />
+                          {t.auth.registerSuccess || 'Account created successfully! Logging you in...'}
                         </div>
                       )}
 

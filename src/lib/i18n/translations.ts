@@ -155,6 +155,7 @@ export interface Translations {
     subtitle: string;
     registerSubtitle: string;
     createAccount: string;
+    registerSuccess: string;
   };
   // Admin
   admin: {
@@ -430,6 +431,7 @@ export const translations: Record<Locale, Translations> = {
       subtitle: 'Enter your email to access the platform',
       registerSubtitle: 'Create your account to get started',
       createAccount: 'Create Account',
+      registerSuccess: 'Account created successfully! Logging you in...',
     },
     admin: {
       dashboard: 'Dashboard',
@@ -698,6 +700,7 @@ export const translations: Record<Locale, Translations> = {
       subtitle: 'أدخل بريدك الإلكتروني للوصول إلى المنصة',
       registerSubtitle: 'أنشئ حسابك للبدء',
       createAccount: 'إنشاء حساب',
+      registerSuccess: 'تم إنشاء الحساب بنجاح! جاري تسجيل الدخول...',
     },
     admin: {
       dashboard: 'لوحة التحكم',
@@ -966,6 +969,7 @@ export const translations: Record<Locale, Translations> = {
       subtitle: 'Entrez votre e-mail pour accéder à la plateforme',
       registerSubtitle: 'Créez votre compte pour commencer',
       createAccount: 'Créer un compte',
+      registerSuccess: 'Compte créé avec succès! Connexion en cours...',
     },
     admin: {
       dashboard: 'Tableau de bord',
@@ -1234,6 +1238,7 @@ export const translations: Record<Locale, Translations> = {
       subtitle: 'Ingresa tu correo para acceder a la plataforma',
       registerSubtitle: 'Crea tu cuenta para comenzar',
       createAccount: 'Crear cuenta',
+      registerSuccess: 'Cuenta creada con éxito! Iniciando sesión...',
     },
     admin: {
       dashboard: 'Panel de control',
@@ -1502,6 +1507,7 @@ export const translations: Record<Locale, Translations> = {
       subtitle: 'Platforma erişmek için e-postanızı girin',
       registerSubtitle: 'Başlamak için hesabınızı oluşturun',
       createAccount: 'Hesap Oluştur',
+      registerSuccess: 'Hesap başarıyla oluşturuldu! Giriş yapılıyor...',
     },
     admin: {
       dashboard: 'Yönetim Paneli',

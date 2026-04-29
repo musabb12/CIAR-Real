@@ -9,14 +9,21 @@ export async function POST(request: NextRequest) {
     const { name, email, password, phone } = body;
 
     // Validate required fields
-    if (!name || !email || !password) {
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
       return NextResponse.json(
-        { error: 'Name, email, and password are required' },
+        { error: 'Name is required' },
         { status: 400 }
       );
     }
 
-    if (password.length < 6) {
+    if (!email || typeof email !== 'string' || !email.includes('@')) {
+      return NextResponse.json(
+        { error: 'A valid email is required' },
+        { status: 400 }
+      );
+    }
+
+    if (!password || typeof password !== 'string' || password.length < 6) {
       return NextResponse.json(
         { error: 'Password must be at least 6 characters' },
         { status: 400 }
@@ -44,7 +51,7 @@ export async function POST(request: NextRequest) {
         name,
         email: email.toLowerCase(),
         password: hashedPassword,
-        phone: phone || null,
+        phone: (typeof phone === 'string' && phone.trim().length > 0) ? phone.trim() : null,
         role: 'USER',
         isActive: true,
       },
@@ -57,6 +64,7 @@ export async function POST(request: NextRequest) {
         role: true,
         isActive: true,
         createdAt: true,
+        updatedAt: true,
       },
     });
 

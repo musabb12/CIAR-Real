@@ -19,3 +19,39 @@ Stage Summary:
 - All sections redesigned with frosted glass effects
 - Responsive breakpoints maintained and improved
 - Zero compilation errors
+
+---
+Task ID: 2
+Agent: main
+Task: Fix registration (التسجيل) not working
+
+Work Log:
+- Investigated registration flow: API endpoint, header auth dialog, Zustand store
+- Tested API directly with curl - confirmed `/api/register` works correctly
+- Identified issues:
+  1. API response missing `updatedAt` field (required by User type)
+  2. Potential stale closure in `handleRegister` (registerForm not updating inside async handler)
+  3. Empty phone string sent as `''` instead of null/omitted
+  4. No success feedback for user
+  5. No validation for email format
+- Fixed `/api/register` route.ts:
+  - Added `updatedAt` to the Prisma select clause
+  - Improved validation: check name.trim(), email format, password length
+  - Handle empty phone string properly (trim and convert to null)
+- Fixed `header.tsx`:
+  - Added `useRef` for registerForm to avoid stale closures
+  - Ref reads latest form data before API call
+  - Trim and lowercase email before sending
+  - Added `registerSuccess` state with visual success message
+  - Auto-login after 1.2s delay to show confirmation
+  - Disable form inputs while processing/success
+  - Better error messages
+- Added `registerSuccess` translation for all 5 languages (EN/AR/FR/ES/TR)
+- Verified all error cases work: missing name, duplicate email, short password
+- Zero lint errors
+
+Stage Summary:
+- Registration now works end-to-end with proper feedback
+- User gets visual confirmation before auto-login
+- Robust validation on both client and server side
+- All 5 languages have success/error translations

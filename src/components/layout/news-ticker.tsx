@@ -9,6 +9,8 @@ interface NewsItem {
   id: string;
   type: 'info' | 'warning' | 'urgent' | 'promo';
   text: string;
+  content?: string;
+  link?: string | null;
 }
 
 const typeColors: Record<NewsItem['type'], string> = {
@@ -91,7 +93,7 @@ export function NewsTicker() {
             {[...news, ...news].map((item, idx) => (
               <span key={`${item.id}-${idx}`} className="inline-flex items-center gap-2 px-6">
                 <span className={`inline-block h-2 w-2 rounded-full ${typeColors[item.type]} flex-shrink-0`} />
-                <span className="text-xs text-foreground/80">{item.text}</span>
+                <span className="text-xs text-foreground/80">{item.content || item.text}</span>
                 <span className="text-foreground/20 mx-1">|</span>
               </span>
             ))}

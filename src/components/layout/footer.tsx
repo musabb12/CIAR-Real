@@ -2,9 +2,11 @@
 
 import { Building2, Mail, Phone, MapPin } from 'lucide-react';
 import { useAppStore } from '@/store/app-store';
+import { useTranslation } from '@/lib/i18n/use-translation';
 
 export function Footer() {
   const { setCurrentPage } = useAppStore();
+  const { t } = useTranslation();
 
   return (
     <footer className="border-t bg-muted/30 mt-auto">
@@ -28,13 +30,13 @@ export function Footer() {
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider">Quick Links</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider">{t.footer.quickLinks}</h3>
             <ul className="mt-3 space-y-2">
               {[
-                { label: 'Buy Property', action: () => { useAppStore.getState().setFilters({ listingType: 'SALE' }); setCurrentPage('search'); } },
-                { label: 'Rent Property', action: () => { useAppStore.getState().setFilters({ listingType: 'RENT' }); setCurrentPage('search'); } },
-                { label: 'Find Agents', action: () => setCurrentPage('agents') },
-                { label: 'Favorites', action: () => setCurrentPage('favorites') },
+                { label: t.footer.buyProperty, action: () => { useAppStore.getState().setFilters({ listingType: 'SALE' }); setCurrentPage('search'); } },
+                { label: t.footer.rentProperty, action: () => { useAppStore.getState().setFilters({ listingType: 'RENT' }); setCurrentPage('search'); } },
+                { label: t.footer.findAgents, action: () => setCurrentPage('agents') },
+                { label: t.nav.favorites, action: () => setCurrentPage('favorites') },
               ].map((link) => (
                 <li key={link.label}>
                   <button
@@ -50,7 +52,7 @@ export function Footer() {
 
           {/* Locations */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider">Top Locations</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider">{t.footer.topLocations}</h3>
             <ul className="mt-3 space-y-2">
               {['Dubai, UAE', 'London, UK', 'Cairo, Egypt', 'Riyadh, Saudi Arabia', 'New York, USA'].map((loc) => (
                 <li key={loc}>
@@ -67,7 +69,7 @@ export function Footer() {
 
           {/* Contact */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-wider">Contact Us</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wider">{t.footer.contactUs}</h3>
             <ul className="mt-3 space-y-2">
               <li className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Mail className="h-4 w-4 text-primary" /> info@propertyfinder.com
@@ -85,12 +87,12 @@ export function Footer() {
         {/* Bottom */}
         <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t pt-6 md:flex-row">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} PropertyFinder. All rights reserved.
+            &copy; {new Date().getFullYear()} PropertyFinder. {t.footer.rights}.
           </p>
           <div className="flex gap-4">
-            <button onClick={() => setCurrentPage('home')} className="text-sm text-muted-foreground hover:text-primary">Privacy Policy</button>
-            <button onClick={() => setCurrentPage('home')} className="text-sm text-muted-foreground hover:text-primary">Terms of Service</button>
-            <button onClick={() => setCurrentPage('home')} className="text-sm text-muted-foreground hover:text-primary">Contact</button>
+            <button onClick={() => setCurrentPage('home')} className="text-sm text-muted-foreground hover:text-primary">{t.footer.privacy}</button>
+            <button onClick={() => setCurrentPage('home')} className="text-sm text-muted-foreground hover:text-primary">{t.footer.terms}</button>
+            <button onClick={() => setCurrentPage('home')} className="text-sm text-muted-foreground hover:text-primary">{t.common.contact}</button>
           </div>
         </div>
       </div>

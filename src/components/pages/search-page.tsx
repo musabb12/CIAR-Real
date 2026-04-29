@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 
 import { useAppStore } from '@/store/app-store';
+import { useTranslation } from '@/lib/i18n/use-translation';
 import type {
   Property,
   Country,
@@ -67,34 +68,34 @@ import { PropertyCard } from '@/components/property/property-card';
 // ============================================================
 
 const LISTING_TYPE_OPTIONS: { value: ListingType | 'all'; label: string }[] = [
-  { value: 'all', label: 'All Listings' },
-  { value: 'SALE', label: 'For Sale' },
-  { value: 'RENT', label: 'For Rent' },
-  { value: 'SHORT_TERM', label: 'Short Term' },
+  { value: 'all', label: '__listing_all' },
+  { value: 'SALE', label: '__listing_sale' },
+  { value: 'RENT', label: '__listing_rent' },
+  { value: 'SHORT_TERM', label: '__listing_short_term' },
 ];
 
 const PROPERTY_TYPE_OPTIONS: { value: PropertyType | 'all'; label: string }[] = [
-  { value: 'all', label: 'All Types' },
-  { value: 'APARTMENT', label: 'Apartment' },
-  { value: 'VILLA', label: 'Villa' },
-  { value: 'HOUSE', label: 'House' },
-  { value: 'LAND', label: 'Land' },
-  { value: 'OFFICE', label: 'Office' },
-  { value: 'COMMERCIAL', label: 'Commercial' },
-  { value: 'STUDIO', label: 'Studio' },
-  { value: 'PENTHOUSE', label: 'Penthouse' },
-  { value: 'TOWNHOUSE', label: 'Townhouse' },
-  { value: 'DUPLEX', label: 'Duplex' },
+  { value: 'all', label: '__type_all' },
+  { value: 'APARTMENT', label: '__type_apartment' },
+  { value: 'VILLA', label: '__type_villa' },
+  { value: 'HOUSE', label: '__type_house' },
+  { value: 'LAND', label: '__type_land' },
+  { value: 'OFFICE', label: '__type_office' },
+  { value: 'COMMERCIAL', label: '__type_commercial' },
+  { value: 'STUDIO', label: '__type_studio' },
+  { value: 'PENTHOUSE', label: '__type_penthouse' },
+  { value: 'TOWNHOUSE', label: '__type_townhouse' },
+  { value: 'DUPLEX', label: '__type_duplex' },
 ];
 
 const SORT_OPTIONS = [
-  { value: 'newest', label: 'Newest First' },
-  { value: 'price_asc', label: 'Price: Low to High' },
-  { value: 'price_desc', label: 'Price: High to Low' },
+  { value: 'newest', label: '__sort_newest' },
+  { value: 'price_asc', label: '__sort_price_asc' },
+  { value: 'price_desc', label: '__sort_price_desc' },
 ] as const;
 
 const BEDROOM_OPTIONS = [
-  { value: '', label: 'Any' },
+  { value: '', label: '__any' },
   { value: '1', label: '1+' },
   { value: '2', label: '2+' },
   { value: '3', label: '3+' },
@@ -103,7 +104,7 @@ const BEDROOM_OPTIONS = [
 ];
 
 const BATHROOM_OPTIONS = [
-  { value: '', label: 'Any' },
+  { value: '', label: '__any' },
   { value: '1', label: '1+' },
   { value: '2', label: '2+' },
   { value: '3', label: '3+' },
@@ -208,18 +209,44 @@ function FilterControls({
   onReset,
   countries,
 }: FilterControlsProps) {
+  const { t } = useTranslation();
   const cities = useMemo(
     () =>
       filters.countryId ? getCitiesForCountry(countries, filters.countryId) : [],
     [countries, filters.countryId]
   );
 
+  // Map placeholder labels to translations
+  const resolveLabel = (label: string) => {
+    const map: Record<string, string> = {
+      '__listing_all': t.listingTypes.all,
+      '__listing_sale': t.property.forSale,
+      '__listing_rent': t.property.forRent,
+      '__listing_short_term': t.property.shortTerm,
+      '__type_all': t.search.allTypes,
+      '__type_apartment': t.propertyTypes.apartment,
+      '__type_villa': t.propertyTypes.villa,
+      '__type_house': t.propertyTypes.house,
+      '__type_land': t.propertyTypes.land,
+      '__type_office': t.propertyTypes.office,
+      '__type_commercial': t.propertyTypes.commercial,
+      '__type_studio': t.propertyTypes.studio,
+      '__type_penthouse': t.propertyTypes.penthouse,
+      '__type_townhouse': t.propertyTypes.townhouse,
+      '__type_duplex': t.propertyTypes.duplex,
+      '__sort_newest': t.search.sortNewest,
+      '__sort_price_asc': t.search.sortPriceAsc,
+      '__sort_price_desc': t.search.sortPriceDesc,
+      '__any': t.search.any,
+    };
+    return map[label] ?? label;
+  };
+
   return (
     <div className="space-y-5">
       {/* Country */}
       <div className="space-y-2">
         <Label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          <MapPin className="size-3.5" />
           Country
         </Label>
         <Select
@@ -230,10 +257,10 @@ function FilterControls({
           }}
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="All Countries" />
+            <SelectValue placeholder={t.search.allCountries} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Countries</SelectItem>
+            <SelectItem value="all">{t.search.allCountries}</SelectItem>
             {countries.map((country) => (
               <SelectItem key={country.id} value={country.id}>
                 {country.flag ? `${country.flag} ` : ''}
@@ -247,7 +274,6 @@ function FilterControls({
       {/* City */}
       <div className="space-y-2">
         <Label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          <Building2 className="size-3.5" />
           City
         </Label>
         <Select
@@ -259,11 +285,11 @@ function FilterControls({
         >
           <SelectTrigger className="w-full">
             <SelectValue
-              placeholder={!filters.countryId ? 'Select a country first' : 'All Cities'}
+              placeholder={!filters.countryId ? t.search.allCountries : t.search.allCities}
             />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Cities</SelectItem>
+            <SelectItem value="all">{t.search.allCities}</SelectItem>
             {cities.map((city) => (
               <SelectItem key={city.id} value={city.id}>
                 {city.name}
@@ -278,7 +304,6 @@ function FilterControls({
       {/* Listing Type */}
       <div className="space-y-2">
         <Label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          <Home className="size-3.5" />
           Listing Type
         </Label>
         <Select
@@ -288,12 +313,12 @@ function FilterControls({
           }
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="All Listings" />
+            <SelectValue placeholder={t.listingTypes.all} />
           </SelectTrigger>
           <SelectContent>
             {LISTING_TYPE_OPTIONS.map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
+                {resolveLabel(opt.label)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -303,7 +328,6 @@ function FilterControls({
       {/* Property Type */}
       <div className="space-y-2">
         <Label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          <Building2 className="size-3.5" />
           Property Type
         </Label>
         <Select
@@ -313,12 +337,12 @@ function FilterControls({
           }
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="All Types" />
+            <SelectValue placeholder={t.search.allTypes} />
           </SelectTrigger>
           <SelectContent>
             {PROPERTY_TYPE_OPTIONS.map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
+                {resolveLabel(opt.label)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -330,7 +354,6 @@ function FilterControls({
       {/* Price Range */}
       <div className="space-y-2">
         <Label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          <DollarSign className="size-3.5" />
           Price Range
         </Label>
         <div className="flex items-center gap-2">
@@ -367,7 +390,6 @@ function FilterControls({
       {/* Bedrooms */}
       <div className="space-y-2">
         <Label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          <BedDouble className="size-3.5" />
           Bedrooms
         </Label>
         <Select
@@ -380,12 +402,12 @@ function FilterControls({
           }
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Any" />
+            <SelectValue placeholder={t.search.any} />
           </SelectTrigger>
           <SelectContent>
             {BEDROOM_OPTIONS.map((opt) => (
               <SelectItem key={opt.value || 'any'} value={opt.value || 'any'}>
-                {opt.label}
+                {resolveLabel(opt.label)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -395,7 +417,6 @@ function FilterControls({
       {/* Bathrooms */}
       <div className="space-y-2">
         <Label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          <Bath className="size-3.5" />
           Bathrooms
         </Label>
         <Select
@@ -408,12 +429,12 @@ function FilterControls({
           }
         >
           <SelectTrigger className="w-full">
-            <SelectValue placeholder="Any" />
+            <SelectValue placeholder={t.search.any} />
           </SelectTrigger>
           <SelectContent>
             {BATHROOM_OPTIONS.map((opt) => (
               <SelectItem key={opt.value || 'any'} value={opt.value || 'any'}>
-                {opt.label}
+                {resolveLabel(opt.label)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -424,7 +445,7 @@ function FilterControls({
       <div className="space-y-2">
         <Label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           <Ruler className="size-3.5" />
-          Area (sqm)
+          {t.property.area} ({t.property.sqm})
         </Label>
         <div className="flex items-center gap-2">
           <Input
@@ -473,7 +494,7 @@ function FilterControls({
           className="flex cursor-pointer items-center gap-2 text-sm font-normal"
         >
           <Star className="size-3.5 text-amber-500" />
-          Featured Only
+          {t.search.featuredOnly}
         </Label>
       </div>
 
@@ -483,11 +504,11 @@ function FilterControls({
       <div className="flex flex-col gap-2 pt-1">
         <Button onClick={onApply} className="w-full">
           <Search className="size-4" />
-          Apply Filters
+          {t.search.applyFilters}
         </Button>
         <Button onClick={onReset} variant="outline" className="w-full">
           <RotateCcw className="size-4" />
-          Reset Filters
+          {t.search.resetFilters}
         </Button>
       </div>
     </div>
@@ -532,6 +553,7 @@ function PropertyGridSkeleton() {
 // ============================================================
 
 function EmptyState({ onReset }: { onReset: () => void }) {
+  const { t } = useTranslation();
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -541,13 +563,13 @@ function EmptyState({ onReset }: { onReset: () => void }) {
       <div className="mb-4 flex size-16 items-center justify-center rounded-full bg-muted">
         <Search className="size-7 text-muted-foreground" />
       </div>
-      <h3 className="mb-2 text-lg font-semibold">No properties found</h3>
+      <h3 className="mb-2 text-lg font-semibold">{t.search.noResults}</h3>
       <p className="mb-6 max-w-sm text-sm text-muted-foreground">
-        Try adjusting your filters or search terms to discover more properties.
+        {t.search.tryAdjusting}
       </p>
       <Button variant="outline" onClick={onReset}>
         <RotateCcw className="size-4" />
-        Reset Filters
+        {t.search.resetFilters}
       </Button>
     </motion.div>
   );
@@ -566,6 +588,7 @@ function ActiveFilterBadges({
   countries: Country[];
   onRemove: (key: keyof PropertyFilters) => void;
 }) {
+  const { t } = useTranslation();
   const badges: { key: keyof PropertyFilters; label: string }[] = [];
 
   if (filters.countryId) {
@@ -630,7 +653,7 @@ function ActiveFilterBadges({
   }
 
   if (filters.isFeatured) {
-    badges.push({ key: 'isFeatured', label: 'Featured' });
+    badges.push({ key: 'isFeatured', label: t.property.featured });
   }
 
   if (badges.length === 0) return null;
@@ -638,7 +661,7 @@ function ActiveFilterBadges({
   return (
     <div className="flex flex-wrap items-center gap-2">
       <span className="text-xs font-medium text-muted-foreground">
-        Active filters:
+        {t.search.filters}:
       </span>
       {badges.map((badge) => (
         <Badge
@@ -667,6 +690,7 @@ export function SearchPage() {
     resetFilters,
     searchQuery,
   } = useAppStore();
+  const { t } = useTranslation();
 
   // ---- Local state ----
   const [properties, setProperties] = useState<Property[]>([]);
@@ -806,7 +830,7 @@ export function SearchPage() {
                 <SheetTrigger asChild>
                   <Button variant="outline" size="sm" className="lg:hidden">
                     <SlidersHorizontal className="size-4" />
-                    Filters
+                    {t.search.filters}
                     {activeFilterCount > 0 && (
                       <Badge
                         variant="secondary"
@@ -822,7 +846,7 @@ export function SearchPage() {
                   <SheetHeader className="border-b px-4 py-4">
                     <SheetTitle className="flex items-center gap-2">
                       <SlidersHorizontal className="size-4" />
-                      Filters
+                      {t.search.filters}
                       {activeFilterCount > 0 && (
                         <Badge
                           variant="secondary"
@@ -833,7 +857,7 @@ export function SearchPage() {
                       )}
                     </SheetTitle>
                     <SheetDescription>
-                      Narrow down your property search
+                      {t.search.title}
                     </SheetDescription>
                   </SheetHeader>
                   <ScrollArea className="h-[calc(100vh-10rem)]">
@@ -864,7 +888,7 @@ export function SearchPage() {
                       {!loading && totalResults > 0 && (
                         <span className="hidden sm:inline">
                           {' '}
-                          &middot; Showing {resultsFrom}&ndash;{resultsTo}
+                          &middot; {t.search.showing} {resultsFrom}&ndash;{resultsTo}
                         </span>
                       )}
                     </>
@@ -881,12 +905,12 @@ export function SearchPage() {
                 onValueChange={handleSortChange}
               >
                 <SelectTrigger className="w-[180px]" size="sm">
-                  <SelectValue placeholder="Sort by" />
+                  <SelectValue placeholder={t.search.sort} />
                 </SelectTrigger>
                 <SelectContent>
                   {SORT_OPTIONS.map((opt) => (
                     <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
+                      {opt.label === '__sort_newest' ? t.search.sortNewest : opt.label === '__sort_price_asc' ? t.search.sortPriceAsc : t.search.sortPriceDesc}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -935,7 +959,7 @@ export function SearchPage() {
             <div className="sticky top-[130px] rounded-xl border bg-card p-5 shadow-sm">
               <div className="mb-4 flex items-center gap-2">
                 <SlidersHorizontal className="size-4 text-primary" />
-                <h2 className="font-semibold">Filters</h2>
+                <h2 className="font-semibold">{t.search.filters}</h2>
                 {activeFilterCount > 0 && (
                   <Badge
                     variant="secondary"
@@ -1095,14 +1119,14 @@ export function SearchPage() {
 
                 {/* Page info text */}
                 <p className="text-sm text-muted-foreground">
-                  Showing{' '}
+                  {t.search.showing}{' '}
                   <span className="font-medium text-foreground">{resultsFrom}</span>
                   &ndash;
-                  <span className="font-medium text-foreground">{resultsTo}</span> of{' '}
+                  <span className="font-medium text-foreground">{resultsTo}</span> {t.search.of}{' '}
                   <span className="font-medium text-foreground">
                     {totalResults}
                   </span>{' '}
-                  results
+                  {t.search.results}
                 </p>
               </motion.div>
             )}

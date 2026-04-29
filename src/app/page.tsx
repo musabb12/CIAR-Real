@@ -11,10 +11,11 @@ import { AgentsPage } from '@/components/pages/agents-page';
 import { FavoritesPage } from '@/components/pages/favorites-page';
 import { AdminPage } from '@/components/pages/admin-page';
 import { useAppStore } from '@/store/app-store';
+import { getLocaleDirection } from '@/lib/i18n';
 import { Toaster } from 'sonner';
 
 export default function Home() {
-  const { currentPage, currentUser, isAuthenticated, setFavorites } = useAppStore();
+  const { currentPage, currentUser, isAuthenticated, setFavorites, locale } = useAppStore();
 
   // Load favorites when user logs in
   useEffect(() => {
@@ -27,6 +28,13 @@ export default function Home() {
         .catch(() => {});
     }
   }, [isAuthenticated, currentUser, setFavorites]);
+
+  // Update document dir and lang for RTL support
+  useEffect(() => {
+    const dir = getLocaleDirection(locale);
+    document.documentElement.dir = dir;
+    document.documentElement.lang = locale;
+  }, [locale]);
 
   const renderPage = () => {
     switch (currentPage) {

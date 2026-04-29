@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { User, PropertyFilters, AppPage, Favorite } from '@/types';
+import type { Locale } from '@/lib/i18n';
 
 // ============================================================
 // Default values
@@ -50,6 +51,10 @@ interface AppState {
   setSidebarOpen: (open: boolean) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+
+  // i18n
+  locale: Locale;
+  setLocale: (locale: Locale) => void;
 }
 
 // ============================================================
@@ -139,6 +144,10 @@ export const useAppStore = create<AppState>((set, get) => ({
   // ---- UI ----
   sidebarOpen: false,
   searchQuery: '',
+
+  // ---- i18n ----
+  locale: 'en' as Locale,
+  setLocale: (locale) => set({ locale }),
 
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),

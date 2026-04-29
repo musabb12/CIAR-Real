@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAppStore } from '@/store/app-store';
+import { useTranslation } from '@/lib/i18n/use-translation';
 import type {
   Property, User, Agent, Country, Region, City,
   Inquiry, Banner, Amenity, ListingType, PropertyType, PropertyStatus,
@@ -175,6 +176,7 @@ const fadeIn = {
 export function AdminPage() {
   // ── Auth ──────────────────────────────────────────────────────────────────
   const { currentUser, isAuthenticated, setCurrentPage } = useAppStore();
+  const { t } = useTranslation();
   const isAdmin = currentUser?.role === 'ADMIN';
 
   // ── Tab ───────────────────────────────────────────────────────────────────
@@ -700,12 +702,12 @@ export function AdminPage() {
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4">
         <motion.div {...fadeIn}>
           <ShieldAlert className="mx-auto h-16 w-16 text-destructive/60" />
-          <h2 className="mt-4 text-2xl font-bold">Access Denied</h2>
+          <h2 className="mt-4 text-2xl font-bold">{t.admin.accessDenied}</h2>
           <p className="mt-2 text-center text-muted-foreground max-w-md">
-            You must be authenticated as an administrator to view this page.
+            {t.admin.accessDeniedMessage}
           </p>
           <Button className="mt-6 gap-2" onClick={() => setCurrentPage('home')}>
-            <LogIn className="h-4 w-4" /> Sign In
+            <LogIn className="h-4 w-4" /> {t.nav.signIn}
           </Button>
         </motion.div>
       </div>
@@ -737,10 +739,10 @@ export function AdminPage() {
     if (!stats) return <p className="text-muted-foreground">Failed to load stats.</p>;
 
     const statCards = [
-      { label: 'Total Properties', value: stats.totals.properties, icon: Building2, color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-50 dark:bg-teal-950/50' },
-      { label: 'Total Users', value: stats.totals.users, icon: Users, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/50' },
-      { label: 'Total Inquiries', value: stats.totals.inquiries, icon: MessageSquare, color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-950/50' },
-      { label: 'Total Views', value: stats.totals.views.toLocaleString(), icon: Eye, color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-50 dark:bg-cyan-950/50' },
+      { label: t.admin.totalProperties, value: stats.totals.properties, icon: Building2, color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-50 dark:bg-teal-950/50' },
+      { label: t.admin.totalUsers, value: stats.totals.users, icon: Users, color: 'text-amber-600 dark:text-amber-400', bg: 'bg-amber-50 dark:bg-amber-950/50' },
+      { label: t.admin.totalInquiries, value: stats.totals.inquiries, icon: MessageSquare, color: 'text-rose-600 dark:text-rose-400', bg: 'bg-rose-50 dark:bg-rose-950/50' },
+      { label: t.admin.totalViews, value: stats.totals.views.toLocaleString(), icon: Eye, color: 'text-cyan-600 dark:text-cyan-400', bg: 'bg-cyan-50 dark:bg-cyan-950/50' },
     ];
 
     return (
@@ -775,7 +777,7 @@ export function AdminPage() {
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
-                <BarChart3 className="h-4 w-4" /> Properties by Type
+                <BarChart3 className="h-4 w-4" /> {t.admin.propertiesByType}
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
@@ -850,7 +852,7 @@ export function AdminPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <TrendingUp className="h-4 w-4" /> Recent Inquiries
+              <TrendingUp className="h-4 w-4" /> {t.admin.recentInquiries}
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
@@ -1452,22 +1454,22 @@ export function AdminPage() {
           <div className="overflow-x-auto pb-2 -mb-2">
             <TabsList className="w-auto">
               <TabsTrigger value="overview" className="gap-1.5">
-                <LayoutDashboard className="h-4 w-4" /> Overview
+                <LayoutDashboard className="h-4 w-4" /> {t.admin.overview}
               </TabsTrigger>
               <TabsTrigger value="properties" className="gap-1.5">
-                <Building2 className="h-4 w-4" /> Properties
+                <Building2 className="h-4 w-4" /> {t.admin.properties}
               </TabsTrigger>
               <TabsTrigger value="users" className="gap-1.5">
-                <Users className="h-4 w-4" /> Users
+                <Users className="h-4 w-4" /> {t.admin.users}
               </TabsTrigger>
               <TabsTrigger value="locations" className="gap-1.5">
-                <Globe className="h-4 w-4" /> Locations
+                <Globe className="h-4 w-4" /> {t.admin.locations}
               </TabsTrigger>
               <TabsTrigger value="inquiries" className="gap-1.5">
-                <MessageSquare className="h-4 w-4" /> Inquiries
+                <MessageSquare className="h-4 w-4" /> {t.admin.inquiries}
               </TabsTrigger>
               <TabsTrigger value="banners" className="gap-1.5">
-                <ImageIcon className="h-4 w-4" /> Banners
+                <ImageIcon className="h-4 w-4" /> {t.admin.banners}
               </TabsTrigger>
             </TabsList>
           </div>

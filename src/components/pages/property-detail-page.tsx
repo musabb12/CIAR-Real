@@ -38,6 +38,7 @@ import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppStore } from '@/store/app-store';
+import { useTranslation } from '@/lib/i18n/use-translation';
 import type { Property } from '@/types';
 
 // ============================================================
@@ -198,6 +199,7 @@ export function PropertyDetailPage() {
     currentUser,
     isAuthenticated,
   } = useAppStore();
+  const { t } = useTranslation();
 
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
@@ -344,7 +346,7 @@ export function PropertyDetailPage() {
           </p>
           <Button onClick={() => setCurrentPage('search')} variant="outline">
             <ArrowLeft size={16} />
-            Back to Search
+            {t.property.back} {t.search.title}
           </Button>
         </motion.div>
       </div>
@@ -363,13 +365,13 @@ export function PropertyDetailPage() {
     >
       {/* Back Button */}
       <motion.div variants={fadeInUp}>
-        <Button
+          <Button
           variant="ghost"
           onClick={() => setCurrentPage('search')}
           className="gap-2 -ml-2"
         >
           <ArrowLeft size={16} />
-          Back to Results
+          {t.property.back}
         </Button>
       </motion.div>
 
@@ -447,18 +449,18 @@ export function PropertyDetailPage() {
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2">
               <Badge className={getListingTypeColor(property.listingType)}>
-                {property.listingType}
+                {property.listingType === 'SALE' ? t.property.forSale : property.listingType === 'RENT' ? t.property.forRent : t.property.shortTerm}
               </Badge>
               <Badge className={getPropertyTypeColor(property.propertyType)}>
                 {property.propertyType.replace(/_/g, ' ')}
               </Badge>
               <Badge className={getStatusColor(property.status)}>
-                {property.status}
+                {property.status === 'AVAILABLE' ? t.status.available : property.status === 'SOLD' ? t.status.sold : property.status === 'RENTED' ? t.status.rented : t.status.pending}
               </Badge>
               {property.isFeatured && (
                 <Badge className="bg-amber-100 text-amber-700 border-amber-200 gap-1">
                   <Star size={12} className="fill-amber-500" />
-                  Featured
+                  {t.property.featured}
                 </Badge>
               )}
             </div>
@@ -515,7 +517,7 @@ export function PropertyDetailPage() {
                   <Bed size={22} className="text-primary" />
                   <div className="text-center">
                     <div className="text-lg font-semibold">{property.bedrooms}</div>
-                    <div className="text-xs text-muted-foreground">Bedrooms</div>
+                    <div className="text-xs text-muted-foreground">{t.property.bedrooms}</div>
                   </div>
                 </div>
               )}
@@ -524,7 +526,7 @@ export function PropertyDetailPage() {
                   <Bath size={22} className="text-primary" />
                   <div className="text-center">
                     <div className="text-lg font-semibold">{property.bathrooms}</div>
-                    <div className="text-xs text-muted-foreground">Bathrooms</div>
+                    <div className="text-xs text-muted-foreground">{t.property.bathrooms}</div>
                   </div>
                 </div>
               )}
@@ -532,7 +534,7 @@ export function PropertyDetailPage() {
                 <Maximize size={22} className="text-primary" />
                 <div className="text-center">
                   <div className="text-lg font-semibold">{property.area}</div>
-                  <div className="text-xs text-muted-foreground">sqm</div>
+                  <div className="text-xs text-muted-foreground">{t.property.sqm}</div>
                 </div>
               </div>
               {property.yearBuilt && (
@@ -540,7 +542,7 @@ export function PropertyDetailPage() {
                   <Calendar size={22} className="text-primary" />
                   <div className="text-center">
                     <div className="text-lg font-semibold">{property.yearBuilt}</div>
-                    <div className="text-xs text-muted-foreground">Year Built</div>
+                    <div className="text-xs text-muted-foreground">{t.property.yearBuilt}</div>
                   </div>
                 </div>
               )}
@@ -549,7 +551,7 @@ export function PropertyDetailPage() {
                   <Building size={22} className="text-primary" />
                   <div className="text-center">
                     <div className="text-lg font-semibold">{property.floors}</div>
-                    <div className="text-xs text-muted-foreground">Floors</div>
+                    <div className="text-xs text-muted-foreground">{t.property.floors}</div>
                   </div>
                 </div>
               )}

@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/select';
 import { PropertyCard } from '@/components/property/property-card';
 import { useAppStore } from '@/store/app-store';
+import { useTranslation } from '@/lib/i18n/use-translation';
 import type { Property, Country } from '@/types';
 
 // ============================================================
@@ -79,10 +80,12 @@ function PropertyCardSkeleton() {
 function SectionHeading({
   title,
   subtitle,
+  viewAllLabel,
   onViewAll,
 }: {
   title: string;
   subtitle?: string;
+  viewAllLabel?: string;
   onViewAll?: () => void;
 }) {
   return (
@@ -101,7 +104,7 @@ function SectionHeading({
           onClick={onViewAll}
           className="mt-2 flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary/80 sm:mt-0"
         >
-          View All
+          {viewAllLabel}
           <ChevronRight className="h-4 w-4" />
         </button>
       )}
@@ -115,6 +118,7 @@ function SectionHeading({
 
 export function HomePage() {
   const { setCurrentPage, setFilters, resetFilters } = useAppStore();
+  const { t } = useTranslation();
 
   // ---- Data states ----
   const [featuredProperties, setFeaturedProperties] = useState<Property[]>([]);
@@ -224,23 +228,20 @@ export function HomePage() {
   const steps = [
     {
       icon: Search,
-      title: 'Search',
-      description:
-        'Browse thousands of listings with advanced filters. Find properties by location, type, price, and more.',
+      title: t.howItWorks.step1Title,
+      description: t.howItWorks.step1Desc,
       color: 'bg-primary/10 text-primary',
     },
     {
       icon: PhoneCall,
-      title: 'Connect',
-      description:
-        'Get in touch with verified agents directly. Schedule viewings and ask questions about any property.',
+      title: t.howItWorks.step2Title,
+      description: t.howItWorks.step2Desc,
       color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
     },
     {
       icon: Home,
-      title: 'Move In',
-      description:
-        'Find your perfect property and make it home. Whether buying, renting, or short-term stays.',
+      title: t.howItWorks.step3Title,
+      description: t.howItWorks.step3Desc,
       color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
     },
   ];
@@ -250,10 +251,10 @@ export function HomePage() {
   // ============================================================
 
   const stats = [
-    { icon: Globe, value: '5+', label: 'Countries' },
-    { icon: Building2, value: '30+', label: 'Properties' },
-    { icon: Users, value: '6+', label: 'Agents' },
-    { icon: Briefcase, value: '5+', label: 'Companies' },
+    { icon: Globe, value: '60+', label: t.hero.countries },
+    { icon: Building2, value: '30+', label: t.hero.propertiesCount },
+    { icon: Users, value: '6+', label: t.hero.agentsCount },
+    { icon: Briefcase, value: '5+', label: t.hero.companiesCount },
   ];
 
   // ============================================================
@@ -291,21 +292,13 @@ export function HomePage() {
               className="mb-6 border-0 bg-white/15 px-4 py-1.5 text-sm text-white backdrop-blur-sm"
             >
               <Star className="mr-1.5 h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-              Trusted by thousands of property seekers
+              {t.hero.subtitle}
             </Badge>
 
             {/* Heading */}
             <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
-              Find Your{' '}
-              <span className="bg-gradient-to-r from-amber-400 to-orange-400 bg-clip-text text-transparent">
-                Dream Property
-              </span>
+              {t.hero.title}
             </h1>
-
-            <p className="mt-4 text-lg text-white/80 sm:text-xl">
-              Discover premium properties across 5+ countries. Buy, rent, or
-              find short-term stays with verified agents.
-            </p>
           </motion.div>
 
           {/* Search bar — glass morphism */}
@@ -320,10 +313,10 @@ export function HomePage() {
                 {/* Country select */}
                 <Select value={searchCountry} onValueChange={setSearchCountry}>
                   <SelectTrigger className="w-full border-white/20 bg-white/15 text-white placeholder:text-white/60 focus:ring-white/30">
-                    <SelectValue placeholder="All Countries" />
+                    <SelectValue placeholder={t.search.allCountries} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Countries</SelectItem>
+                    <SelectItem value="all">{t.search.allCountries}</SelectItem>
                     {countries.map((c) => (
                       <SelectItem key={c.id} value={c.id}>
                         <span className="mr-1.5">{c.flag}</span>
@@ -339,27 +332,24 @@ export function HomePage() {
                   onValueChange={setSearchPropertyType}
                 >
                   <SelectTrigger className="w-full border-white/20 bg-white/15 text-white placeholder:text-white/60 focus:ring-white/30">
-                    <SelectValue placeholder="Property Type" />
+                    <SelectValue placeholder={t.propertyTypes.apartment} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="all">{t.search.allTypes}</SelectItem>
                     {[
-                      'APARTMENT',
-                      'VILLA',
-                      'HOUSE',
-                      'PENTHOUSE',
-                      'STUDIO',
-                      'TOWNHOUSE',
-                      'DUPLEX',
-                      'LAND',
-                      'OFFICE',
-                      'COMMERCIAL',
-                    ].map((t) => (
-                      <SelectItem key={t} value={t}>
-                        {t
-                          .split('_')
-                          .map((w) => w.charAt(0) + w.slice(1).toLowerCase())
-                          .join(' ')}
+                      ['APARTMENT', t.propertyTypes.apartment],
+                      ['VILLA', t.propertyTypes.villa],
+                      ['HOUSE', t.propertyTypes.house],
+                      ['PENTHOUSE', t.propertyTypes.penthouse],
+                      ['STUDIO', t.propertyTypes.studio],
+                      ['TOWNHOUSE', t.propertyTypes.townhouse],
+                      ['DUPLEX', t.propertyTypes.duplex],
+                      ['LAND', t.propertyTypes.land],
+                      ['OFFICE', t.propertyTypes.office],
+                      ['COMMERCIAL', t.propertyTypes.commercial],
+                    ].map(([val, label]) => (
+                      <SelectItem key={val} value={val as string}>
+                        {label}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -371,13 +361,13 @@ export function HomePage() {
                   onValueChange={setSearchListingType}
                 >
                   <SelectTrigger className="w-full border-white/20 bg-white/15 text-white placeholder:text-white/60 focus:ring-white/30">
-                    <SelectValue placeholder="Listing Type" />
+                    <SelectValue placeholder={t.property.forRent} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All Listings</SelectItem>
-                    <SelectItem value="SALE">For Sale</SelectItem>
-                    <SelectItem value="RENT">For Rent</SelectItem>
-                    <SelectItem value="SHORT_TERM">Short-term</SelectItem>
+                    <SelectItem value="all">{t.listingTypes.all}</SelectItem>
+                    <SelectItem value="SALE">{t.property.forSale}</SelectItem>
+                    <SelectItem value="RENT">{t.property.forRent}</SelectItem>
+                    <SelectItem value="SHORT_TERM">{t.property.shortTerm}</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -388,7 +378,7 @@ export function HomePage() {
                   size="lg"
                 >
                   <Search className="mr-2 h-4 w-4" />
-                  Search
+                  {t.hero.search}
                 </Button>
               </div>
             </div>
@@ -423,8 +413,9 @@ export function HomePage() {
           ================================================================ */}
       <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <SectionHeading
-          title="Featured Properties"
-          subtitle="Hand-picked premium listings from our top agents"
+          title={t.property.featured}
+          subtitle={t.hero.subtitle}
+          viewAllLabel={t.common.viewAll}
           onViewAll={handleViewAllFeatured}
         />
 
@@ -445,7 +436,7 @@ export function HomePage() {
             >
               <Building2 className="mb-3 h-10 w-10 text-muted-foreground/40" />
               <p className="text-sm text-muted-foreground">
-                No featured properties available yet
+                {t.property.noProperties}
               </p>
               <Button
                 variant="outline"
@@ -453,7 +444,7 @@ export function HomePage() {
                 className="mt-4"
                 onClick={handleViewAllFeatured}
               >
-                Browse All Properties
+                {t.common.viewAll}
               </Button>
             </motion.div>
           ) : (
@@ -487,10 +478,10 @@ export function HomePage() {
             transition={{ duration: 0.5 }}
           >
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              How It Works
+              {t.howItWorks.title}
             </h2>
             <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-              Find your perfect property in three simple steps
+              {t.hero.subtitle}
             </p>
           </motion.div>
 
@@ -539,8 +530,9 @@ export function HomePage() {
           ================================================================ */}
       <section className="mx-auto w-full max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
         <SectionHeading
-          title="Recently Added"
-          subtitle="The latest properties added to our platform"
+          title={t.search.sortNewest}
+          subtitle={t.hero.subtitle}
+          viewAllLabel={t.common.viewAll}
           onViewAll={handleViewAllRecent}
         />
 
@@ -561,7 +553,7 @@ export function HomePage() {
             >
               <Building2 className="mb-3 h-10 w-10 text-muted-foreground/40" />
               <p className="text-sm text-muted-foreground">
-                No recent listings available
+                {t.property.noProperties}
               </p>
             </motion.div>
           ) : (
@@ -595,10 +587,10 @@ export function HomePage() {
             transition={{ duration: 0.5 }}
           >
             <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              Popular Locations
+              {t.footer.topLocations}
             </h2>
             <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-              Explore properties in our most popular countries
+              {t.hero.subtitle}
             </p>
           </motion.div>
 
@@ -613,7 +605,7 @@ export function HomePage() {
               <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-12 text-center">
                 <Globe className="mb-3 h-10 w-10 text-muted-foreground/40" />
                 <p className="text-sm text-muted-foreground">
-                  No locations available yet
+                  {t.property.noProperties}
                 </p>
               </div>
             ) : (
@@ -643,7 +635,7 @@ export function HomePage() {
                             </h3>
                             <p className="mt-0.5 text-xs text-muted-foreground">
                               {propertyCount}{' '}
-                              {propertyCount === 1 ? 'property' : 'properties'}
+                              {t.hero.propertiesCount.replace('+','')}
                             </p>
                           </div>
                           <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40 transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
@@ -675,11 +667,10 @@ export function HomePage() {
 
           <div className="relative z-10">
             <h2 className="text-2xl font-bold sm:text-3xl">
-              Ready to Find Your Perfect Property?
+              {t.cta.title}
             </h2>
             <p className="mx-auto mt-3 max-w-xl text-sm text-primary-foreground/80 sm:text-base">
-              Join thousands of happy homeowners and tenants. Start your
-              property search today and connect with top-rated agents.
+              {t.cta.subtitle}
             </p>
             <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <Button
@@ -691,7 +682,7 @@ export function HomePage() {
                 }}
                 className="min-w-[160px]"
               >
-                Browse Properties
+                {t.cta.browseProperties}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <Button
@@ -700,7 +691,7 @@ export function HomePage() {
                 className="border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground min-w-[160px]"
                 onClick={() => setCurrentPage('agents')}
               >
-                Find Agents
+                {t.cta.findAgents}
               </Button>
             </div>
           </div>

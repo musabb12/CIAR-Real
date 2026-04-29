@@ -39,6 +39,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { useAppStore } from '@/store/app-store';
+import { useTranslation } from '@/lib/i18n/use-translation';
 import type { Agent, Property } from '@/types';
 
 // ============================================================
@@ -150,6 +151,7 @@ function AgentDetailDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { t } = useTranslation();
   if (!agent) return null;
 
   const properties = agent.properties || [];
@@ -181,14 +183,14 @@ function AgentDetailDialog({
                   className="ml-2 bg-emerald-100 text-emerald-700 border-emerald-200 gap-1"
                 >
                   <Shield size={10} />
-                  Verified
+                  {t.agents.verified}
                 </Badge>
               )}
             </div>
           </DialogTitle>
           <DialogDescription>
-            {agent.title || 'Real Estate Agent'}
-            {agent.company && ` at ${agent.company.name}`}
+            {agent.title || t.agents.ourAgents}
+            {agent.company && ` ${t.common.or} ${agent.company.name}`}
           </DialogDescription>
         </DialogHeader>
 
@@ -197,19 +199,19 @@ function AgentDetailDialog({
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="text-center p-3 rounded-lg bg-muted/50">
               <div className="text-lg font-bold">{agent.totalListings}</div>
-              <div className="text-xs text-muted-foreground">Listings</div>
+              <div className="text-xs text-muted-foreground">{t.agents.listings}</div>
             </div>
             <div className="text-center p-3 rounded-lg bg-muted/50">
               <div className="text-lg font-bold">{agent.totalSales}</div>
-              <div className="text-xs text-muted-foreground">Sales</div>
+              <div className="text-xs text-muted-foreground">{t.agents.sales}</div>
             </div>
             <div className="text-center p-3 rounded-lg bg-muted/50">
               <StarRating rating={agent.rating} size={12} />
-              <div className="text-xs text-muted-foreground mt-1">Rating</div>
+              <div className="text-xs text-muted-foreground mt-1">{t.agents.rating}</div>
             </div>
             <div className="text-center p-3 rounded-lg bg-muted/50">
               <div className="text-lg font-bold">{agent.experience || '-'}</div>
-              <div className="text-xs text-muted-foreground">Years Exp.</div>
+              <div className="text-xs text-muted-foreground">{t.agents.years}</div>
             </div>
           </div>
 
@@ -218,7 +220,7 @@ function AgentDetailDialog({
           {/* Bio */}
           {agent.bio && (
             <div>
-              <h4 className="text-sm font-semibold mb-2">About</h4>
+              <h4 className="text-sm font-semibold mb-2">{t.agents.bio}</h4>
               <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
                 {agent.bio}
               </p>
@@ -227,7 +229,7 @@ function AgentDetailDialog({
 
           {/* Contact Info */}
           <div>
-            <h4 className="text-sm font-semibold mb-3">Contact Information</h4>
+            <h4 className="text-sm font-semibold mb-3">{t.agents.contactInfo}</h4>
             <div className="space-y-2">
               {agent.user?.email && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -261,7 +263,7 @@ function AgentDetailDialog({
             <>
               <Separator />
               <div>
-                <h4 className="text-sm font-semibold mb-3">Company</h4>
+                <h4 className="text-sm font-semibold mb-3">{t.agents.company}</h4>
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm font-medium">
                     <Building size={14} />
@@ -305,11 +307,11 @@ function AgentDetailDialog({
                     )}
                     <span className="flex items-center gap-1">
                       <Users size={12} />
-                      {agent.company.agentCount} agents
+                      {agent.company.agentCount} {t.agents.ourAgents}
                     </span>
                     <span className="flex items-center gap-1">
                       <Building size={12} />
-                      {agent.company.listingCount} listings
+                      {agent.company.listingCount} {t.agents.listings}
                     </span>
                   </div>
                 </div>
@@ -379,6 +381,7 @@ function AgentDetailDialog({
 
 export function AgentsPage() {
   const { setSelectedPropertyId, setCurrentPage } = useAppStore();
+  const { t } = useTranslation();
 
   const [agents, setAgents] = useState<AgentWithCounts[]>([]);
   const [loading, setLoading] = useState(true);
@@ -454,13 +457,13 @@ export function AgentsPage() {
           <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center">
             <Users className="text-muted-foreground" size={28} />
           </div>
-          <h2 className="text-xl font-semibold">Failed to load agents</h2>
+          <h2 className="text-xl font-semibold">{t.common.error}</h2>
           <p className="text-muted-foreground">{error}</p>
           <Button
             onClick={() => window.location.reload()}
             variant="outline"
           >
-            Try Again
+            {t.common.retry}
           </Button>
         </motion.div>
       </div>
@@ -481,7 +484,7 @@ export function AgentsPage() {
           className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
         >
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Our Agents</h1>
+            <h1 className="text-2xl md:text-3xl font-bold">{t.agents.ourAgents}</h1>
             <p className="text-muted-foreground text-sm mt-1">
               {agents.length} professional{' '}
               {agents.length === 1 ? 'agent' : 'agents'} ready to help
@@ -493,7 +496,7 @@ export function AgentsPage() {
               className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
             />
             <Input
-              placeholder="Search agents..."
+              placeholder={t.search.title}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 pr-9"
@@ -519,7 +522,7 @@ export function AgentsPage() {
               <Search className="text-muted-foreground" size={28} />
             </div>
             <h3 className="text-lg font-semibold">
-              {searchQuery ? 'No agents found' : 'No agents yet'}
+              {searchQuery ? t.agents.noAgents : t.agents.noAgents}
             </h3>
             <p className="text-muted-foreground mt-1">
               {searchQuery
@@ -587,12 +590,12 @@ export function AgentsPage() {
                         <span className="flex items-center gap-1.5">
                           <Calendar size={13} />
                           {agent.experience
-                            ? `${agent.experience} yr exp`
-                            : 'No experience listed'}
+                            ? `${agent.experience} ${t.agents.years}`
+                            : ''}
                         </span>
                         <span className="flex items-center gap-1.5">
                           <Building size={13} />
-                          {listingCount} listings
+                          {listingCount} {t.agents.listings}
                         </span>
                       </div>
 
@@ -608,7 +611,7 @@ export function AgentsPage() {
                         variant="outline"
                         onClick={() => handleViewProfile(agent.id)}
                       >
-                        View Profile
+                        {t.agents.viewProfile}
                       </Button>
                     </CardFooter>
                   </Card>

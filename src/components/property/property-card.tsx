@@ -18,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { Property, ListingType, PropertyStatus } from '@/types';
 import { useAppStore } from '@/store/app-store';
+import { useTranslation } from '@/lib/i18n/use-translation';
 
 // ============================================================
 // Helpers
@@ -28,11 +29,11 @@ function formatPrice(num: number): string {
   return num.toLocaleString('en-US');
 }
 
-/** Human-readable label for listing types */
-const listingLabels: Record<ListingType, string> = {
-  SALE: 'For Sale',
-  RENT: 'For Rent',
-  SHORT_TERM: 'Short-term',
+/** Listing type to translation key mapping */
+const listingTypeKeys: Record<ListingType, keyof import('@/lib/i18n/translations').Translations['property']> = {
+  SALE: 'forSale',
+  RENT: 'forRent',
+  SHORT_TERM: 'shortTerm',
 };
 
 /** Color classes per listing type */
@@ -51,23 +52,19 @@ function formatPropertyType(type: string): string {
 }
 
 /** Status color map */
-const statusConfig: Record<PropertyStatus, { label: string; className: string }> = {
-  AVAILABLE: {
-    label: 'Available',
-    className: 'bg-emerald-500/90 text-white',
-  },
-  SOLD: {
-    label: 'Sold',
-    className: 'bg-red-500/90 text-white',
-  },
-  RENTED: {
-    label: 'Rented',
-    className: 'bg-orange-500/90 text-white',
-  },
-  PENDING: {
-    label: 'Pending',
-    className: 'bg-yellow-500/90 text-white',
-  },
+const statusColors: Record<PropertyStatus, string> = {
+  AVAILABLE: 'bg-emerald-500/90 text-white',
+  SOLD: 'bg-red-500/90 text-white',
+  RENTED: 'bg-orange-500/90 text-white',
+  PENDING: 'bg-yellow-500/90 text-white',
+};
+
+/** Status to translation key mapping */
+const statusKeys: Record<PropertyStatus, keyof import('@/lib/i18n/translations').Translations['status']> = {
+  AVAILABLE: 'available',
+  SOLD: 'sold',
+  RENTED: 'rented',
+  PENDING: 'pending',
 };
 
 /** Get cover image from property images */
@@ -93,11 +90,11 @@ export function PropertyCard({ property }: PropertyCardProps) {
 
   const { setCurrentPage, setSelectedPropertyId, toggleFavorite, isFavorite } =
     useAppStore();
+  const { t } = useTranslation();
 
   const coverUrl = getCoverImage(property);
   const favorited = isFavorite(property.id);
   const currency = property.country?.currencySymbol ?? '$';
-  const statusInfo = statusConfig[property.status];
 
   // ---- Handlers ----
   const handleCardClick = () => {
@@ -156,7 +153,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             <Badge
               className={`${listingColors[property.listingType]} border text-xs font-semibold`}
             >
-              {listingLabels[property.listingType]}
+              {t.property[listingTypeKeys[property.listingType]]}
             </Badge>
 
             {/* Property type badge */}
@@ -170,7 +167,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             <div className="absolute left-3 bottom-3">
               <Badge className="border-0 bg-amber-500/90 text-xs font-semibold text-white">
                 <Star className="mr-1 h-3 w-3 fill-current" />
-                Featured
+                {t.property.featured}
               </Badge>
             </div>
           )}
@@ -178,8 +175,8 @@ export function PropertyCard({ property }: PropertyCardProps) {
           {/* Status badge */}
           {property.status !== 'AVAILABLE' && (
             <div className="absolute left-3 top-[60px] sm:top-[52px]">
-              <Badge className={`border-0 text-xs font-semibold ${statusInfo.className}`}>
-                {statusInfo.label}
+              <Badge className={`border-0 text-xs font-semibold ${statusColors[property.status]}`}>
+                {t.status[statusKeys[property.status]]}
               </Badge>
             </div>
           )}
@@ -250,7 +247,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             {property.area > 0 && (
               <div className="flex items-center gap-1">
                 <Maximize className="h-3.5 w-3.5" />
-                <span className="text-xs font-medium">{property.area} m²</span>
+                <span className="text-xs font-medium">{property.area} {t.property.sqm}</span>
               </div>
             )}
           </div>
@@ -263,7 +260,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             </div>
 
             <span className="flex items-center gap-1 text-xs font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
-              View Details
+              {t.property.viewDetails}
               <ArrowRight className="h-3 w-3" />
             </span>
           </div>

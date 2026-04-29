@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
 import { useAppStore } from '@/store/app-store';
+import { useTranslation } from '@/lib/i18n/use-translation';
 import type { Favorite, Property } from '@/types';
 
 // ============================================================
@@ -139,6 +140,7 @@ function FavoritePropertyCard({
   onRemove: (propertyId: string) => void;
   onViewProperty: (propertyId: string) => void;
 }) {
+  const { t } = useTranslation();
   const property = favorite.property;
   if (!property) return null;
 
@@ -171,11 +173,11 @@ function FavoritePropertyCard({
           </Button>
           {/* Badges */}
           <div className="absolute bottom-3 left-3 flex gap-1.5">
-            <Badge className={getStatusColor(property.status)}>{property.status}</Badge>
+            <Badge className={getStatusColor(property.status)}>{property.status === 'AVAILABLE' ? t.status.available : property.status === 'SOLD' ? t.status.sold : property.status === 'RENTED' ? t.status.rented : t.status.pending}</Badge>
             {property.isFeatured && (
               <Badge className="bg-amber-100 text-amber-700 border-amber-200 gap-1">
                 <Star size={10} className="fill-amber-500" />
-                Featured
+                {t.property.featured}
               </Badge>
             )}
           </div>
@@ -222,7 +224,7 @@ function FavoritePropertyCard({
             )}
             <span className="flex items-center gap-1">
               <Maximize size={14} />
-              {property.area} sqm
+              {property.area} {t.property.sqm}
             </span>
           </div>
 
@@ -250,6 +252,7 @@ export function FavoritesPage() {
     setSelectedPropertyId,
     removeFavorite,
   } = useAppStore();
+  const { t } = useTranslation();
 
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -325,15 +328,14 @@ export function FavoritesPage() {
           <LogIn size={36} className="text-primary" />
         </div>
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold">Sign In Required</h2>
+          <h2 className="text-2xl font-bold">{t.auth.signIn}</h2>
           <p className="text-muted-foreground max-w-sm">
-            Please sign in to view and manage your favorite properties. Your saved
-            listings will appear here once you&apos;re logged in.
+            {t.favorites.signInMessage}
           </p>
         </div>
         <Button size="lg" onClick={() => setCurrentPage('home')}>
           <LogIn size={16} />
-          Sign In
+          {t.nav.signIn}
         </Button>
       </motion.div>
     );
@@ -360,11 +362,11 @@ export function FavoritesPage() {
           <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center">
             <Heart className="text-muted-foreground" size={28} />
           </div>
-          <h2 className="text-xl font-semibold">Failed to load favorites</h2>
+          <h2 className="text-xl font-semibold">{t.common.error}</h2>
           <p className="text-muted-foreground">{error}</p>
           <div className="flex gap-2">
             <Button onClick={fetchFavorites} variant="outline">
-              Try Again
+              {t.common.retry}
             </Button>
           </div>
         </motion.div>
@@ -385,7 +387,7 @@ export function FavoritesPage() {
     >
       {/* Page Header */}
       <motion.div variants={fadeInUp}>
-        <h1 className="text-2xl md:text-3xl font-bold">My Favorites</h1>
+        <h1 className="text-2xl md:text-3xl font-bold">{t.favorites.myFavorites}</h1>
         <p className="text-muted-foreground text-sm mt-1">
           {favorites.length} saved {favorites.length === 1 ? 'property' : 'properties'}
         </p>
@@ -400,17 +402,16 @@ export function FavoritesPage() {
           <div className="mx-auto w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
             <Heart className="text-muted-foreground/50" size={32} />
           </div>
-          <h3 className="text-xl font-semibold">No favorites yet</h3>
+          <h3 className="text-xl font-semibold">{t.favorites.noFavorites}</h3>
           <p className="text-muted-foreground mt-2 max-w-sm">
-            Start browsing properties and click the heart icon to save your favorites
-            here for easy access later.
+            {t.favorites.signInMessage}
           </p>
           <Button
             className="mt-6"
             onClick={() => setCurrentPage('search')}
           >
             <Search size={16} />
-            Browse Properties
+            {t.favorites.browseProperties}
           </Button>
         </motion.div>
       ) : (

@@ -196,3 +196,36 @@ html {
 .dark .property-card:hover {
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
 }
+
+/* RTL Support */
+html[dir="rtl"] {
+  text-align: right;
+}
+
+html[dir="rtl"] .text-left {
+  text-align: right;
+}
+
+html[dir="rtl"] .text-right {
+  text-align: left;
+}
+
+html[dir="rtl"] .ml-auto {
+  margin-left: initial;
+  margin-right: auto;
+}
+
+html[dir="rtl"] .mr-auto {
+  margin-right: initial;
+  margin-left: auto;
+}
+
+/* RTL scrollbar position */
+html[dir="rtl"] ::-webkit-scrollbar {
+  width: 8px;
+}
+
+/* Smooth font for Arabic */
+html[dir="rtl"] body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif, var(--font-geist-sans);
+}

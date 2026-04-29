@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
+import { NewsTicker } from '@/components/layout/news-ticker';
 import { HomePage } from '@/components/pages/home-page';
 import { SearchPage } from '@/components/pages/search-page';
 import { PropertyDetailPage } from '@/components/pages/property-detail-page';
@@ -81,6 +82,7 @@ export default function Home() {
     <div className="flex min-h-screen flex-col">
       <ScrollProgress />
       {currentPage !== 'admin-login' && <Header />}
+      {currentPage !== 'admin-login' && <NewsTicker />}
       <main className={currentPage === 'admin-login' ? 'flex-1' : 'flex-1'}>
         <AnimatePresence mode="wait">
           <motion.div

@@ -198,6 +198,13 @@ const userRoleClasses: Record<string, string> = {
   GUEST: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
 };
 
+const newsTypeClasses: Record<string, string> = {
+  info: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+  warning: 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400',
+  urgent: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
+  promo: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
+};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // DEFAULT FORM VALUES
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -326,6 +333,17 @@ export function AdminPage() {
   const [featureCategoryFilter, setFeatureCategoryFilter] = useState('all');
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // NEWS STATE
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const [newsItems, setNewsItems] = useState<any[]>([]);
+  const [newsLoading, setNewsLoading] = useState(false);
+  const [newsDialogOpen, setNewsDialogOpen] = useState(false);
+  const [editingNews, setEditingNews] = useState<any>(null);
+  const [newsForm, setNewsForm] = useState({ content: '', link: '', type: 'info', order: 0, isActive: true });
+  const [newsSaving, setNewsSaving] = useState(false);
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // SHARED DATA
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -441,6 +459,21 @@ export function AdminPage() {
     }
   }, []);
 
+  // ── Fetch News ───────────────────────────────────────────────────────────
+  const fetchNews = useCallback(async () => {
+    setNewsLoading(true);
+    try {
+      const res = await fetch('/api/news');
+      if (!res.ok) throw new Error('Failed to fetch news');
+      const data = await res.json();
+      setNewsItems(data);
+    } catch {
+      toast.error('Failed to load news');
+    } finally {
+      setNewsLoading(false);
+    }
+  }, []);
+
   // ── Fetch Features (NEW) ──────────────────────────────────────────────────
   const fetchFeatures = useCallback(async () => {
     setFeaturesLoading(true);
@@ -505,6 +538,10 @@ export function AdminPage() {
   useEffect(() => {
     if (activeTab === 'features') fetchFeatures();
   }, [activeTab, fetchFeatures]);
+
+  useEffect(() => {
+    if (activeTab === 'news') fetchNews();
+  }, [activeTab, fetchNews]);
 
   useEffect(() => { fetchAgents(); fetchAmenities(); fetchLocations(); }, [fetchAgents, fetchAmenities, fetchLocations]);
 
@@ -766,6 +803,61 @@ export function AdminPage() {
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // HANDLERS — News CRUD
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const openNewsDialog = (item?: any) => {
+    if (item) {
+      setEditingNews(item);
+      setNewsForm({
+        content: item.content || '',
+        link: item.link || '',
+        type: item.type || 'info',
+        order: item.order ?? 0,
+        isActive: item.isActive ?? true,
+      });
+    } else {
+      setEditingNews(null);
+      setNewsForm({ content: '', link: '', type: 'info', order: newsItems.length, isActive: true });
+    }
+    setNewsDialogOpen(true);
+  };
+
+  const saveNews = async () => {
+    if (!newsForm.content.trim()) { toast.error('Content is required'); return; }
+    setNewsSaving(true);
+    try {
+      const method = editingNews ? 'PUT' : 'POST';
+      const body = editingNews ? { ...newsForm, id: editingNews.id } : newsForm;
+      const res = await fetch('/api/news', { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error();
+      toast.success(editingNews ? 'News updated' : 'News created');
+      setNewsDialogOpen(false);
+      setEditingNews(null);
+      fetchNews();
+    } catch {
+      toast.error('Failed to save news');
+    } finally {
+      setNewsSaving(false);
+    }
+  };
+
+  const toggleNewsActive = async (item: any) => {
+    try {
+      const res = await fetch('/api/news', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: item.id, isActive: !item.isActive }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success(`News ${item.isActive ? 'deactivated' : 'activated'}`);
+      fetchNews();
+    } catch {
+      toast.error('Failed to update news');
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // HANDLERS — Features Toggle (NEW)
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -801,7 +893,8 @@ export function AdminPage() {
         : deleteTarget.type === 'user' ? `/api/users/${deleteTarget.id}`
           : deleteTarget.type === 'inquiry' ? `/api/inquiries/${deleteTarget.id}`
             : deleteTarget.type === 'banner' ? `/api/banners/${deleteTarget.id}`
-              : null;
+              : deleteTarget.type === 'news' ? `/api/news?id=${deleteTarget.id}`
+                : null;
       if (!endpoint) throw new Error('Unknown type');
       const res = await fetch(endpoint, { method: 'DELETE' });
       if (!res.ok) throw new Error();
@@ -812,6 +905,7 @@ export function AdminPage() {
       else if (deleteTarget.type === 'user') fetchUsers();
       else if (deleteTarget.type === 'inquiry') { fetchInquiries(); fetchStats(); }
       else if (deleteTarget.type === 'banner') fetchBanners();
+      else if (deleteTarget.type === 'news') fetchNews();
     } catch {
       toast.error('Failed to delete');
     } finally {
@@ -1922,6 +2016,127 @@ export function AdminPage() {
   };
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // TAB 8: NEWS TICKER MANAGEMENT
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const renderNews = () => (
+    <motion.div {...fadeIn} className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-heading text-sm text-muted-foreground">{newsItems.length} news items</h3>
+        <Button size="sm" onClick={() => openNewsDialog()}><Plus className="mr-1 h-4 w-4" /> Add News</Button>
+      </div>
+      <Card className="glass-card">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto max-h-[480px] overflow-y-auto">
+            {newsLoading ? (
+              <div className="p-6 space-y-3">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}</div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-16">Order</TableHead>
+                    <TableHead>Content</TableHead>
+                    <TableHead className="hidden sm:table-cell">Type</TableHead>
+                    <TableHead>{t.admin.status}</TableHead>
+                    <TableHead className="text-right">{t.admin.actions}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {newsItems.length === 0 ? (
+                    <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground py-8">No news items yet</TableCell></TableRow>
+                  ) : (
+                    newsItems.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell className="text-muted-foreground">{item.order ?? 0}</TableCell>
+                        <TableCell>
+                          <div className="max-w-[300px]">
+                            <p className="font-medium truncate">{item.content}</p>
+                            {item.link && <p className="text-xs text-muted-foreground truncate">{item.link}</p>}
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">
+                          <Badge variant="secondary" className={newsTypeClasses[item.type] || ''}>{item.type || 'info'}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Switch checked={item.isActive} onCheckedChange={() => toggleNewsActive(item)} />
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm"><MoreHorizontal className="h-4 w-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => openNewsDialog(item)}><Edit className="mr-2 h-4 w-4" />Edit</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem className="text-destructive" onClick={() => confirmDelete(item.id, 'news', item.content.substring(0, 40))}><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* ── News Add/Edit Dialog ── */}
+      <Dialog open={newsDialogOpen} onOpenChange={setNewsDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingNews ? 'Edit News' : 'Add News'}</DialogTitle>
+            <DialogDescription>Manage news ticker items displayed on the platform.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="news-content">Content *</Label>
+              <Textarea
+                id="news-content"
+                value={newsForm.content}
+                onChange={(e) => setNewsForm((p) => ({ ...p, content: e.target.value }))}
+                placeholder="Enter news content..."
+                rows={3}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="news-link">Link URL</Label>
+              <Input id="news-link" value={newsForm.link} onChange={(e) => setNewsForm((p) => ({ ...p, link: e.target.value }))} placeholder="https://..." />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <Select value={newsForm.type} onValueChange={(v) => setNewsForm((p) => ({ ...p, type: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="info">Info</SelectItem>
+                    <SelectItem value="warning">Warning</SelectItem>
+                    <SelectItem value="urgent">Urgent</SelectItem>
+                    <SelectItem value="promo">Promo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Order</Label>
+                <Input type="number" value={newsForm.order} onChange={(e) => setNewsForm((p) => ({ ...p, order: parseInt(e.target.value, 10) || 0 }))} />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch checked={newsForm.isActive} onCheckedChange={(v) => setNewsForm((p) => ({ ...p, isActive: v }))} />
+              <Label>Active</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewsDialogOpen(false)}>{t.admin.cancel}</Button>
+            <Button onClick={saveNews} disabled={newsSaving}>{newsSaving ? 'Saving...' : t.admin.save}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </motion.div>
+  );
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // MAIN RENDER — Tab Layout
   // ═══════════════════════════════════════════════════════════════════════════
 
@@ -2006,6 +2221,10 @@ export function AdminPage() {
                 <Sparkles className="h-4 w-4 text-amber-500" />
                 <span className="hidden sm:inline font-semibold">Features</span>
               </TabsTrigger>
+              <TabsTrigger value="news" className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <Bell className="h-4 w-4" />
+                <span className="hidden sm:inline">{(t as any).admin?.news || 'News'}</span>
+              </TabsTrigger>
             </TabsList>
           </motion.div>
 
@@ -2017,6 +2236,7 @@ export function AdminPage() {
           <TabsContent value="inquiries">{renderInquiries()}</TabsContent>
           <TabsContent value="banners">{renderBanners()}</TabsContent>
           <TabsContent value="features">{renderFeatures()}</TabsContent>
+          <TabsContent value="news">{renderNews()}</TabsContent>
         </Tabs>
       </div>
 

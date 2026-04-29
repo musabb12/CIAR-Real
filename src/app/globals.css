@@ -1912,3 +1912,31 @@ textarea,
     animation: none;
   }
 }
+
+/* ============================================================
+   20. NEWS TICKER SCROLL ANIMATION
+   ============================================================ */
+
+.news-ticker-track {
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-fill-mode: forwards;
+}
+
+@keyframes ticker-scroll-ltr {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes ticker-scroll-rtl {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}

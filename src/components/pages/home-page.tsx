@@ -962,6 +962,93 @@ export function HomePage() {
         </div>
       </section>
 
+      {/* ================================================================
+          PAYMENT METHODS SECTION — Secure Payment Options
+          ================================================================ */}
+      <section className="relative overflow-hidden bg-gradient-to-b from-muted/30 via-muted/10 to-muted/30 backdrop-blur-sm py-20 sm:py-24">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <motion.div
+            className="mx-auto max-w-2xl text-center"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
+              Secure Payment Methods
+            </h2>
+            <div className="mx-auto mt-4 h-[3px] w-16 rounded-full bg-gradient-to-r from-amber-500 to-amber-400" />
+            <p className="mt-4 text-sm text-muted-foreground sm:text-base">
+              Multiple secure payment options for your convenience
+            </p>
+          </motion.div>
+
+          {/* Shield badge */}
+          <motion.div
+            className="mx-auto mt-8 flex items-center justify-center"
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+          >
+            <div className="glass-badge inline-flex items-center gap-2 rounded-full px-5 py-2.5">
+              <Shield className="h-5 w-5 text-emerald-500" />
+              <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">100% Secure</span>
+            </div>
+          </motion.div>
+
+          {/* Payment methods grid */}
+          <motion.div
+            className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3 md:gap-6"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-50px' }}
+          >
+            {[
+              {
+                name: 'Visa',
+                svg: <svg viewBox="0 0 48 32" className="h-8 w-12"><rect width="48" height="32" rx="4" fill="#1A1F71"/><text x="24" y="22" textAnchor="middle" fill="white" fontSize="16" fontWeight="bold" fontFamily="Arial">VISA</text></svg>,
+              },
+              {
+                name: 'Mastercard',
+                svg: <svg viewBox="0 0 48 32" className="h-8 w-12"><rect width="48" height="32" rx="4" fill="#EB001B"/><circle cx="18" cy="16" r="10" fill="#F79E1B" opacity="0.8"/><circle cx="30" cy="16" r="10" fill="#EB001B" opacity="0.8"/></svg>,
+              },
+              {
+                name: 'PayPal',
+                svg: <svg viewBox="0 0 48 32" className="h-8 w-12"><rect width="48" height="32" rx="4" fill="#003087"/><text x="24" y="21" textAnchor="middle" fill="white" fontSize="11" fontWeight="bold" fontFamily="Arial">PayPal</text></svg>,
+              },
+              {
+                name: 'Apple Pay',
+                svg: <svg viewBox="0 0 48 32" className="h-8 w-12"><rect width="48" height="32" rx="4" fill="#000000"/><text x="24" y="20" textAnchor="middle" fill="white" fontSize="9" fontWeight="bold" fontFamily="Arial">APPLE</text><text x="24" y="28" textAnchor="middle" fill="white" fontSize="7" fontFamily="Arial">PAY</text></svg>,
+              },
+              {
+                name: 'Google Pay',
+                svg: <svg viewBox="0 0 48 32" className="h-8 w-12"><rect width="48" height="32" rx="4" fill="#4285F4"/><g transform="translate(10,8)"><circle cx="7" cy="8" r="5" fill="#EA4335"/><circle cx="14" cy="8" r="5" fill="#FBBC05"/><circle cx="7" cy="15" r="5" fill="#34A853"/><circle cx="14" cy="15" r="5" fill="#4285F4"/></g></svg>,
+              },
+              {
+                name: 'Bank Transfer',
+                svg: <svg viewBox="0 0 48 32" className="h-8 w-12"><rect width="48" height="32" rx="4" fill="#374151"/><polygon points="10,8 10,24 18,24 18,14 24,14 24,20 32,20 24,8" fill="white" opacity="0.9"/><line x1="14" y1="12" x2="22" y2="12" stroke="white" strokeWidth="1.5" strokeLinecap="round"/></svg>,
+              },
+            ].map((method) => (
+              <motion.div
+                key={method.name}
+                variants={staggerItem}
+              >
+                <div className="glass-card rounded-xl flex flex-col items-center gap-3 p-5 text-center transition-all duration-300 hover:-translate-y-1">
+                  <div className="flex h-12 w-full items-center justify-center rounded-lg bg-muted/50 px-2">
+                    {method.svg}
+                  </div>
+                  <span className="text-xs font-medium text-foreground/80">
+                    {method.name}
+                  </span>
+                </div>
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </section>
+
       {/* Gradient divider */}
       <div className="gradient-divider" />
 

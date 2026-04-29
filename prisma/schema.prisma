@@ -280,6 +280,19 @@ model Banner {
   @@index([position])
 }
 
+// ==================== NEWS TICKER ====================
+
+model NewsItem {
+  id            String         @id @default(cuid())
+  content       String         // news text
+  link          String?        // optional link
+  type          String         @default("info") // info, warning, urgent, promo
+  isActive      Boolean        @default(true)
+  order         Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
 // ==================== CIAR FEATURES ====================
 
 model FeatureToggle {

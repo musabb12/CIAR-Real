@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
@@ -40,6 +41,13 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import type { Property } from '@/types';
+
+// Dynamically import PropertyMap to avoid SSR issues with Leaflet
+const PropertyMap = dynamic(
+  () => import('@/components/map/property-map').then((mod) => mod.PropertyMap),
+  { ssr: false, loading: () => <div className="glass-card rounded-xl flex items-center justify-center" style={{ height: '300px' }}><div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div> }
+);
+
 import {
   AIPropertyValuation, VirtualTourViewer, InvestmentROICalculator,
   NeighborhoodInsights, WalkabilityTransit, PriceTrendChart,
@@ -819,7 +827,7 @@ export function PropertyDetailPage() {
         </Card>
       </motion.div>
 
-      {/* Location Map Placeholder */}
+      {/* Location Map */}
       {property.latitude && property.longitude && (
         <motion.div variants={fadeInUp}>
           <Card className="glass-card rounded-xl">
@@ -830,13 +838,12 @@ export function PropertyDetailPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="rounded-lg bg-muted/80 border border-dashed p-8 flex flex-col items-center justify-center gap-3 text-center">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                  <MapPin size={24} className="text-primary" />
-                </div>
-                <p className="text-sm text-muted-foreground font-medium">
-                  {property.address || 'Property Location'}
-                </p>
+              <PropertyMap
+                lat={property.latitude}
+                lng={property.longitude}
+                address={property.address || undefined}
+              />
+              <div className="mt-3 flex items-center justify-between">
                 <p className="text-xs text-muted-foreground font-mono">
                   {property.latitude.toFixed(4)}, {property.longitude.toFixed(4)}
                 </p>
@@ -844,7 +851,6 @@ export function PropertyDetailPage() {
                   href={`https://www.google.com/maps?q=${property.latitude},${property.longitude}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-1"
                 >
                   <Button variant="outline" size="sm">
                     <MapPin size={14} />

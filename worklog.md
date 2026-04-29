@@ -55,3 +55,38 @@ Stage Summary:
 - User gets visual confirmation before auto-login
 - Robust validation on both client and server side
 - All 5 languages have success/error translations
+
+---
+Task ID: 3
+Agent: main
+Task: Add Google Maps, News Ticker, Payment Methods
+
+Work Log:
+- Added `NewsItem` model to Prisma schema (content, link, type, isActive, order)
+- Pushed schema to DB and regenerated Prisma client
+- Created `/api/news` route with full CRUD (GET/POST/PUT/DELETE)
+- Created `/api/news/seed` route with 5 initial news items
+- Installed `leaflet` and `react-leaflet` packages
+- Dispatched 2 parallel subagents:
+
+Agent 3-a (UI Components):
+  - Created `news-ticker.tsx` - scrolling marquee ticker with CSS animations, RTL support, colored type indicators
+  - Created `property-map.tsx` - Leaflet interactive map with OpenStreetMap tiles, marker, popup
+  - Added ticker keyframe animations to globals.css (ltr/rtl)
+  - Added news ticker to page.tsx layout (after Header)
+  - Replaced map placeholder in property-detail-page.tsx with real Leaflet map
+  - Added payment methods section to home-page.tsx with Visa, Mastercard, PayPal, Apple Pay, Google Pay, Bank Transfer SVG icons
+
+Agent 3-b (Admin Panel):
+  - Added News management tab to admin-page.tsx
+  - Full CRUD: create, edit, delete, toggle active status
+  - Dialog form with Content, Link, Type, Order, Active fields
+  - News table with colored type badges
+  - Integrated with delete dialog
+
+Stage Summary:
+- News ticker scrolls horizontally like TV news channels, controllable from admin
+- Leaflet map shows property location on detail pages (no API key needed)
+- Payment methods section on homepage with 6 method icons
+- Admin panel has full news management tab
+- Zero lint errors, all APIs verified working

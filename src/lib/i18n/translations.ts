@@ -130,12 +130,17 @@ export interface Translations {
   // Auth
   auth: {
     signIn: string;
+    signUp: string;
     email: string;
     password: string;
+    name: string;
+    phone: string;
     demoAccounts: string;
     welcome: string;
     signOut: string;
     subtitle: string;
+    registerSubtitle: string;
+    createAccount: string;
   };
   // Admin
   admin: {
@@ -372,12 +377,17 @@ export const translations: Record<Locale, Translations> = {
     },
     auth: {
       signIn: 'Sign In',
+      signUp: 'Create Account',
       email: 'Email',
       password: 'Password',
+      name: 'Full Name',
+      phone: 'Phone',
       demoAccounts: 'Demo Accounts',
       welcome: 'Welcome',
       signOut: 'Sign Out',
       subtitle: 'Enter your email to access the platform',
+      registerSubtitle: 'Create your account to get started',
+      createAccount: 'Create Account',
     },
     admin: {
       dashboard: 'Dashboard',
@@ -607,12 +617,17 @@ export const translations: Record<Locale, Translations> = {
     },
     auth: {
       signIn: 'تسجيل الدخول',
+      signUp: 'إنشاء حساب',
       email: 'البريد الإلكتروني',
       password: 'كلمة المرور',
+      name: 'الاسم الكامل',
+      phone: 'الهاتف',
       demoAccounts: 'حسابات تجريبية',
       welcome: 'مرحباً',
       signOut: 'تسجيل الخروج',
       subtitle: 'أدخل بريدك الإلكتروني للوصول إلى المنصة',
+      registerSubtitle: 'أنشئ حسابك للبدء',
+      createAccount: 'إنشاء حساب',
     },
     admin: {
       dashboard: 'لوحة التحكم',
@@ -842,12 +857,17 @@ export const translations: Record<Locale, Translations> = {
     },
     auth: {
       signIn: 'Connexion',
+      signUp: 'Créer un compte',
       email: 'E-mail',
       password: 'Mot de passe',
+      name: 'Nom complet',
+      phone: 'Téléphone',
       demoAccounts: 'Comptes démo',
       welcome: 'Bienvenue',
       signOut: 'Déconnexion',
       subtitle: 'Entrez votre e-mail pour accéder à la plateforme',
+      registerSubtitle: 'Créez votre compte pour commencer',
+      createAccount: 'Créer un compte',
     },
     admin: {
       dashboard: 'Tableau de bord',
@@ -1077,12 +1097,17 @@ export const translations: Record<Locale, Translations> = {
     },
     auth: {
       signIn: 'Iniciar sesión',
+      signUp: 'Crear cuenta',
       email: 'Correo',
       password: 'Contraseña',
+      name: 'Nombre completo',
+      phone: 'Teléfono',
       demoAccounts: 'Cuentas de prueba',
       welcome: 'Bienvenido',
       signOut: 'Cerrar sesión',
       subtitle: 'Ingresa tu correo para acceder a la plataforma',
+      registerSubtitle: 'Crea tu cuenta para comenzar',
+      createAccount: 'Crear cuenta',
     },
     admin: {
       dashboard: 'Panel de control',
@@ -1312,12 +1337,17 @@ export const translations: Record<Locale, Translations> = {
     },
     auth: {
       signIn: 'Giriş Yap',
+      signUp: 'Hesap Oluştur',
       email: 'E-posta',
       password: 'Şifre',
+      name: 'Ad Soyad',
+      phone: 'Telefon',
       demoAccounts: 'Demo Hesaplar',
       welcome: 'Hoş Geldiniz',
       signOut: 'Çıkış Yap',
       subtitle: 'Platforma erişmek için e-postanızı girin',
+      registerSubtitle: 'Başlamak için hesabınızı oluşturun',
+      createAccount: 'Hesap Oluştur',
     },
     admin: {
       dashboard: 'Yönetim Paneli',

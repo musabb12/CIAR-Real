@@ -376,16 +376,61 @@ export function PropertyDetailPage() {
       animate="animate"
       className="space-y-6 p-4 md:p-6 max-w-6xl mx-auto"
     >
-      {/* Back Button */}
-      <motion.div variants={fadeInUp}>
-          <Button
-          variant="ghost"
-          onClick={() => setCurrentPage('search')}
-          className="gap-2 -ml-2"
-        >
-          <ArrowLeft size={16} />
-          {t.property.back}
-        </Button>
+      {/* Hero Banner */}
+      <motion.div
+        variants={fadeInUp}
+        className="relative -mx-4 -mt-4 overflow-hidden sm:-mx-6 md:-mx-6 sm:-mt-6 md:-mt-6"
+        style={{
+          backgroundImage: "url('https://picsum.photos/seed/ciar-property-bg/1920/400.jpg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70" />
+        <div className="relative px-4 py-10 sm:px-6 sm:py-14">
+          <div className="flex items-center gap-2 mb-4">
+            <Button
+              variant="ghost"
+              onClick={() => setCurrentPage('search')}
+              className="gap-2 -ml-2 text-white/80 hover:text-white hover:bg-white/10"
+            >
+              <ArrowLeft size={16} />
+              {t.property.back}
+            </Button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge className={getListingTypeColor(property.listingType)}>
+              {property.listingType === 'SALE' ? t.property.forSale : property.listingType === 'RENT' ? t.property.forRent : t.property.shortTerm}
+            </Badge>
+            <Badge className={getPropertyTypeColor(property.propertyType)}>
+              {property.propertyType.replace(/_/g, ' ')}
+            </Badge>
+            <Badge className={getStatusColor(property.status)}>
+              {property.status === 'AVAILABLE' ? t.status.available : property.status === 'SOLD' ? t.status.sold : property.status === 'RENTED' ? t.status.rented : t.status.pending}
+            </Badge>
+            {property.isFeatured && (
+              <Badge className="bg-amber-100 text-amber-700 border-amber-200 gap-1">
+                <Star size={12} className="fill-amber-500" />
+                {t.property.featured}
+              </Badge>
+            )}
+          </div>
+          <h1 className="font-heading mt-3 text-2xl font-bold leading-tight text-white sm:text-3xl md:text-4xl">
+            {property.title}
+          </h1>
+          <div className="mt-3 h-[3px] w-16 bg-gradient-to-r from-amber-500 to-amber-400" />
+          <div className="mt-3 flex items-center gap-2 text-white/80">
+            <MapPin size={16} />
+            <span className="text-sm">
+              {[property.city?.name, property.region?.name, property.country?.name]
+                .filter(Boolean)
+                .join(', ') || 'Unknown Location'}
+            </span>
+          </div>
+          <div className="mt-3 text-2xl font-bold text-amber-400 sm:text-3xl">
+            {formatPrice(property.price, property.listingType)}
+          </div>
+        </div>
       </motion.div>
 
       {/* Image Gallery */}
@@ -477,7 +522,7 @@ export function PropertyDetailPage() {
                 </Badge>
               )}
             </div>
-            <h1 className="text-2xl md:text-3xl font-bold leading-tight">
+            <h1 className="font-heading text-2xl md:text-3xl font-bold leading-tight">
               {property.title}
             </h1>
             <div className="flex items-center gap-2 text-muted-foreground">
@@ -577,7 +622,7 @@ export function PropertyDetailPage() {
       <motion.div variants={fadeInUp}>
         <Card>
           <CardHeader>
-            <CardTitle>Description</CardTitle>
+            <CardTitle className="font-heading">Description</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
@@ -592,7 +637,7 @@ export function PropertyDetailPage() {
         <motion.div variants={fadeInUp}>
           <Card>
             <CardHeader>
-              <CardTitle>Amenities</CardTitle>
+              <CardTitle className="font-heading">Amenities</CardTitle>
               <CardDescription>
                 {property.amenities.length} amenities available
               </CardDescription>
@@ -622,7 +667,7 @@ export function PropertyDetailPage() {
         {agent && (
           <Card className="flex flex-col">
             <CardHeader>
-              <CardTitle>Listing Agent</CardTitle>
+              <CardTitle className="font-heading">Listing Agent</CardTitle>
             </CardHeader>
             <CardContent className="flex-1">
               <div className="flex items-start gap-4">
@@ -703,7 +748,7 @@ export function PropertyDetailPage() {
         {/* Contact Form */}
         <Card className="flex flex-col">
           <CardHeader>
-            <CardTitle>Contact Agent</CardTitle>
+            <CardTitle className="font-heading">Contact Agent</CardTitle>
             <CardDescription>
               Send an inquiry about this property
             </CardDescription>
@@ -779,7 +824,7 @@ export function PropertyDetailPage() {
         <motion.div variants={fadeInUp}>
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="font-heading flex items-center gap-2">
                 <MapPin size={18} />
                 Location
               </CardTitle>
@@ -815,7 +860,8 @@ export function PropertyDetailPage() {
       {/* CIAR SMART TOOLS SECTION */}
       <motion.div variants={fadeInUp} className="mt-12">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold gradient-underline">CIAR Smart Tools</h2>
+          <h2 className="font-heading text-2xl font-bold">CIAR Smart Tools</h2>
+          <div className="mt-2 h-[3px] w-16 bg-gradient-to-r from-amber-500 to-amber-400" />
           <p className="mt-2 text-muted-foreground">Advanced analytics and AI-powered insights</p>
         </div>
 

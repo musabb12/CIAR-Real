@@ -478,37 +478,46 @@ export function AgentsPage() {
         animate="animate"
         className="p-4 md:p-6 max-w-6xl mx-auto space-y-6"
       >
-        {/* Page Header */}
+        {/* Page Header Banner */}
         <motion.div
           variants={fadeInUp}
-          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
+          className="relative -mx-4 -mt-4 overflow-hidden sm:-mx-6 md:-mx-6 sm:-mt-6 md:-mt-6"
+          style={{
+            backgroundImage: "url('https://picsum.photos/seed/ciar-agents-bg/1920/400.jpg')",
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+          }}
         >
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">{t.agents.ourAgents}</h1>
-            <p className="text-muted-foreground text-sm mt-1">
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70" />
+          <div className="relative px-4 py-14 sm:px-6 sm:py-16">
+            <h1 className="font-heading text-3xl font-bold text-white sm:text-4xl">
+              {t.agents.ourAgents}
+            </h1>
+            <div className="mt-3 h-[3px] w-16 bg-gradient-to-r from-amber-500 to-amber-400" />
+            <p className="mt-3 max-w-xl text-sm text-white/80 sm:text-base">
               {agents.length} professional{' '}
               {agents.length === 1 ? 'agent' : 'agents'} ready to help
             </p>
-          </div>
-          <div className="relative w-full sm:w-72">
-            <Search
-              size={16}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-            />
-            <Input
-              placeholder={t.search.title}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-9"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              >
-                <X size={14} />
-              </button>
-            )}
+            <div className="mt-5 relative w-full max-w-sm sm:w-72">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+              />
+              <Input
+                placeholder={t.search.title}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-white/10 pl-9 pr-9 text-white placeholder:text-white/60 border-white/20 backdrop-blur-sm"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
           </div>
         </motion.div>
 

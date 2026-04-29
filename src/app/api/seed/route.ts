@@ -7,7 +7,7 @@ const execAsync = promisify(exec);
 // POST /api/seed - Trigger re-seeding of the database
 export async function POST() {
   try {
-    console.log('🔄 Triggering database re-seed...');
+    console.log('[SEED] Triggering database re-seed...');
 
     const { stdout, stderr } = await execAsync('npx prisma db seed', {
       cwd: '/home/z/my-project',

@@ -141,7 +141,7 @@ function AnimatedCounter({ value, suffix = '', duration = 2000 }: { value: numbe
   );
 }
 
-/** Section heading with gradient underline */
+/** Section heading with gold accent line */
 function SectionHeading({
   title,
   subtitle,
@@ -164,11 +164,12 @@ function SectionHeading({
       viewport={{ once: true, margin: '-50px' }}
     >
       <div>
-        <h2 className={`text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl ${centered ? 'gradient-underline gradient-underline-center' : 'gradient-underline'}`}>
+        <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
           {title}
         </h2>
+        <div className={`mt-4 h-[3px] w-16 rounded-full bg-gradient-to-r from-amber-500 to-amber-400 ${centered ? 'mx-auto' : ''}`} />
         {subtitle && (
-          <p className="mt-3 text-sm text-muted-foreground sm:text-base max-w-lg">
+          <p className="mt-4 text-sm text-muted-foreground sm:text-base max-w-lg">
             {subtitle}
           </p>
         )}
@@ -433,17 +434,19 @@ export function HomePage() {
     <div className="flex flex-col">
 
       {/* ================================================================
-          1. HERO SECTION — Full Viewport with Animated Gradient Mesh
+          1. HERO SECTION — Full Viewport with Background Image
           ================================================================ */}
-      <section className="animated-gradient-mesh relative flex min-h-[100dvh] flex-col items-center justify-center px-4 py-20 sm:px-6 lg:px-8">
-        {/* Decorative floating orbs */}
-        <div className="particles-layer">
-          <div className="particle" />
-          <div className="particle" />
-          <div className="particle" />
-          <div className="particle" />
-          <div className="particle" />
-        </div>
+      <section className="relative flex min-h-[100dvh] flex-col items-center justify-center px-4 py-20 sm:px-6 lg:px-8">
+        {/* Background image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: 'url(https://picsum.photos/seed/ciar-hero-luxury/1920/1080.jpg)' }}
+        />
+        {/* Dark gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70" />
+
+        {/* Subtle gold accent at top */}
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
 
         {/* Content */}
         <div className="relative z-10 mx-auto w-full max-w-5xl text-center">
@@ -455,16 +458,16 @@ export function HomePage() {
           >
             <Badge
               variant="secondary"
-              className="mb-6 border border-primary/20 bg-primary/5 px-5 py-2 text-sm font-medium text-primary backdrop-blur-sm"
+              className="mb-6 border border-white/20 bg-white/10 px-5 py-2 text-sm font-medium text-white/90 backdrop-blur-sm"
             >
               <Shield className="mr-2 h-3.5 w-3.5" />
               {t.hero.subtitle}
             </Badge>
           </motion.div>
 
-          {/* Main Heading — Gradient Text */}
+          {/* Main Heading */}
           <motion.h1
-            className="text-gradient-luxury text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
+            className="font-heading text-4xl font-bold leading-tight tracking-tight text-white drop-shadow-lg sm:text-5xl md:text-6xl lg:text-7xl"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -472,9 +475,17 @@ export function HomePage() {
             {t.hero.title}
           </motion.h1>
 
-          {/* Subtitle — Fade In */}
+          {/* Gold accent line under hero title */}
+          <motion.div
+            className="mx-auto mt-6 h-[2px] w-20 bg-gradient-to-r from-transparent via-amber-400 to-transparent"
+            initial={{ opacity: 0, scaleX: 0 }}
+            animate={{ opacity: 1, scaleX: 1 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+          />
+
+          {/* Subtitle */}
           <motion.p
-            className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground sm:text-lg md:text-xl"
+            className="mx-auto mt-6 max-w-2xl text-base text-white/75 sm:text-lg md:text-xl"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: showSubtitle ? 1 : 0, y: showSubtitle ? 0 : 20 }}
             transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
@@ -482,18 +493,18 @@ export function HomePage() {
             {t.hero.subtitle}
           </motion.p>
 
-          {/* Search Bar — Glass Morphism */}
+          {/* Search Bar */}
           <motion.div
             className="mx-auto mt-10 max-w-4xl"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.4 }}
           >
-            <div className="glass-card rounded-2xl p-3 shadow-2xl sm:p-4">
+            <div className="rounded-2xl border border-white/20 bg-white/10 p-3 shadow-2xl backdrop-blur-xl sm:p-4">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {/* Country select */}
                 <Select value={searchCountry} onValueChange={setSearchCountry}>
-                  <SelectTrigger className="w-full border-white/20 bg-white/10 backdrop-blur-sm focus:ring-primary/30">
+                  <SelectTrigger className="w-full border-white/20 bg-white/10 text-white backdrop-blur-sm focus:ring-primary/30">
                     <SelectValue placeholder={t.search.allCountries} />
                   </SelectTrigger>
                   <SelectContent>
@@ -509,7 +520,7 @@ export function HomePage() {
 
                 {/* Property type select */}
                 <Select value={searchPropertyType} onValueChange={setSearchPropertyType}>
-                  <SelectTrigger className="w-full border-white/20 bg-white/10 backdrop-blur-sm focus:ring-primary/30">
+                  <SelectTrigger className="w-full border-white/20 bg-white/10 text-white backdrop-blur-sm focus:ring-primary/30">
                     <SelectValue placeholder={t.propertyTypes.apartment} />
                   </SelectTrigger>
                   <SelectContent>
@@ -535,7 +546,7 @@ export function HomePage() {
 
                 {/* Listing type select */}
                 <Select value={searchListingType} onValueChange={setSearchListingType}>
-                  <SelectTrigger className="w-full border-white/20 bg-white/10 backdrop-blur-sm focus:ring-primary/30">
+                  <SelectTrigger className="w-full border-white/20 bg-white/10 text-white backdrop-blur-sm focus:ring-primary/30">
                     <SelectValue placeholder={t.property.forRent} />
                   </SelectTrigger>
                   <SelectContent>
@@ -549,7 +560,7 @@ export function HomePage() {
                 {/* Search button */}
                 <Button
                   onClick={handleSearch}
-                  className="w-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:from-emerald-500 hover:to-teal-400"
+                  className="w-full bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg shadow-amber-500/25 hover:shadow-xl hover:shadow-amber-500/30 hover:from-amber-400 hover:to-amber-500"
                   size="lg"
                 >
                   <Search className="mr-2 h-4 w-4" />
@@ -575,10 +586,10 @@ export function HomePage() {
                 <div className={`mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${stat.color} shadow-lg transition-transform group-hover:scale-110`}>
                   <stat.icon className="h-5 w-5 text-white" />
                 </div>
-                <div className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                <div className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
                   <AnimatedCounter value={stat.value} suffix={stat.suffix} />
                 </div>
-                <div className="mt-0.5 text-xs text-muted-foreground sm:text-sm">{stat.label}</div>
+                <div className="mt-0.5 text-xs text-white/60 sm:text-sm">{stat.label}</div>
               </motion.div>
             ))}
           </motion.div>
@@ -591,21 +602,18 @@ export function HomePage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5 }}
         >
-          <div className="flex flex-col items-center gap-1 text-muted-foreground/50">
+          <div className="flex flex-col items-center gap-1 text-white/40">
             <span className="text-xs tracking-widest uppercase">Scroll</span>
             <motion.div
               animate={{ y: [0, 6, 0] }}
               transition={{ repeat: Infinity, duration: 1.5 }}
-              className="h-6 w-4 rounded-full border-2 border-muted-foreground/30 p-0.5"
+              className="h-6 w-4 rounded-full border-2 border-white/20 p-0.5"
             >
-              <div className="h-1.5 w-full rounded-full bg-muted-foreground/40" />
+              <div className="h-1.5 w-full rounded-full bg-white/40" />
             </motion.div>
           </div>
         </motion.div>
       </section>
-
-      {/* Gradient divider */}
-      <div className="gradient-divider" />
 
       {/* ================================================================
           2. FEATURED PROPERTIES — Bento Grid
@@ -706,9 +714,10 @@ export function HomePage() {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="gradient-underline gradient-underline-center text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
+            <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
               {t.howItWorks.title}
             </h2>
+            <div className="mx-auto mt-4 h-[3px] w-16 rounded-full bg-gradient-to-r from-amber-500 to-amber-400" />
             <p className="mt-4 text-sm text-muted-foreground sm:text-base">
               {t.hero.subtitle}
             </p>
@@ -741,7 +750,7 @@ export function HomePage() {
                   </div>
 
                   {/* Content */}
-                  <h3 className="text-lg font-bold tracking-tight">{step.title}</h3>
+                  <h3 className="font-heading text-lg font-bold tracking-tight">{step.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                     {step.description}
                   </p>
@@ -817,9 +826,10 @@ export function HomePage() {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="gradient-underline gradient-underline-center text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
+            <h2 className="font-heading text-2xl font-bold tracking-tight sm:text-3xl lg:text-4xl">
               What Our Clients Say
             </h2>
+            <div className="mx-auto mt-4 h-[3px] w-16 rounded-full bg-gradient-to-r from-amber-500 to-amber-400" />
             <p className="mt-4 text-sm text-muted-foreground sm:text-base">
               Trusted by thousands of property seekers worldwide
             </p>
@@ -925,7 +935,7 @@ export function HomePage() {
               { icon: Zap, label: 'Energy Score', gradient: 'from-yellow-400 to-orange-400' },
               { icon: ShieldAlert, label: 'Risk Assessment', gradient: 'from-red-600 to-rose-500' },
               { icon: Trophy, label: 'Gamification', gradient: 'from-amber-400 to-yellow-300' },
-            ].map((feature, i) => (
+            ].map((feature) => (
               <motion.div key={feature.label} variants={staggerItem}>
                 <div className="group flex flex-col items-center gap-3 rounded-2xl border border-border/50 bg-card/80 p-5 text-center backdrop-blur-sm transition-all duration-300 hover:border-primary/20 hover:shadow-lg hover:-translate-y-1">
                   <div className={`flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br ${feature.gradient} shadow-lg transition-transform duration-300 group-hover:scale-110`}>
@@ -954,37 +964,21 @@ export function HomePage() {
       <div className="gradient-divider" />
 
       {/* ================================================================
-          6. CTA SECTION — Full-width Gradient
+          6. CTA SECTION — Background Image with Overlay
           ================================================================ */}
       <section className="relative overflow-hidden">
-        <div className="relative bg-gradient-to-br from-emerald-600 via-teal-500 to-emerald-700 px-6 py-16 sm:px-12 sm:py-20 lg:py-24">
-          {/* Decorative shapes */}
-          <div
-            className="cta-shape absolute -left-16 -top-16 h-64 w-64 bg-white/5"
-            style={{ animation: 'ctaFloat1 12s ease-in-out infinite' }}
-          />
-          <div
-            className="cta-shape absolute -bottom-12 -right-12 h-48 w-48 bg-white/5"
-            style={{ animation: 'ctaFloat2 10s ease-in-out infinite' }}
-          />
-          <div
-            className="cta-shape absolute left-1/3 top-1/4 h-32 w-32 rounded-full border border-white/10"
-            style={{ animation: 'ctaFloat1 15s ease-in-out infinite reverse' }}
-          />
-          <div
-            className="cta-shape absolute bottom-1/4 right-1/3 h-24 w-24 bg-white/[0.03]"
-            style={{ animation: 'ctaFloat2 8s ease-in-out infinite' }}
-          />
+        {/* Background image */}
+        <div
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: 'url(https://picsum.photos/seed/ciar-cta-modern/1920/600.jpg)' }}
+        />
+        {/* Dark gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/60 to-black/75" />
 
-          {/* Decorative grid pattern */}
-          <div className="absolute inset-0 opacity-[0.04]" style={{
-            backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)',
-            backgroundSize: '32px 32px',
-          }} />
-
-          <div className="relative z-10 mx-auto max-w-3xl text-center">
+        <div className="relative z-10 px-6 py-20 sm:px-12 sm:py-24 lg:py-28">
+          <div className="mx-auto max-w-3xl text-center">
             <motion.h2
-              className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl"
+              className="font-heading text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl"
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -993,12 +987,21 @@ export function HomePage() {
               {t.cta.title}
             </motion.h2>
 
+            {/* Gold accent line */}
+            <motion.div
+              className="mx-auto mt-6 h-[2px] w-16 bg-gradient-to-r from-transparent via-amber-400 to-transparent"
+              initial={{ opacity: 0, scaleX: 0 }}
+              whileInView={{ opacity: 1, scaleX: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            />
+
             <motion.p
-              className="mx-auto mt-4 max-w-xl text-base text-white/80 sm:text-lg"
+              className="mx-auto mt-5 max-w-xl text-base text-white/75 sm:text-lg"
               initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.1 }}
+              transition={{ duration: 0.6, delay: 0.15 }}
             >
               {t.cta.subtitle}
             </motion.p>
@@ -1016,7 +1019,7 @@ export function HomePage() {
                   resetFilters();
                   setCurrentPage('search');
                 }}
-                className="min-w-[180px] bg-white text-emerald-700 shadow-xl shadow-black/10 hover:bg-white/90 hover:text-emerald-800"
+                className="min-w-[180px] bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-xl shadow-amber-500/20 hover:from-amber-400 hover:to-amber-500"
               >
                 {t.cta.browseProperties}
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -1079,9 +1082,9 @@ export function HomePage() {
                       onClick={() => handleLocationClick(country.id)}
                     >
                       <div className="flex items-center gap-4">
-                        {/* Country flag */}
+                        {/* Country flag with Globe icon fallback */}
                         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 text-3xl shadow-sm transition-all group-hover:from-primary/20 group-hover:to-primary/10 group-hover:shadow-md">
-                          {country.flag ?? '🌍'}
+                          {country.flag || <Globe className="h-6 w-6 text-muted-foreground" />}
                         </div>
                         <div className="min-w-0 flex-1">
                           <h3 className="truncate text-sm font-bold tracking-tight">

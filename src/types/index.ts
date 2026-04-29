@@ -221,7 +221,8 @@ export type AppPage =
   | 'property-detail'
   | 'agents'
   | 'favorites'
-  | 'admin';
+  | 'admin'
+  | 'admin-login';
 
 export interface AdminTab {
   id: string;

@@ -16,6 +16,11 @@ import {
   Users,
   CheckCircle,
   Send,
+  Sparkles,
+  Diamond,
+  Crown,
+  TrendingUp,
+  Lock,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppStore } from '@/store/app-store';
@@ -35,9 +40,9 @@ function QuickLinkItem({
     <li>
       <button
         onClick={onClick}
-        className="group flex w-full items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary"
+        className="group flex w-full items-center gap-2 text-sm text-gray-400 transition-colors duration-300 hover:text-amber-300"
       >
-        <ArrowRight className="h-3 w-3 -translate-x-2 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100" />
+        <ArrowRight className="h-3 w-3 -translate-x-2 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100 text-amber-400" />
         <span className="transition-transform duration-300 group-hover:translate-x-1">
           {label}
         </span>
@@ -47,26 +52,27 @@ function QuickLinkItem({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Location item with country flag                                    */
+/*  Location item with MapPin icon (no flags)                         */
 /* ------------------------------------------------------------------ */
 function LocationItem({
-  flag,
   city,
+  country,
   onClick,
 }: {
-  flag: string;
   city: string;
+  country: string;
   onClick: () => void;
 }) {
   return (
     <li>
       <button
         onClick={onClick}
-        className="group flex w-full items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary"
+        className="group flex w-full items-start gap-2.5 text-sm text-gray-400 transition-colors duration-300 hover:text-amber-300"
       >
-        <span className="text-base leading-none">{flag}</span>
-        <span className="transition-transform duration-300 group-hover:translate-x-1">
-          {city}
+        <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500/70 transition-colors duration-300 group-hover:text-amber-400" />
+        <span className="flex flex-col leading-snug transition-transform duration-300 group-hover:translate-x-1">
+          <span className="text-gray-300 group-hover:text-amber-200 transition-colors duration-300">{city}</span>
+          <span className="text-[11px] text-gray-500 group-hover:text-amber-400/60 transition-colors duration-300">{country}</span>
         </span>
       </button>
     </li>
@@ -79,10 +85,12 @@ function LocationItem({
 function TrustBadge({
   icon: Icon,
   label,
+  sublabel,
   delay,
 }: {
   icon: React.ElementType;
   label: string;
+  sublabel?: string;
   delay: number;
 }) {
   return (
@@ -91,13 +99,31 @@ function TrustBadge({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay }}
-      className="flex flex-col items-center gap-2 rounded-xl border border-border/50 bg-card/50 px-4 py-5 backdrop-blur-sm transition-colors hover:border-primary/30 hover:bg-card"
+      className="flex flex-col items-center gap-2.5 rounded-xl border border-amber-500/10 bg-white/[0.03] px-4 py-5 backdrop-blur-sm transition-all duration-500 hover:border-amber-500/30 hover:bg-white/[0.06]"
     >
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500/20 to-amber-500/20">
-        <Icon className="h-5 w-5 text-primary" />
+      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-amber-500/15 to-amber-700/10 ring-1 ring-amber-500/10">
+        <Icon className="h-5 w-5 text-amber-400" />
       </div>
-      <span className="text-xs font-semibold tracking-wide">{label}</span>
+      <div className="flex flex-col items-center gap-0.5">
+        <span className="text-xs font-semibold tracking-wide text-gray-200">{label}</span>
+        {sublabel && (
+          <span className="text-[10px] tracking-wider text-amber-500/60 uppercase">{sublabel}</span>
+        )}
+      </div>
     </motion.div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Decorative gold line                                              */
+/* ------------------------------------------------------------------ */
+function GoldDivider() {
+  return (
+    <div className="flex items-center gap-3">
+      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
+      <Diamond className="h-3 w-3 text-amber-500/40" />
+      <div className="h-px flex-1 bg-gradient-to-r from-transparent via-amber-500/20 to-transparent" />
+    </div>
   );
 }
 
@@ -165,18 +191,19 @@ export function Footer() {
   ];
 
   const topLocations = [
-    { flag: '\u{1F1FA}\u{1F1F8}', city: 'New York' },
-    { flag: '\u{1F1EC}\u{1F1E7}', city: 'London' },
-    { flag: '\u{1F1F8}\u{1F1E6}', city: 'Riyadh' },
-    { flag: '\u{1F1EB}\u{1F1F7}', city: 'Paris' },
-    { flag: '\u{1F1EF}\u{1F1F5}', city: 'Tokyo' },
+    { city: 'New York', country: 'United States' },
+    { city: 'London', country: 'United Kingdom' },
+    { city: 'Riyadh', country: 'Saudi Arabia' },
+    { city: 'Paris', country: 'France' },
+    { city: 'Tokyo', country: 'Japan' },
+    { city: 'Dubai', country: 'UAE' },
   ];
 
   const trustBadges = [
-    { icon: Globe, label: '60+ Countries' },
-    { icon: Home, label: '10K+ Properties' },
-    { icon: CheckCircle, label: 'Verified Agents' },
-    { icon: Shield, label: 'Secure Payments' },
+    { icon: Globe, label: '60+ Countries', sublabel: 'Global Reach' },
+    { icon: Home, label: '10K+ Properties', sublabel: 'Premium Listings' },
+    { icon: Users, label: 'Verified Agents', sublabel: 'Trusted Network' },
+    { icon: Lock, label: 'Secure Payments', sublabel: 'Protected' },
   ];
 
   const socialLinks = [
@@ -188,12 +215,27 @@ export function Footer() {
 
   return (
     <footer className="mt-auto relative">
-      {/* Gradient top border */}
-      <div className="h-[2px] w-full bg-gradient-to-r from-emerald-500 via-teal-400 to-amber-500" />
+      {/* Gold gradient top border */}
+      <div className="h-[3px] w-full bg-gradient-to-r from-amber-700/0 via-amber-500 to-amber-700/0" />
 
-      {/* Main footer content */}
-      <div className="bg-[#0a0f0d] text-gray-300">
-        <div className="mx-auto max-w-7xl px-4 pt-16 pb-8 sm:px-6 lg:px-8">
+      {/* Main footer with background image and overlay */}
+      <div
+        className="relative text-gray-300"
+        style={{
+          backgroundImage: 'url(https://picsum.photos/seed/ciar-footer/1920/600.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
+        {/* Dark overlay for readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#080c0a]/95 via-[#0a0f0d]/97 to-[#060908]/99" />
+
+        {/* Subtle gold ambient glow at top */}
+        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-amber-900/10 to-transparent pointer-events-none" />
+
+        {/* Content */}
+        <div className="relative mx-auto max-w-7xl px-4 pt-16 pb-8 sm:px-6 lg:px-8">
           {/* ======== Top grid: Brand | Links | Locations | Newsletter ======== */}
           <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-12">
             {/* ---- Brand section (spans 4 cols) ---- */}
@@ -207,31 +249,43 @@ export function Footer() {
               {/* Logo */}
               <button
                 onClick={() => setCurrentPage('home')}
-                className="flex items-center gap-2 transition-opacity hover:opacity-80"
+                className="flex items-center gap-3 transition-opacity hover:opacity-80"
               >
-                <Building2 className="h-7 w-7" />
-                <span className="bg-gradient-to-r from-emerald-400 to-amber-400 bg-clip-text text-transparent text-xl font-bold tracking-tight">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-700/10 ring-1 ring-amber-500/20">
+                  <Crown className="h-5 w-5 text-amber-400" />
+                </div>
+                <span className="font-heading bg-gradient-to-r from-amber-300 via-amber-400 to-amber-200 bg-clip-text text-transparent text-2xl font-bold tracking-wide">
                   CIAR
                 </span>
               </button>
 
+              {/* Tagline */}
+              <p className="mt-1.5 text-xs font-medium uppercase tracking-[0.25em] text-amber-500/50">
+                Luxury Real Estate
+              </p>
+
               {/* Description */}
-              <p className="mt-4 text-sm leading-relaxed text-gray-400">
+              <p className="mt-5 text-sm leading-relaxed text-gray-400">
                 CIAR is your trusted global real estate directory. Discover
                 premium properties across 60+ countries with AI-powered tools,
                 smart analytics, verified agents, and secure transactions.
               </p>
 
+              {/* Decorative accent */}
+              <div className="mt-6 h-px w-16 bg-gradient-to-r from-amber-500/50 to-transparent" />
+
               {/* Social / Contact icons */}
               <div className="mt-6 flex items-center gap-3">
                 {socialLinks.map((s) => (
-                  <button
+                  <motion.button
                     key={s.label}
                     aria-label={s.label}
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-700/60 text-gray-400 transition-all duration-300 hover:border-emerald-500/60 hover:text-emerald-400 hover:shadow-lg hover:shadow-emerald-500/10"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-amber-500/15 text-gray-500 transition-all duration-300 hover:border-amber-500/40 hover:text-amber-400 hover:shadow-lg hover:shadow-amber-500/10 hover:bg-amber-500/5"
                   >
                     <s.icon className="h-4 w-4" />
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             </motion.div>
@@ -244,9 +298,12 @@ export function Footer() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="lg:col-span-2"
             >
-              <h3 className="mb-5 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-400">
-                {t.footer.quickLinks}
-              </h3>
+              <div className="mb-5 flex items-center gap-2">
+                <Sparkles className="h-3.5 w-3.5 text-amber-500/70" />
+                <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400">
+                  {t.footer.quickLinks}
+                </h3>
+              </div>
               <ul className="space-y-3">
                 {quickLinks.map((link) => (
                   <QuickLinkItem
@@ -266,15 +323,18 @@ export function Footer() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="lg:col-span-2"
             >
-              <h3 className="mb-5 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-400">
-                {t.footer.topLocations}
-              </h3>
-              <ul className="space-y-3">
+              <div className="mb-5 flex items-center gap-2">
+                <TrendingUp className="h-3.5 w-3.5 text-amber-500/70" />
+                <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400">
+                  {t.footer.topLocations}
+                </h3>
+              </div>
+              <ul className="space-y-3.5">
                 {topLocations.map((loc) => (
                   <LocationItem
                     key={loc.city}
-                    flag={loc.flag}
                     city={loc.city}
+                    country={loc.country}
                     onClick={() => setCurrentPage('search')}
                   />
                 ))}
@@ -289,18 +349,21 @@ export function Footer() {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="lg:col-span-4"
             >
-              <h3 className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-400">
-                Newsletter
-              </h3>
-              <p className="mb-5 text-sm text-gray-400">
+              <div className="mb-2 flex items-center gap-2">
+                <Mail className="h-3.5 w-3.5 text-amber-500/70" />
+                <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400">
+                  Newsletter
+                </h3>
+              </div>
+              <p className="mb-5 text-sm leading-relaxed text-gray-400">
                 Stay updated with the latest luxury properties and exclusive
-                offers.
+                offers curated just for you.
               </p>
 
               {!subscribed ? (
                 <form
                   onSubmit={handleSubscribe}
-                  className="relative flex items-stretch gap-0 overflow-hidden rounded-xl border border-gray-700/60 bg-gray-900/60 focus-within:border-emerald-500/60 focus-within:ring-1 focus-within:ring-emerald-500/20 transition-all duration-300"
+                  className="relative flex items-stretch gap-0 overflow-hidden rounded-xl border border-amber-500/15 bg-white/[0.03] backdrop-blur-sm focus-within:border-amber-500/40 focus-within:ring-1 focus-within:ring-amber-500/20 transition-all duration-300"
                 >
                   <input
                     type="email"
@@ -308,13 +371,13 @@ export function Footer() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
-                    className="flex-1 bg-transparent px-4 py-3 text-sm text-gray-200 placeholder-gray-500 outline-none"
+                    className="flex-1 bg-transparent px-4 py-3.5 text-sm text-gray-200 placeholder-gray-600 outline-none"
                   />
                   <motion.button
                     type="submit"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.97 }}
-                    className="flex items-center gap-2 whitespace-nowrap bg-gradient-to-r from-emerald-600 to-emerald-500 px-5 text-sm font-medium text-white transition-shadow duration-300 hover:shadow-lg hover:shadow-emerald-500/25"
+                    className="flex items-center gap-2 whitespace-nowrap bg-gradient-to-r from-amber-600 to-amber-500 px-5 text-sm font-medium text-gray-950 transition-shadow duration-300 hover:shadow-lg hover:shadow-amber-500/25"
                   >
                     <Send className="h-4 w-4" />
                     Subscribe
@@ -324,59 +387,91 @@ export function Footer() {
                 <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="flex items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-5 py-3"
+                  className="flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-5 py-3.5"
                 >
-                  <CheckCircle className="h-5 w-5 text-emerald-400" />
-                  <span className="text-sm text-emerald-300">
+                  <CheckCircle className="h-5 w-5 text-amber-400" />
+                  <span className="text-sm text-amber-200">
                     Thanks for subscribing!
                   </span>
                 </motion.div>
               )}
+
+              {/* Trusted line */}
+              <div className="mt-4 flex items-center gap-2 text-gray-500">
+                <Shield className="h-3.5 w-3.5" />
+                <span className="text-[11px] tracking-wide">No spam, unsubscribe anytime</span>
+              </div>
             </motion.div>
           </div>
 
+          {/* ======== Decorative Divider ======== */}
+          <div className="mt-14">
+            <GoldDivider />
+          </div>
+
           {/* ======== Trust Badges ======== */}
-          <div className="mt-16 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
             {trustBadges.map((badge, i) => (
               <TrustBadge
                 key={badge.label}
                 icon={badge.icon}
                 label={badge.label}
+                sublabel={badge.sublabel}
                 delay={i * 0.1}
               />
             ))}
           </div>
 
-          {/* ======== Divider ======== */}
-          <div className="mt-12 h-px bg-gradient-to-r from-transparent via-gray-700/60 to-transparent" />
+          {/* ======== Bottom Divider ======== */}
+          <div className="mt-12">
+            <GoldDivider />
+          </div>
 
           {/* ======== Bottom bar ======== */}
-          <div className="mt-8 flex flex-col items-center justify-between gap-4 md:flex-row">
-            <p className="text-xs text-gray-500">
-              &copy; {new Date().getFullYear()} CIAR.{' '}
-              {t.footer.rights}.
-            </p>
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="mt-8 flex flex-col items-center justify-between gap-4 md:flex-row"
+          >
+            <div className="flex items-center gap-3">
+              <Crown className="h-3.5 w-3.5 text-amber-500/40" />
+              <p className="text-xs text-gray-500">
+                &copy; {new Date().getFullYear()}{' '}
+                <button
+                  onClick={() => setCurrentPage('admin-login')}
+                  className="font-heading text-amber-400/60 font-semibold cursor-default select-none"
+                  title=""
+                >
+                  CIAR
+                </button>.{' '}
+                {t.footer.rights}
+              </p>
+            </div>
             <div className="flex items-center gap-6">
               <button
                 onClick={() => setCurrentPage('home')}
-                className="text-xs text-gray-500 transition-colors hover:text-gray-300"
+                className="text-xs text-gray-500 transition-colors duration-300 hover:text-amber-300"
               >
                 {t.footer.privacy}
               </button>
+              <span className="h-3 w-px bg-amber-500/20" />
               <button
                 onClick={() => setCurrentPage('home')}
-                className="text-xs text-gray-500 transition-colors hover:text-gray-300"
+                className="text-xs text-gray-500 transition-colors duration-300 hover:text-amber-300"
               >
                 {t.footer.terms}
               </button>
+              <span className="h-3 w-px bg-amber-500/20" />
               <button
                 onClick={() => setCurrentPage('home')}
-                className="text-xs text-gray-500 transition-colors hover:text-gray-300"
+                className="text-xs text-gray-500 transition-colors duration-300 hover:text-amber-300"
               >
                 {t.common.contact}
               </button>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
 
@@ -390,7 +485,7 @@ export function Footer() {
             transition={{ duration: 0.25 }}
             onClick={scrollToTop}
             aria-label="Back to top"
-            className="fixed right-6 bottom-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-amber-500 text-white shadow-lg shadow-emerald-500/25 transition-shadow duration-300 hover:shadow-xl hover:shadow-emerald-500/40"
+            className="fixed right-6 bottom-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-amber-600 text-gray-950 shadow-lg shadow-amber-500/20 transition-shadow duration-300 hover:shadow-xl hover:shadow-amber-500/30"
           >
             <ArrowUp className="h-5 w-5" />
           </motion.button>

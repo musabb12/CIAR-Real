@@ -819,6 +819,37 @@ export function SearchPage() {
   // ---- Render ----
   return (
     <div className="min-h-screen bg-background">
+      {/* Hero Banner */}
+      <div
+        className="relative overflow-hidden"
+        style={{
+          backgroundImage: "url('https://picsum.photos/seed/ciar-search-bg/1920/400.jpg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70" />
+        <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="font-heading text-3xl font-bold text-white sm:text-4xl"
+          >
+            {t.search.title}
+          </motion.h1>
+          <div className="mt-3 h-[3px] w-16 bg-gradient-to-r from-amber-500 to-amber-400" />
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.15 }}
+            className="mt-4 max-w-xl text-sm text-white/80 sm:text-base"
+          >
+            {'Discover your perfect property from our extensive collection'}
+          </motion.p>
+        </div>
+      </div>
+
       {/* Top Bar */}
       <div className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="mx-auto max-w-7xl px-4 py-3 sm:px-6 lg:px-8">
@@ -957,7 +988,7 @@ export function SearchPage() {
             <div className="sticky top-[130px] rounded-xl border bg-card p-5 shadow-sm">
               <div className="mb-4 flex items-center gap-2">
                 <SlidersHorizontal className="size-4 text-primary" />
-                <h2 className="font-semibold">{t.search.filters}</h2>
+                <h2 className="font-heading font-semibold">{t.search.filters}</h2>
                 {activeFilterCount > 0 && (
                   <Badge
                     variant="secondary"

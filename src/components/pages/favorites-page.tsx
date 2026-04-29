@@ -385,12 +385,26 @@ export function FavoritesPage() {
       animate="animate"
       className="p-4 md:p-6 max-w-6xl mx-auto space-y-6"
     >
-      {/* Page Header */}
-      <motion.div variants={fadeInUp}>
-        <h1 className="text-2xl md:text-3xl font-bold">{t.favorites.myFavorites}</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          {favorites.length} saved {favorites.length === 1 ? 'property' : 'properties'}
-        </p>
+      {/* Page Header Banner */}
+      <motion.div
+        variants={fadeInUp}
+        className="relative -mx-4 -mt-4 overflow-hidden sm:-mx-6 md:-mx-6 sm:-mt-6 md:-mt-6"
+        style={{
+          backgroundImage: "url('https://picsum.photos/seed/ciar-favorites-bg/1920/400.jpg')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/70" />
+        <div className="relative px-4 py-14 sm:px-6 sm:py-16">
+          <h1 className="font-heading text-3xl font-bold text-white sm:text-4xl">
+            {t.favorites.myFavorites}
+          </h1>
+          <div className="mt-3 h-[3px] w-16 bg-gradient-to-r from-amber-500 to-amber-400" />
+          <p className="mt-3 text-sm text-white/80 sm:text-base">
+            {favorites.length} saved {favorites.length === 1 ? 'property' : 'properties'}
+          </p>
+        </div>
       </motion.div>
 
       {/* Empty state */}

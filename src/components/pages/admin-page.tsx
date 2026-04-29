@@ -54,7 +54,7 @@ import {
   LayoutDashboard, Building2, Users, MessageSquare, Eye,
   TrendingUp, Plus, Edit, Trash2, Search, BarChart3, MapPin,
   Flag, Image as ImageIcon, ChevronDown, ChevronRight, MoreHorizontal,
-  LogIn, ShieldAlert, Star, Globe, Home,
+  LogIn, ShieldAlert, Star, Globe, Home, Crown,
   // Feature icon imports
   Brain, Footprints, Bell, LayoutGrid,
   Flame, GraduationCap, Car, Leaf, Wifi, Volume2, Dog, Music, CalendarDays,
@@ -858,7 +858,7 @@ export function AdminPage() {
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 px-4">
         <motion.div {...fadeIn}>
           <ShieldAlert className="mx-auto h-16 w-16 text-destructive/60" />
-          <h2 className="mt-4 text-2xl font-bold">{t.admin.accessDenied}</h2>
+          <h2 className="mt-4 font-heading text-2xl font-bold">{t.admin.accessDenied}</h2>
           <p className="mt-2 text-center text-muted-foreground max-w-md">
             {t.admin.accessDeniedMessage}
           </p>
@@ -933,9 +933,10 @@ export function AdminPage() {
           {/* Properties by Type — Bar Chart */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-2 text-base font-heading">
                 <BarChart3 className="h-4 w-4" /> {t.admin.propertiesByType}
               </CardTitle>
+              <div className="h-[3px] w-16 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full mt-1" />
             </CardHeader>
             <CardContent className="pt-0">
               <div className="h-64">
@@ -963,9 +964,10 @@ export function AdminPage() {
           {/* Inquiries by Status — Bar Chart */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base">
+              <CardTitle className="flex items-center gap-2 text-base font-heading">
                 <MessageSquare className="h-4 w-4" /> Inquiries by Status
               </CardTitle>
+              <div className="h-[3px] w-16 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full mt-1" />
             </CardHeader>
             <CardContent className="pt-0">
               <div className="h-64">
@@ -994,9 +996,10 @@ export function AdminPage() {
         {/* ── Recent Inquiries Table ── */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle className="flex items-center gap-2 text-base font-heading">
               <TrendingUp className="h-4 w-4" /> {t.admin.recentInquiries}
             </CardTitle>
+            <div className="h-[3px] w-16 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full mt-1" />
           </CardHeader>
           <CardContent className="pt-0">
             <div className="overflow-x-auto">
@@ -1281,7 +1284,10 @@ export function AdminPage() {
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base">User Management ({users.length})</CardTitle>
+            <div>
+              <CardTitle className="font-heading text-base">User Management ({users.length})</CardTitle>
+              <div className="h-[3px] w-16 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full mt-1" />
+            </div>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -1389,7 +1395,7 @@ export function AdminPage() {
   const renderLocations = () => (
     <motion.div {...fadeIn} className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm text-muted-foreground">{locations.length} countries</h3>
+        <h3 className="font-heading text-sm text-muted-foreground">{locations.length} countries</h3>
         <Button size="sm" onClick={() => openLocationDialog('Country')}>
           <Plus className="mr-1 h-4 w-4" /> {t.admin.addCountry}
         </Button>
@@ -1594,7 +1600,7 @@ export function AdminPage() {
   const renderBanners = () => (
     <motion.div {...fadeIn} className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm text-muted-foreground">{banners.length} banners</h3>
+        <h3 className="font-heading text-sm text-muted-foreground">{banners.length} banners</h3>
         <Button size="sm" onClick={() => openBannerDialog()}><Plus className="mr-1 h-4 w-4" /> {t.admin.add}</Button>
       </div>
       <Card>
@@ -1825,7 +1831,8 @@ export function AdminPage() {
                 <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${categoryColorMap[category] || ''}`}>
                   <CatIcon className="h-4 w-4" />
                 </div>
-                <h3 className="text-sm font-semibold uppercase tracking-wider">{category}</h3>
+                <h3 className="font-heading text-sm font-semibold uppercase tracking-wider">{category}</h3>
+                <div className="h-[2px] w-10 bg-gradient-to-r from-amber-500 to-amber-400 rounded-full" />
                 <Badge variant="secondary" className="text-xs">{catEnabled}/{catFeatures.length} enabled</Badge>
               </div>
 
@@ -1921,32 +1928,39 @@ export function AdminPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
-        <div className="container mx-auto max-w-7xl px-4 py-4">
+      <div className="border-b sticky top-0 z-50 bg-gradient-to-r from-[#0a1a14]/95 via-[#0d1f18]/95 to-[#0f1a12]/95 backdrop-blur supports-[backdrop-filter]:backdrop-blur-xl border-emerald-800/30">
+        {/* Gold accent line at top */}
+        <div className="h-[2px] bg-gradient-to-r from-transparent via-amber-500/60 to-transparent" />
+        <div className="container mx-auto max-w-7xl px-4 py-5">
           <div className="flex items-center justify-between">
-            <div>
-              <motion.h1
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="text-2xl font-bold tracking-tight"
-              >
-                CIAR {t.admin.dashboard}
-              </motion.h1>
-              <motion.p
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.1 }}
-                className="text-sm text-muted-foreground mt-0.5"
-              >
-                Manage your platform from one place
-              </motion.p>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-amber-600 shadow-lg shadow-amber-500/20">
+                <Crown className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <motion.h1
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="font-heading text-2xl font-bold tracking-tight bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 bg-clip-text text-transparent"
+                >
+                  CIAR {t.admin.dashboard}
+                </motion.h1>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                  className="text-sm text-muted-foreground/80 mt-0.5"
+                >
+                  Manage your platform from one place
+                </motion.p>
+              </div>
             </div>
             <motion.div
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center gap-2"
             >
-              <Badge variant="outline" className="hidden sm:flex items-center gap-1">
+              <Badge variant="outline" className="hidden sm:flex items-center gap-1 border-amber-500/30 text-amber-400">
                 <ShieldAlert className="h-3 w-3" /> Admin
               </Badge>
             </motion.div>

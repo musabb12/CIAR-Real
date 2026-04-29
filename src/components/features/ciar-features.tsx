@@ -16,7 +16,7 @@ import {
   UtensilsCrossed, Music, Theater, PartyPopper, Pill, Siren, Baby,
   BabyCarriage, SmilePlus, ThumbsUp, ThumbsDown, MessageSquare,
   Send, ChevronDown, AlertCircle, Info, FlameKindling, SnowflakeIcon,
-  SunDim, Leaf as LeafIcon, CircleDot, CircleCheck, CircleX,
+  SunDim, Leaf as LeafIcon, CircleDot, CircleCheck, CircleX, Plane, Train,
 } from 'lucide-react';
 
 // ─── Shared Types ───────────────────────────────────────────────────────────

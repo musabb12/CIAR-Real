@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { NewsTicker } from '@/components/layout/news-ticker';
@@ -22,9 +21,15 @@ import { Toaster } from 'sonner';
 
 export default function Home() {
   const { currentPage, currentUser, isAuthenticated, setFavorites, setFeatures, locale } = useAppStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Load favorites when user logs in
   useEffect(() => {
+    if (!mounted) return;
     if (isAuthenticated && currentUser) {
       fetch(`/api/favorites?userId=${currentUser.id}`)
         .then((res) => res.json())
@@ -33,10 +38,11 @@ export default function Home() {
         })
         .catch(() => {});
     }
-  }, [isAuthenticated, currentUser, setFavorites]);
+  }, [isAuthenticated, currentUser, setFavorites, mounted]);
 
   // Load feature toggles from API
   useEffect(() => {
+    if (!mounted) return;
     fetch('/api/features')
       .then((res) => res.json())
       .then((data) => {
@@ -49,14 +55,15 @@ export default function Home() {
         }
       })
       .catch(() => {});
-  }, [setFeatures]);
+  }, [setFeatures, mounted]);
 
   // Update document dir and lang for RTL support
   useEffect(() => {
+    if (!mounted) return;
     const dir = getLocaleDirection(locale);
     document.documentElement.dir = dir;
     document.documentElement.lang = locale;
-  }, [locale]);
+  }, [locale, mounted]);
 
   const renderPage = () => {
     switch (currentPage) {
@@ -81,23 +88,21 @@ export default function Home() {
     }
   };
 
+  if (!mounted) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col">
       <ScrollProgress />
       {currentPage !== 'admin-login' && <Header />}
       {currentPage !== 'admin-login' && <NewsTicker />}
-      <main className={currentPage === 'admin-login' ? 'flex-1' : 'flex-1'}>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentPage}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.2 }}
-          >
-            {renderPage()}
-          </motion.div>
-        </AnimatePresence>
+      <main className="flex-1">
+        {renderPage()}
       </main>
       {currentPage !== 'admin-login' && <Footer />}
       <AIChatbot />

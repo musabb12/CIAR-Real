@@ -171,8 +171,7 @@ function ChartTooltipContent({
   const nestLabel = payload.length === 1 && indicator !== "dot"
 
   return (
-    <div
-      className={cn(
+    <div className={cn(
         "border-border/50 bg-background grid min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl",
         className
       )}
@@ -200,8 +199,7 @@ function ChartTooltipContent({
                     <itemConfig.icon />
                   ) : (
                     !hideIndicator && (
-                      <div
-                        className={cn(
+                      <div className={cn(
                           "shrink-0 rounded-[2px] border-(--color-border) bg-(--color-bg)",
                           {
                             "h-2.5 w-2.5": indicator === "dot",
@@ -220,8 +218,7 @@ function ChartTooltipContent({
                       />
                     )
                   )}
-                  <div
-                    className={cn(
+                  <div className={cn(
                       "flex flex-1 justify-between leading-none",
                       nestLabel ? "items-end" : "items-center"
                     )}
@@ -268,8 +265,7 @@ function ChartLegendContent({
   }
 
   return (
-    <div
-      className={cn(
+    <div className={cn(
         "flex items-center justify-center gap-4",
         verticalAlign === "top" ? "pb-3" : "pt-3",
         className
@@ -289,8 +285,7 @@ function ChartLegendContent({
             {itemConfig?.icon && !hideIcon ? (
               <itemConfig.icon />
             ) : (
-              <div
-                className="h-2 w-2 shrink-0 rounded-[2px]"
+              <div className="h-2 w-2 shrink-0 rounded-[2px]">
                 style={{
                   backgroundColor: item.color,
                 }}

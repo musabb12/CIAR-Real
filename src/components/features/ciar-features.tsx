@@ -213,7 +213,7 @@ export function VirtualTourViewer({ property }: FeatureProps) {
         ))}
         {/* 360° badge */}
         <div className="absolute bottom-3 right-3 px-2 py-1 rounded-full bg-amber-500/90 text-white text-xs font-bold flex items-center gap-1">
-          <Eye className="w-3 h-3" /> 360°
+          <Eye className="w-3 h-3" /> 360°>
         </div>
       </div>
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -464,10 +464,10 @@ export function SmartPriceAlerts({ property }: FeatureProps) {
           <label className="text-xs text-muted-foreground mb-1.5 block">Alert Type</label>
           <div className="flex gap-2">
             <button onClick={() => setAlertType('drop')} className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all ${alertType === 'drop' ? 'bg-gradient-to-r from-emerald-500 to-teal-400 text-white shadow-sm' : 'bg-muted/20 text-muted-foreground hover:bg-muted/30'}`}>
-              <ArrowDownRight className="w-3 h-3" /> Price Drop
+              <ArrowDownRight className="w-3 h-3" /> Price Drop>
             </button>
             <button onClick={() => setAlertType('rise')} className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all ${alertType === 'rise' ? 'bg-gradient-to-r from-amber-500 to-orange-400 text-white shadow-sm' : 'bg-muted/20 text-muted-foreground hover:bg-muted/30'}`}>
-              <ArrowUpRight className="w-3 h-3" /> Price Rise
+              <ArrowUpRight className="w-3 h-3" /> Price Rise>
             </button>
           </div>
         </div>
@@ -556,7 +556,7 @@ export function PropertyReviews({ property }: FeatureProps) {
         ))}
       </div>
       <button className="w-full py-2 rounded-lg border border-dashed border-emerald-500/30 text-emerald-500 text-xs font-medium hover:bg-emerald-500/5 transition-colors flex items-center justify-center gap-1">
-        <MessageSquare className="w-3.5 h-3.5" /> Write Review
+        <MessageSquare className="w-3.5 h-3.5" /> Write Review>
       </button>
     </GlassCard>
   );
@@ -1364,11 +1364,11 @@ export function SimilarProperties({ property }: FeatureProps) {
             <div className="flex items-center justify-between mb-2">
               <p className="text-sm font-bold">{fmtPrice(s.price)}</p>
               <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium ${s.match >= 90 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
-                <Target className="w-2.5 h-2.5" /> {s.match}% match
+                <Target className="w-2.5 h-2.5" /> {s.match}% match>
               </div>
             </div>
             <p className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1">
-              <MapPin className="w-3 h-3" /> {s.location}
+              <MapPin className="w-3 h-3" /> {s.location}>
             </p>
             <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
               <span className="flex items-center gap-0.5"><Bed className="w-3 h-3" /> {s.beds} beds</span>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import React from 'react';
 import {
   Heart,
   Bed,
@@ -162,12 +162,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
 
   // ---- Render ----
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: 'spring', stiffness: 260, damping: 24 }}
-      className="perspective-container"
-    >
+    <div className="perspective-container">
       <div
         ref={cardRef}
         className="card-3d"
@@ -244,12 +239,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
 
             {/* ------ Featured star badge with shimmer ------ */}
             {property.isFeatured && (
-              <motion.div
-                initial={{ scale: 0, rotate: -180 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 15, delay: 0.2 }}
-                className="absolute left-1/2 top-3 -translate-x-1/2"
-              >
+              <div className="absolute left-1/2 top-3 -translate-x-1/2">
                 <div className="relative overflow-hidden rounded-full bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 px-3 py-1 shadow-lg shadow-amber-500/25">
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-[shimmerSlide_2.5s_ease-in-out_infinite]" />
                   <span className="relative flex items-center gap-1 text-[11px] font-bold text-amber-900">
@@ -257,16 +247,13 @@ export function PropertyCard({ property }: PropertyCardProps) {
                     {t.property.featured}
                   </span>
                 </div>
-              </motion.div>
+              </div>
             )}
 
             {/* ------ TOP-RIGHT: Favorite heart button ------ */}
-            <motion.button
+            <button
               onClick={handleFavoriteClick}
               className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center glass-badge rounded-full transition-colors hover:bg-black/50"
-              whileTap={{ scale: 0.8 }}
-              animate={heartBurst ? { scale: [1, 1.3, 1] } : { scale: 1 }}
-              transition={{ duration: 0.35 }}
               aria-label={favorited ? 'Remove from favorites' : 'Add to favorites'}
             >
               <Heart
@@ -276,7 +263,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
                     : 'fill-none text-white'
                 }`}
               />
-            </motion.button>
+            </button>
 
             {/* ------ BOTTOM-RIGHT: Price tag with glass + Image counter ------ */}
             <div className="absolute right-3 bottom-3 flex flex-col items-end gap-1.5">
@@ -372,17 +359,12 @@ export function PropertyCard({ property }: PropertyCardProps) {
               </div>
 
               {/* View Details — slides in on hover */}
-              <motion.span
-                className="flex items-center gap-1 text-xs font-semibold text-primary"
-                initial={{ opacity: 0, x: 12 }}
-                whileHover={{ x: 2 }}
-                transition={{ duration: 0.25 }}
-              >
+              <span className="flex items-center gap-1 text-xs font-semibold text-primary">
                 <span className="hidden opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:inline">
                   {t.property.viewDetails}
                 </span>
                 <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-              </motion.span>
+              </span>
             </div>
 
             {/* Subtle hover glow overlay */}
@@ -390,6 +372,6 @@ export function PropertyCard({ property }: PropertyCardProps) {
           </CardContent>
         </Card>
       </div>
-    </motion.div>
+    </div>
   );
 }

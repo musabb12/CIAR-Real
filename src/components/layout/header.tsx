@@ -2,7 +2,6 @@
 
 import { useTheme } from 'next-themes';
 import { useState, useEffect, useCallback, useRef, useSyncExternalStore } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
   Building2,
   Search,
@@ -25,6 +24,7 @@ import {
   Lock,
   Loader2,
   MessageSquare,
+  Mail,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -126,10 +126,8 @@ export function Header() {
     }
   }, []);
 
-  // Attach scroll listener on mount
   useEffect(() => {
     window.addEventListener('scroll', handleScroll, { passive: true });
-    // Defer initial read to avoid synchronous setState in effect
     const rafId = requestAnimationFrame(() => {
       handleScroll();
     });
@@ -200,7 +198,6 @@ export function Header() {
       if (res.ok) {
         setRegisterSuccess(true);
         setRegisterForm({ name: '', email: '', password: '', phone: '' });
-        // Auto-login after short delay to show success
         setTimeout(() => {
           login(data.user);
           setShowLoginDialog(false);
@@ -209,7 +206,7 @@ export function Header() {
       } else {
         setRegisterError(data.error || 'Registration failed');
       }
-    } catch (err) {
+    } catch {
       setRegisterError('Network error. Please check your connection and try again.');
     } finally {
       setRegisterLoading(false);
@@ -273,20 +270,15 @@ export function Header() {
 
   return (
     <>
-      {/* ============================================================ */}
-      {/* Scroll Progress Indicator                                      */}
-      {/* ============================================================ */}
+      {/* Scroll Progress Indicator */}
       <div className="fixed top-0 left-0 right-0 z-[60] h-[2px]">
-        <motion.div
-          className="h-full bg-gradient-to-r from-amber-400 via-yellow-300 to-emerald-400"
+        <div
+          className="h-full bg-gradient-to-r from-amber-400 via-yellow-300 to-emerald-400 transition-[width] duration-150 ease-out"
           style={{ width: `${scrollProgress}%` }}
-          transition={{ duration: 0.1, ease: 'linear' }}
         />
       </div>
 
-      {/* ============================================================ */}
-      {/* Header                                                        */}
-      {/* ============================================================ */}
+      {/* Header */}
       <header
         dir={rtl ? 'rtl' : 'ltr'}
         className={`sticky top-0 z-50 w-full transition-all duration-500 ease-out glass-nav ${headerShadow}`}
@@ -298,7 +290,7 @@ export function Header() {
             className="group flex items-center gap-2.5 transition-opacity hover:opacity-80"
           >
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-emerald-600 shadow-lg shadow-amber-500/20 transition-shadow duration-300 group-hover:shadow-amber-500/40">
-              <Building2 className="h-4.5 w-4.5 text-white" />
+              <Building2 className="h-4 w-4 text-white" />
             </div>
             <span className="font-heading bg-gradient-to-r from-amber-600 via-amber-500 to-emerald-600 bg-clip-text text-2xl font-bold tracking-wide text-transparent">
               CIAR
@@ -327,17 +319,12 @@ export function Header() {
                   </span>
                   <span>{t.nav[item.labelKey]}</span>
                   {item.page === 'favorites' && favoritePropertyIds.size > 0 && (
-                    <span className="flex h-4.5 min-w-4.5 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-emerald-500 px-1 text-[10px] font-bold leading-none text-white">
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-emerald-500 px-1 text-[10px] font-bold leading-none text-white">
                       {favoritePropertyIds.size}
                     </span>
                   )}
-                  {/* Gold underline accent for active item */}
                   {isActive && (
-                    <motion.span
-                      layoutId="active-nav-underline"
-                      className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600"
-                      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                    />
+                    <span className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600" />
                   )}
                 </button>
               );
@@ -398,55 +385,44 @@ export function Header() {
                     scrolled ? 'text-muted-foreground' : isDark ? 'text-white/70' : 'text-gray-500'
                   }`}
                 />
-                <span
-                  className={`hidden sm:inline ${
+                <span className={`hidden sm:inline ${
                     scrolled ? '' : isDark ? 'text-white/70' : 'text-gray-600'
                   }`}
                 >
                   {currentLocaleName}
                 </span>
               </Button>
-              <AnimatePresence>
-                {langMenuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -8, scale: 0.96 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -8, scale: 0.96 }}
-                    transition={{ duration: 0.2, ease: 'easeOut' }}
-                    className="absolute end-0 top-full mt-2 w-44 overflow-hidden glass-deep rounded-xl p-1"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {locales.map((l) => (
-                      <button
-                        key={l.code}
-                        onClick={() => {
-                          setLocale(l.code as Locale);
-                          setLangMenuOpen(false);
-                        }}
-                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] transition-colors ${
+              {langMenuOpen && (
+                <div className="absolute end-0 top-full mt-2 w-44 overflow-hidden glass-deep rounded-xl p-1">
+                  {locales.map((l) => (
+                    <button
+                      key={l.code}
+                      onClick={() => {
+                        setLocale(l.code as Locale);
+                        setLangMenuOpen(false);
+                      }}
+                      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] transition-colors ${
+                        l.code === locale
+                          ? 'bg-gradient-to-r from-amber-500/10 to-emerald-500/10 font-semibold text-amber-700 dark:text-amber-400'
+                          : 'text-gray-600 hover:bg-gray-100/80 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-white'
+                      }`}
+                    >
+                      <span className={`flex h-6 w-6 items-center justify-center rounded-md text-[10px] font-bold uppercase tracking-wider ${
                           l.code === locale
-                            ? 'bg-gradient-to-r from-amber-500/10 to-emerald-500/10 font-semibold text-amber-700 dark:text-amber-400'
-                            : 'text-gray-600 hover:bg-gray-100/80 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-white'
+                            ? 'bg-gradient-to-br from-amber-500 to-emerald-500 text-white'
+                            : 'bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400'
                         }`}
                       >
-                        <span
-                          className={`flex h-6 w-6 items-center justify-center rounded-md text-[10px] font-bold uppercase tracking-wider ${
-                            l.code === locale
-                              ? 'bg-gradient-to-br from-amber-500 to-emerald-500 text-white'
-                              : 'bg-gray-100 text-gray-500 dark:bg-white/10 dark:text-gray-400'
-                          }`}
-                        >
-                          {l.code}
-                        </span>
-                        <span className="flex-1 text-start">{l.name}</span>
-                        {l.code === locale && (
-                          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                        )}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                        {l.code}
+                      </span>
+                      <span className="flex-1 text-start">{l.name}</span>
+                      {l.code === locale && (
+                        <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* ---- Theme Toggle ---- */}
@@ -457,33 +433,11 @@ export function Header() {
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                 className="relative h-8 w-8 rounded-full overflow-hidden"
               >
-                <AnimatePresence mode="wait" initial={false}>
-                  {theme === 'dark' ? (
-                    <motion.div
-                      key="sun"
-                      initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
-                      animate={{ rotate: 0, opacity: 1, scale: 1 }}
-                      exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
-                      transition={{ duration: 0.3, ease: 'easeInOut' }}
-                    >
-                      <Sun className="h-4 w-4 text-amber-400" />
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                      key="moon"
-                      initial={{ rotate: 90, opacity: 0, scale: 0.5 }}
-                      animate={{ rotate: 0, opacity: 1, scale: 1 }}
-                      exit={{ rotate: -90, opacity: 0, scale: 0.5 }}
-                      transition={{ duration: 0.3, ease: 'easeInOut' }}
-                    >
-                      <Moon
-                        className={`h-4 w-4 ${
-                          scrolled ? 'text-gray-500' : 'text-gray-500'
-                        }`}
-                      />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                {theme === 'dark' ? (
+                  <Sun className={`h-4 w-4 ${scrolled ? 'text-gray-500' : 'text-gray-500'}`} />
+                ) : (
+                  <Moon className={`h-4 w-4 ${scrolled ? 'text-gray-500' : 'text-gray-500'}`} />
+                )}
               </Button>
             )}
 
@@ -503,59 +457,50 @@ export function Header() {
                     {currentUser?.name?.charAt(0)?.toUpperCase() || 'U'}
                   </div>
                 </Button>
-                <AnimatePresence>
-                  {userMenuOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -8, scale: 0.96 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -8, scale: 0.96 }}
-                      transition={{ duration: 0.2, ease: 'easeOut' }}
-                      className="absolute end-0 top-full mt-2 w-60 overflow-hidden glass-deep rounded-xl p-1"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <div className="border-b border-gray-100 px-3 py-3 dark:border-white/5">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-emerald-600 text-sm font-bold text-white">
-                            {currentUser?.name?.charAt(0)?.toUpperCase() || 'U'}
-                          </div>
-                          <div className="flex-1 overflow-hidden">
-                            <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
-                              {currentUser?.name}
-                            </p>
-                            <p className="truncate text-xs text-muted-foreground">
-                              {currentUser?.email}
-                            </p>
-                          </div>
+                {userMenuOpen && (
+                  <div className="absolute end-0 top-full mt-2 w-60 overflow-hidden glass-deep rounded-xl p-1">
+                    <div className="border-b border-gray-100 px-3 py-3 dark:border-white/5">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-emerald-600 text-sm font-bold text-white">
+                          {currentUser?.name?.charAt(0)?.toUpperCase() || 'U'}
                         </div>
-                        <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500/10 to-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-amber-700 dark:text-amber-400">
-                          {currentUser?.role === 'ADMIN' && (
-                            <Shield className="h-3 w-3" />
-                          )}
-                          {currentUser?.role}
-                        </span>
+                        <div className="flex-1 overflow-hidden">
+                          <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                            {currentUser?.name}
+                          </p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {currentUser?.email}
+                          </p>
+                        </div>
                       </div>
-                      {currentUser?.role === 'ADMIN' && (
-                        <button
-                          onClick={() => handleNavClick('admin')}
-                          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-gray-100/80 dark:hover:bg-white/5"
-                        >
-                          <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
-                          {t.admin.dashboard}
-                        </button>
-                      )}
+                      <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500/10 to-emerald-500/10 px-2.5 py-0.5 text-[11px] font-semibold tracking-wide text-amber-700 dark:text-amber-400">
+                        {currentUser?.role === 'ADMIN' && (
+                          <Shield className="h-3 w-3" />
+                        )}
+                        {currentUser?.role}
+                      </span>
+                    </div>
+                    {currentUser?.role === 'ADMIN' && (
                       <button
-                        onClick={() => {
-                          logout();
-                          setUserMenuOpen(false);
-                        }}
-                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-rose-500 transition-colors hover:bg-rose-500/10"
+                        onClick={() => handleNavClick('admin')}
+                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-gray-100/80 dark:hover:bg-white/5"
                       >
-                        <LogOut className="h-4 w-4" />
-                        {t.nav.signOut}
+                        <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
+                        {t.admin.dashboard}
                       </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    )}
+                    <button
+                      onClick={() => {
+                        logout();
+                        setUserMenuOpen(false);
+                      }}
+                      className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-rose-500 transition-colors hover:bg-rose-500/10"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      {t.nav.signOut}
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <Button
@@ -577,431 +522,373 @@ export function Header() {
                 scrolled ? '' : isDark ? 'text-white' : 'text-gray-900'
               }`}
             >
-              <AnimatePresence mode="wait" initial={false}>
-                {mobileMenuOpen ? (
-                  <motion.div
-                    key="close"
-                    initial={{ rotate: -90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: 90, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <X className="h-5 w-5" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="menu"
-                    initial={{ rotate: 90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: -90, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Menu className="h-5 w-5" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {mobileMenuOpen ? (
+                <X className="h-4 w-4" />
+              ) : (
+                <Menu className="h-4 w-4" />
+              )}
             </Button>
           </div>
         </div>
       </header>
 
-      {/* ============================================================ */}
-      {/* Mobile Menu - Full Screen Overlay                              */}
-      {/* ============================================================ */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-40 flex flex-col glass-deep lg:hidden"
-          >
-            {/* Mobile Menu Header */}
-            <div className="flex h-16 items-center justify-between border-b border-gray-100 px-4 sm:px-6 dark:border-white/5">
-              <button
-                onClick={() => handleNavClick('home')}
-                className="flex items-center gap-2.5"
-              >
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-emerald-600 shadow-lg shadow-amber-500/20">
-                  <Building2 className="h-4.5 w-4.5 text-white" />
-                </div>
-                <span className="font-heading bg-gradient-to-r from-amber-600 via-amber-500 to-emerald-600 bg-clip-text text-2xl font-bold tracking-wide text-transparent">
-                  CIAR
-                </span>
-              </button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setMobileMenuOpen(false)}
-                className="h-8 w-8 rounded-full"
-              >
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-
-            {/* Mobile Search */}
-            <div className="px-4 pt-4 sm:px-6">
-              <form onSubmit={handleSearch}>
-                <div className="relative">
-                  <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder={t.hero.searchPlaceholder}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-11 w-full rounded-xl border border-gray-200/50 bg-gray-50/60 ps-9 pe-4 text-sm outline-none transition-all focus:border-amber-500/50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
-                  />
-                </div>
-              </form>
-            </div>
-
-            {/* Mobile Nav Items */}
-            <nav className="flex-1 overflow-y-auto px-4 pt-6 sm:px-6">
-              <div className="space-y-1">
-                {navConfig.map((item, index) => {
-                  if (item.showAdmin && !isAuthenticated) return null;
-                  const isActive =
-                    currentPage === item.page ||
-                    (item.page === 'search' && currentPage === 'property-detail');
-                  return (
-                    <motion.button
-                      key={item.page}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.05 }}
-                      onClick={() => handleNavClick(item.page)}
-                      className={`relative flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition-all ${
-                        isActive
-                          ? 'bg-gradient-to-r from-amber-500/[0.08] to-emerald-500/[0.08] text-amber-700 dark:text-amber-400'
-                          : 'text-gray-600 hover:bg-gray-100/60 dark:text-gray-300 dark:hover:bg-white/5'
-                      }`}
-                    >
-                      <span
-                        className={
-                          isActive
-                            ? 'text-amber-600 dark:text-amber-500'
-                            : 'text-gray-400 dark:text-gray-500'
-                        }
-                      >
-                        {item.icon}
-                      </span>
-                      <span>{t.nav[item.labelKey]}</span>
-                      {item.page === 'favorites' && favoritePropertyIds.size > 0 && (
-                        <span className="ms-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-emerald-500 px-1.5 text-[10px] font-bold text-white">
-                          {favoritePropertyIds.size}
-                        </span>
-                      )}
-                      {/* Active indicator - gold bar on left edge */}
-                      {isActive && (
-                        <span className="absolute start-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-full bg-gradient-to-b from-amber-400 to-amber-600" />
-                      )}
-                    </motion.button>
-                  );
-                })}
+      {/* Mobile Menu - Full Screen Overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-40 flex flex-col glass-deep lg:hidden">
+          {/* Mobile Menu Header */}
+          <div className="flex h-16 items-center justify-between border-b border-gray-100 px-4 sm:px-6 dark:border-white/5">
+            <button
+              onClick={() => handleNavClick('home')}
+              className="flex items-center gap-2.5"
+            >
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-emerald-600 shadow-lg shadow-amber-500/20">
+                <Building2 className="h-4 w-4 text-white" />
               </div>
-            </nav>
+              <span className="font-heading bg-gradient-to-r from-amber-600 via-amber-500 to-emerald-600 bg-clip-text text-2xl font-bold tracking-wide text-transparent">
+                CIAR
+              </span>
+            </button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileMenuOpen(false)}
+              className="h-8 w-8 rounded-full"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
 
-            {/* Mobile Menu Footer */}
-            <div className="border-t border-gray-100 px-4 py-4 dark:border-white/5 sm:px-6">
-              {!isAuthenticated ? (
+          {/* Mobile Search */}
+          <div className="px-4 pt-4 sm:px-6">
+            <form onSubmit={handleSearch}>
+              <div className="relative">
+                <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder={t.hero.searchPlaceholder}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-11 w-full rounded-xl border border-gray-200/50 bg-gray-50/60 ps-9 pe-4 text-sm outline-none transition-all focus:border-amber-500/50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white"
+                />
+              </div>
+            </form>
+          </div>
+
+          {/* Mobile Nav Items */}
+          <nav className="flex-1 overflow-y-auto px-4 pt-6 sm:px-6">
+            <div className="space-y-1">
+              {navConfig.map((item) => {
+                if (item.showAdmin && !isAuthenticated) return null;
+                const isActive =
+                  currentPage === item.page ||
+                  (item.page === 'search' && currentPage === 'property-detail');
+                return (
+                  <button
+                    key={item.page}
+                    onClick={() => handleNavClick(item.page)}
+                    className={`relative flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-sm font-medium transition-all ${
+                      isActive
+                        ? 'bg-gradient-to-r from-amber-500/[0.08] to-emerald-500/[0.08] text-amber-700 dark:text-amber-400'
+                        : 'text-gray-600 hover:bg-gray-100/60 dark:text-gray-300 dark:hover:bg-white/5'
+                    }`}
+                  >
+                    <span className={
+                        isActive
+                          ? 'text-amber-600 dark:text-amber-500'
+                          : 'text-gray-400 dark:text-gray-500'
+                      }
+                    >
+                      {item.icon}
+                    </span>
+                    <span>{t.nav[item.labelKey]}</span>
+                    {item.page === 'favorites' && favoritePropertyIds.size > 0 && (
+                      <span className="ms-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-emerald-500 px-1.5 text-[10px] font-bold text-white">
+                        {favoritePropertyIds.size}
+                      </span>
+                    )}
+                    {isActive && (
+                      <span className="absolute start-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-full bg-gradient-to-b from-amber-400 to-amber-600" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </nav>
+
+          {/* Mobile Menu Footer */}
+          <div className="border-t border-gray-100 px-4 py-4 dark:border-white/5 sm:px-6">
+            {!isAuthenticated ? (
+              <Button
+                onClick={() => {
+                  setShowLoginDialog(true);
+                  setMobileMenuOpen(false);
+                }}
+                className="w-full rounded-xl bg-gradient-to-r from-amber-600 to-emerald-600 text-[13px] font-semibold tracking-wide text-white shadow-lg shadow-amber-500/20"
+              >
+                <LogIn className="me-2 h-4 w-4" />
+                {t.nav.signIn}
+              </Button>
+            ) : (
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-emerald-600 text-sm font-bold text-white">
+                  {currentUser?.name?.charAt(0)?.toUpperCase() || 'U'}
+                </div>
+                <div className="flex-1 overflow-hidden">
+                  <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                    {currentUser?.name}
+                  </p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {currentUser?.email}
+                  </p>
+                </div>
                 <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={() => {
-                    setShowLoginDialog(true);
+                    logout();
                     setMobileMenuOpen(false);
                   }}
-                  className="w-full rounded-xl bg-gradient-to-r from-amber-600 to-emerald-600 text-[13px] font-semibold tracking-wide text-white shadow-lg shadow-amber-500/20"
+                  className="h-8 w-8 rounded-full text-rose-500 hover:bg-rose-500/10"
                 >
-                  <LogIn className="me-2 h-4 w-4" />
-                  {t.nav.signIn}
+                  <LogOut className="h-4 w-4" />
                 </Button>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-emerald-600 text-sm font-bold text-white">
-                    {currentUser?.name?.charAt(0)?.toUpperCase() || 'U'}
-                  </div>
-                  <div className="flex-1 overflow-hidden">
-                    <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">
-                      {currentUser?.name}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground">
-                      {currentUser?.email}
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => {
-                      logout();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="h-8 w-8 rounded-full text-rose-500 hover:bg-rose-500/10"
-                  >
-                    <LogOut className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* ============================================================ */}
-      {/* Auth Dialog - Login / Register Tabs                            */}
-      {/* ============================================================ */}
-      <AnimatePresence>
-        {showLoginDialog && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-            onClick={() => setShowLoginDialog(false)}
-          >
-            {/* Backdrop */}
-            <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm dark:bg-gray-950/60" />
-
-            {/* Dialog Content */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 16 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              transition={{ duration: 0.35, ease: [0.19, 1, 0.22, 1] }}
-              className="relative w-full max-w-md overflow-hidden glass-deep rounded-2xl shadow-2xl shadow-black/[0.12]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Decorative gradient top bar */}
-              <div className="h-1 w-full bg-gradient-to-r from-amber-600 via-amber-500 to-emerald-600" />
-
-              <div className="p-6 sm:p-8">
-                {/* Header */}
-                <div className="mb-5 text-center">
-                  {/* Logo mark */}
-                  <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-emerald-600 shadow-lg shadow-amber-500/25">
-                    <Building2 className="h-7 w-7 text-white" />
-                  </div>
-                  <h2 className="font-heading text-2xl font-bold tracking-wide text-gray-900 dark:text-white">
-                    {t.auth.welcome}
-                  </h2>
-                </div>
-
-                {/* Tabs */}
-                <Tabs defaultValue="login" className="w-full">
-                  <TabsList className="mx-auto grid w-full grid-cols-2">
-                    <TabsTrigger
-                      value="login"
-                      className="gap-1.5 text-[13px] font-medium"
-                    >
-                      <LogIn className="h-3.5 w-3.5" />
-                      {t.auth.signIn}
-                    </TabsTrigger>
-                    <TabsTrigger
-                      value="register"
-                      className="gap-1.5 text-[13px] font-medium"
-                    >
-                      <UserPlus className="h-3.5 w-3.5" />
-                      {t.auth.signUp}
-                    </TabsTrigger>
-                  </TabsList>
-
-                  {/* ---- Login Tab ---- */}
-                  <TabsContent value="login">
-                    <p className="mb-4 mt-1 text-center text-sm text-gray-500 dark:text-gray-400">
-                      {t.auth.subtitle}
-                    </p>
-                    <form onSubmit={handleLogin} className="space-y-5">
-                      <div>
-                        <label className="mb-2 block text-[13px] font-semibold tracking-wide text-gray-600 dark:text-gray-300">
-                          {t.auth.email}
-                        </label>
-                        <div className="relative">
-                          <User className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                          <input
-                            type="email"
-                            value={loginEmail}
-                            onChange={(e) => setLoginEmail(e.target.value)}
-                            placeholder="admin@ciar.com"
-                            required
-                            className="h-11 w-full rounded-xl border border-gray-200/60 bg-gray-50/50 ps-10 pe-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-amber-500/50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-white/10"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Demo accounts section */}
-                      <div className="rounded-xl border border-gray-200/50 bg-gray-50/50 p-4 dark:border-white/[0.06] dark:bg-white/[0.03]">
-                        <p className="mb-3 flex items-center gap-1.5 text-[13px] font-semibold text-gray-700 dark:text-gray-300">
-                          <Shield className="h-3.5 w-3.5 text-amber-500" />
-                          {t.auth.demoAccounts}
-                        </p>
-                        <div className="space-y-2">
-                          {demoAccounts.map((account) => (
-                            <button
-                              key={account.email}
-                              type="button"
-                              onClick={() => setLoginEmail(account.email)}
-                              className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-all hover:bg-white hover:shadow-sm dark:hover:bg-white/5"
-                            >
-                              <span className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-amber-500/10 to-emerald-500/10 text-amber-600 dark:text-amber-400">
-                                {account.icon}
-                              </span>
-                              <div className="flex-1 overflow-hidden">
-                                <p className="truncate text-[12px] font-medium text-gray-800 dark:text-gray-200">
-                                  {account.email}
-                                </p>
-                                <p className="text-[11px] text-gray-400">{account.role}</p>
-                              </div>
-                              <ChevronDown className="-rotate-90 h-3 w-3 text-gray-300 dark:text-gray-600" />
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Action buttons */}
-                      <div className="flex gap-3 pt-1">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="flex-1 rounded-xl border-gray-200/60 text-[13px] font-medium transition-all hover:bg-gray-50 dark:border-white/10 dark:hover:bg-white/5"
-                          onClick={() => setShowLoginDialog(false)}
-                        >
-                          {t.admin.cancel}
-                        </Button>
-                        <Button
-                          type="submit"
-                          className="flex-1 rounded-xl bg-gradient-to-r from-amber-600 to-emerald-600 px-4 text-[13px] font-semibold tracking-wide text-white shadow-lg shadow-amber-500/25 transition-all hover:shadow-xl hover:shadow-amber-500/30 hover:brightness-105"
-                        >
-                          <LogIn className="me-1.5 h-3.5 w-3.5" />
-                          {t.auth.signIn}
-                        </Button>
-                      </div>
-                    </form>
-                  </TabsContent>
-
-                  {/* ---- Register Tab ---- */}
-                  <TabsContent value="register">
-                    <p className="mb-4 mt-1 text-center text-sm text-gray-500 dark:text-gray-400">
-                      {t.auth.registerSubtitle}
-                    </p>
-                    <form onSubmit={handleRegister} className={`space-y-4 ${registerSuccess ? 'pointer-events-none opacity-60' : ''}`}>
-                      {/* Error message */}
-                      {registerError && (
-                        <div className="rounded-lg border border-rose-200/60 bg-rose-50/80 px-3 py-2.5 text-[13px] font-medium text-rose-600 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-400">
-                          {registerError}
-                        </div>
-                      )}
-
-                      {/* Success message */}
-                      {registerSuccess && (
-                        <div className="rounded-lg border border-emerald-200/60 bg-emerald-50/80 px-4 py-3 text-center text-[13px] font-medium text-emerald-600 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400">
-                          <Loader2 className="mx-auto mb-1 h-4 w-4 animate-spin" />
-                          {t.auth.registerSuccess || 'Account created successfully! Logging you in...'}
-                        </div>
-                      )}
-
-                      {/* Name field */}
-                      <div>
-                        <label className="mb-2 block text-[13px] font-semibold tracking-wide text-gray-600 dark:text-gray-300">
-                          {t.auth.name}
-                        </label>
-                        <div className="relative">
-                          <User className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                          <input
-                            type="text"
-                            value={registerForm.name}
-                            onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
-                            placeholder="John Doe"
-                            required
-                            className="h-11 w-full rounded-xl border border-gray-200/60 bg-gray-50/50 ps-10 pe-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-amber-500/50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-white/10"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Email field */}
-                      <div>
-                        <label className="mb-2 block text-[13px] font-semibold tracking-wide text-gray-600 dark:text-gray-300">
-                          {t.auth.email}
-                        </label>
-                        <div className="relative">
-                          <Building2 className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                          <input
-                            type="email"
-                            value={registerForm.email}
-                            onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
-                            placeholder="you@example.com"
-                            required
-                            className="h-11 w-full rounded-xl border border-gray-200/60 bg-gray-50/50 ps-10 pe-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-amber-500/50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-white/10"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Password field */}
-                      <div>
-                        <label className="mb-2 block text-[13px] font-semibold tracking-wide text-gray-600 dark:text-gray-300">
-                          {t.auth.password}
-                        </label>
-                        <div className="relative">
-                          <Lock className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                          <input
-                            type="password"
-                            value={registerForm.password}
-                            onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
-                            placeholder="Min. 6 characters"
-                            required
-                            minLength={6}
-                            className="h-11 w-full rounded-xl border border-gray-200/60 bg-gray-50/50 ps-10 pe-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-amber-500/50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-white/10"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Phone field */}
-                      <div>
-                        <label className="mb-2 block text-[13px] font-semibold tracking-wide text-gray-600 dark:text-gray-300">
-                          {t.auth.phone}
-                        </label>
-                        <div className="relative">
-                          <Phone className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                          <input
-                            type="tel"
-                            value={registerForm.phone}
-                            onChange={(e) => setRegisterForm({ ...registerForm, phone: e.target.value })}
-                            placeholder="+1 (555) 000-0000"
-                            className="h-11 w-full rounded-xl border border-gray-200/60 bg-gray-50/50 ps-10 pe-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-amber-500/50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-white/10"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Action buttons */}
-                      <div className="flex gap-3 pt-1">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="flex-1 rounded-xl border-gray-200/60 text-[13px] font-medium transition-all hover:bg-gray-50 dark:border-white/10 dark:hover:bg-white/5"
-                          onClick={() => setShowLoginDialog(false)}
-                        >
-                          {t.admin.cancel}
-                        </Button>
-                        <Button
-                          type="submit"
-                          disabled={registerLoading}
-                          className="flex-1 rounded-xl bg-gradient-to-r from-amber-600 to-emerald-600 px-4 text-[13px] font-semibold tracking-wide text-white shadow-lg shadow-amber-500/25 transition-all hover:shadow-xl hover:shadow-amber-500/30 hover:brightness-105 disabled:opacity-60 disabled:hover:brightness-100"
-                        >
-                          {registerLoading ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <UserPlus className="me-1.5 h-3.5 w-3.5" />
-                          )}
-                          {t.auth.createAccount}
-                        </Button>
-                      </div>
-                    </form>
-                  </TabsContent>
-                </Tabs>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Auth Dialog - Login / Register Tabs */}
+      {showLoginDialog && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-gray-900/50 backdrop-blur-sm dark:bg-gray-950/60"
+            onClick={() => setShowLoginDialog(false)}
+          />
+
+          {/* Dialog Content */}
+          <div className="relative w-full max-w-md overflow-hidden glass-deep rounded-2xl shadow-2xl shadow-black/[0.12]">
+            {/* Decorative gradient top bar */}
+            <div className="h-1 w-full bg-gradient-to-r from-amber-600 via-amber-500 to-emerald-600" />
+
+            <div className="p-6 sm:p-8">
+              {/* Header */}
+              <div className="mb-5 text-center">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-emerald-600 shadow-lg shadow-amber-500/25">
+                  <Building2 className="h-7 w-7 text-white" />
+                </div>
+                <h2 className="font-heading text-2xl font-bold tracking-wide text-gray-900 dark:text-white">
+                  {t.auth.welcome}
+                </h2>
+              </div>
+
+              {/* Tabs */}
+              <Tabs defaultValue="login" className="w-full">
+                <TabsList className="mx-auto grid w-full grid-cols-2">
+                  <TabsTrigger
+                    value="login"
+                    className="gap-1.5 text-[13px] font-medium"
+                  >
+                    <LogIn className="h-3.5 w-3.5" />
+                    {t.auth.signIn}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="register"
+                    className="gap-1.5 text-[13px] font-medium"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                    {t.auth.signUp}
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* ---- Login Tab ---- */}
+                <TabsContent value="login">
+                  <p className="mb-4 mt-1 text-center text-sm text-gray-500 dark:text-gray-400">
+                    {t.auth.subtitle}
+                  </p>
+                  <form onSubmit={handleLogin} className="space-y-5">
+                    <div>
+                      <label className="mb-2 block text-[13px] font-semibold tracking-wide text-gray-600 dark:text-gray-300">
+                        {t.auth.email}
+                      </label>
+                      <div className="relative">
+                        <User className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <input
+                          type="email"
+                          value={loginEmail}
+                          onChange={(e) => setLoginEmail(e.target.value)}
+                          placeholder="admin@ciar.com"
+                          required
+                          className="h-11 w-full rounded-xl border border-gray-200/60 bg-gray-50/50 ps-10 pe-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-amber-500/50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-white/10"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Demo accounts section */}
+                    <div className="rounded-xl border border-gray-200/50 bg-gray-50/50 p-4 dark:border-white/[0.06] dark:bg-white/[0.03]">
+                      <p className="mb-3 flex items-center gap-1.5 text-[13px] font-semibold text-gray-700 dark:text-gray-300">
+                        <Shield className="h-3.5 w-3.5 text-amber-500" />
+                        {t.auth.demoAccounts}
+                      </p>
+                      <div className="space-y-2">
+                        {demoAccounts.map((account) => (
+                          <button
+                            key={account.email}
+                            type="button"
+                            onClick={() => setLoginEmail(account.email)}
+                            className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-all hover:bg-white hover:shadow-sm dark:hover:bg-white/5"
+                          >
+                            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-amber-500/10 to-emerald-500/10 text-amber-600 dark:text-amber-400">
+                              {account.icon}
+                            </span>
+                            <div className="flex-1 overflow-hidden">
+                              <p className="truncate text-[12px] font-medium text-gray-800 dark:text-gray-200">
+                                {account.email}
+                              </p>
+                              <p className="text-[11px] text-gray-400">{account.role}</p>
+                            </div>
+                            <ChevronDown className="-rotate-90 h-3 w-3 text-gray-300 dark:text-gray-600" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex gap-3 pt-1">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex-1 rounded-xl border-gray-200/60 text-[13px] font-medium transition-all hover:bg-gray-50 dark:border-white/10 dark:hover:bg-white/5"
+                        onClick={() => setShowLoginDialog(false)}
+                      >
+                        {t.admin.cancel}
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="flex-1 rounded-xl bg-gradient-to-r from-amber-600 to-emerald-600 px-4 text-[13px] font-semibold tracking-wide text-white shadow-lg shadow-amber-500/25 transition-all hover:shadow-xl hover:shadow-amber-500/30 hover:brightness-105"
+                      >
+                        <LogIn className="me-1.5 h-3.5 w-3.5" />
+                        {t.auth.signIn}
+                      </Button>
+                    </div>
+                  </form>
+                </TabsContent>
+
+                {/* ---- Register Tab ---- */}
+                <TabsContent value="register">
+                  <p className="mb-4 mt-1 text-center text-sm text-gray-500 dark:text-gray-400">
+                    {t.auth.registerSubtitle}
+                  </p>
+                  <form onSubmit={handleRegister} className={`space-y-4 ${registerSuccess ? 'pointer-events-none opacity-60' : ''}`}>
+                    {/* Error message */}
+                    {registerError && (
+                      <div className="rounded-lg border border-rose-200/60 bg-rose-50/80 px-3 py-2.5 text-[13px] font-medium text-rose-600 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-400">
+                        {registerError}
+                      </div>
+                    )}
+
+                    {/* Success message */}
+                    {registerSuccess && (
+                      <div className="rounded-lg border border-emerald-200/60 bg-emerald-50/80 px-4 py-3 text-center text-[13px] font-medium text-emerald-600 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-400">
+                        <Loader2 className="mx-auto mb-1 h-4 w-4 animate-spin" />
+                        {t.auth.registerSuccess || 'Account created successfully! Logging you in...'}
+                      </div>
+                    )}
+
+                    {/* Name field */}
+                    <div>
+                      <label className="mb-2 block text-[13px] font-semibold tracking-wide text-gray-600 dark:text-gray-300">
+                        {t.auth.name}
+                      </label>
+                      <div className="relative">
+                        <User className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <input
+                          type="text"
+                          value={registerForm.name}
+                          onChange={(e) => setRegisterForm({ ...registerForm, name: e.target.value })}
+                          placeholder="John Doe"
+                          required
+                          className="h-11 w-full rounded-xl border border-gray-200/60 bg-gray-50/50 ps-10 pe-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-amber-500/50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-white/10"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Email field */}
+                    <div>
+                      <label className="mb-2 block text-[13px] font-semibold tracking-wide text-gray-600 dark:text-gray-300">
+                        {t.auth.email}
+                      </label>
+                      <div className="relative">
+                        <Mail className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <input
+                          type="email"
+                          value={registerForm.email}
+                          onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
+                          placeholder="you@example.com"
+                          required
+                          className="h-11 w-full rounded-xl border border-gray-200/60 bg-gray-50/50 ps-10 pe-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-amber-500/50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-white/10"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Password field */}
+                    <div>
+                      <label className="mb-2 block text-[13px] font-semibold tracking-wide text-gray-600 dark:text-gray-300">
+                        {t.auth.password}
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <input
+                          type="password"
+                          value={registerForm.password}
+                          onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
+                          placeholder="••••••••"
+                          required
+                          className="h-11 w-full rounded-xl border border-gray-200/60 bg-gray-50/50 ps-10 pe-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-amber-500/50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-white/10"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Phone field */}
+                    <div>
+                      <label className="mb-2 block text-[13px] font-semibold tracking-wide text-gray-600 dark:text-gray-300">
+                        {t.auth.phone}
+                      </label>
+                      <div className="relative">
+                        <Phone className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <input
+                          type="tel"
+                          value={registerForm.phone}
+                          onChange={(e) => setRegisterForm({ ...registerForm, phone: e.target.value })}
+                          placeholder="+1 (555) 000-0000"
+                          className="h-11 w-full rounded-xl border border-gray-200/60 bg-gray-50/50 ps-10 pe-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-amber-500/50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-white/10"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Register button */}
+                    <Button
+                      type="submit"
+                      disabled={registerLoading}
+                      className="w-full rounded-xl bg-gradient-to-r from-amber-600 to-emerald-600 px-4 text-[13px] font-semibold tracking-wide text-white shadow-lg shadow-amber-500/25 transition-all hover:shadow-xl hover:shadow-amber-500/30 hover:brightness-105 disabled:opacity-50"
+                    >
+                      {registerLoading ? (
+                        <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <UserPlus className="me-2 h-4 w-4" />
+                      )}
+                      {t.auth.signUp}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
+
+

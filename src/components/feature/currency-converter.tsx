@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useSpring, useTransform } from 'framer-motion';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   ArrowUpDown,
   RefreshCw,
@@ -144,14 +143,7 @@ function parseNumericInput(value: string): number {
   return isNaN(num) ? 0 : num;
 }
 
-// ---------------------------------------------------------------------------
-// AnimatedNumber — smooth counter using framer-motion springs
-// ---------------------------------------------------------------------------
-
-function AnimatedNumber({
-  value,
-  currency,
-}: {
+: {
   value: number;
   currency: string;
 }) {
@@ -205,12 +197,8 @@ function CompactConverter({
   );
 
   return (
-    <motion.div
-      className="flex items-center gap-2"
-      initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
+    <div className="flex items-center gap-2">
+          >
       <Select value={fromCurrency} onValueChange={setFromCurrency}>
         <SelectTrigger size="sm" className="w-[110px] text-xs font-semibold">
           <SelectValue />
@@ -255,7 +243,7 @@ function CompactConverter({
           ))}
         </SelectContent>
       </Select>
-    </motion.div>
+    </div>
   );
 }
 
@@ -353,8 +341,7 @@ export function CurrencyConverter({
     <div className="w-full max-w-lg mx-auto">
       <Card className="glass-card overflow-hidden rounded-2xl">
         {/* ── Gradient Accent ── */}
-        <div
-          className="h-1 w-full"
+        <div className="h-1 w-full">
           style={{
             background:
               'linear-gradient(90deg, #0D9488 0%, #14B8A6 30%, #F59E0B 70%, #D97706 100%)',
@@ -383,31 +370,25 @@ export function CurrencyConverter({
               onClick={handleCopy}
               className="gap-1.5 text-xs shrink-0"
             >
-              <AnimatePresence mode="wait">
+              <>
                 {copied ? (
-                  <motion.span
+                  <span
                     key="check"
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0, opacity: 0 }}
-                    className="flex items-center gap-1.5"
+                                        className="flex items-center gap-1.5"
                   >
                     <Check className="size-3.5 text-emerald-600" />
                     Copied
-                  </motion.span>
+                  </span>
                 ) : (
-                  <motion.span
+                  <span
                     key="copy"
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0, opacity: 0 }}
-                    className="flex items-center gap-1.5"
+                                        className="flex items-center gap-1.5"
                   >
                     <Copy className="size-3.5" />
                     Copy
-                  </motion.span>
+                  </span>
                 )}
-              </AnimatePresence>
+              </>
             </Button>
           </div>
         </CardHeader>
@@ -415,12 +396,8 @@ export function CurrencyConverter({
         <CardContent className="px-6 py-6">
           <div className="flex flex-col gap-5">
             {/* ── From: Amount + Currency ── */}
-            <motion.div
-              className="space-y-2.5"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.05 }}
-            >
+            <div className="space-y-2.5">
+                          >
               <label className="text-sm font-semibold text-muted-foreground flex items-center gap-1.5">
                 <span className="inline-block size-2 rounded-full bg-emerald-500" />
                 You Send
@@ -448,15 +425,11 @@ export function CurrencyConverter({
                   className="flex-1 h-11 text-base font-semibold tabular-nums"
                 />
               </div>
-            </motion.div>
+            </div>
 
             {/* ── Swap Button ── */}
-            <motion.div
-              className="flex justify-center -my-1"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-            >
+            <div className="flex justify-center -my-1">
+                          >
               <Button
                 variant="outline"
                 size="icon"
@@ -464,22 +437,15 @@ export function CurrencyConverter({
                 className="rounded-full size-10 border-2 border-dashed border-muted-foreground/30 hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 transition-colors cursor-pointer"
                 aria-label="Swap currencies"
               >
-                <motion.div
-                  animate={{ rotate: swapRotation }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 20 }}
-                >
-                  <ArrowUpDown className="size-4 text-muted-foreground" />
-                </motion.div>
+                <div
+                                    <ArrowUpDown className="size-4 text-muted-foreground" />
+                </div>
               </Button>
-            </motion.div>
+            </div>
 
             {/* ── To: Currency ── */}
-            <motion.div
-              className="space-y-2.5"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.15 }}
-            >
+            <div className="space-y-2.5">
+                          >
               <label className="text-sm font-semibold text-muted-foreground flex items-center gap-1.5">
                 <span className="inline-block size-2 rounded-full bg-amber-500" />
                 They Receive
@@ -503,19 +469,15 @@ export function CurrencyConverter({
                   </span>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
             {/* ── Result Display ── */}
-            <motion.div
-              className="relative overflow-hidden rounded-2xl p-5 text-center"
+            <div className="relative overflow-hidden rounded-2xl p-5 text-center">
               style={{
                 background:
                   'linear-gradient(135deg, #0D9488 0%, #0F766E 50%, #065F46 100%)',
               }}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ type: 'spring', stiffness: 100, damping: 18, delay: 0.2 }}
-            >
+                          >
               {/* Decorative circles */}
               <div className="pointer-events-none absolute -top-8 -right-8 size-32 rounded-full bg-white/10" />
               <div className="pointer-events-none absolute -bottom-6 -left-6 size-24 rounded-full bg-white/5" />
@@ -526,15 +488,10 @@ export function CurrencyConverter({
               </p>
 
               <div className="relative mt-2 mb-1">
-                <AnimatePresence mode="wait">
-                  <motion.div
+                <>
+                  <div
                     key={`${fromCurrency}-${toCurrency}-${amount}`}
-                    initial={{ y: 16, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -16, opacity: 0 }}
-                    transition={{ duration: 0.25 }}
-                    className="flex items-baseline justify-center gap-1.5"
-                  >
+                                        className="flex items-baseline justify-center gap-1.5"
                     <span className="text-base font-medium text-emerald-200">
                       {toCurrency}
                     </span>
@@ -544,8 +501,8 @@ export function CurrencyConverter({
                         currency={toCurrency}
                       />
                     </span>
-                  </motion.div>
-                </AnimatePresence>
+                  </div>
+                </>
               </div>
 
               <div className="relative flex items-center justify-center gap-2 mt-3">
@@ -561,15 +518,11 @@ export function CurrencyConverter({
               <p className="relative text-[11px] text-emerald-200/60 mt-2">
                 1 {toCurrency} = {formatRate(inverseRate)} {fromCurrency}
               </p>
-            </motion.div>
+            </div>
 
             {/* ── Quick Reference ── */}
-            <motion.div
-              className="rounded-xl border border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/20 p-4"
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.3 }}
-            >
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/20 p-4">
+                          >
               <p className="text-xs font-semibold text-muted-foreground mb-3 flex items-center gap-1.5">
                 <DollarSign className="size-3.5 text-emerald-600" />
                 Quick Reference — {fromCurrency}
@@ -598,7 +551,7 @@ export function CurrencyConverter({
                     );
                   })}
               </div>
-            </motion.div>
+            </div>
           </div>
         </CardContent>
       </Card>

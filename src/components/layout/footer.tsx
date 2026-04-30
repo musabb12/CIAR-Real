@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Building2,
   Mail,
@@ -52,7 +51,7 @@ function QuickLinkItem({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Location item with MapPin icon (no flags)                         */
+/*  Location item with MapPin icon                                     */
 /* ------------------------------------------------------------------ */
 function LocationItem({
   city,
@@ -86,21 +85,13 @@ function TrustBadge({
   icon: Icon,
   label,
   sublabel,
-  delay,
 }: {
   icon: React.ElementType;
   label: string;
   sublabel?: string;
-  delay: number;
 }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5, delay }}
-      className="glass-stat rounded-xl flex flex-col items-center gap-2.5 px-4 py-5"
-    >
+    <div className="glass-stat rounded-xl flex flex-col items-center gap-2.5 px-4 py-5">
       <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-amber-500/15 to-amber-700/10 ring-1 ring-amber-500/10">
         <Icon className="h-5 w-5 text-amber-400" />
       </div>
@@ -110,7 +101,7 @@ function TrustBadge({
           <span className="text-[10px] tracking-wider text-amber-500/60 uppercase">{sublabel}</span>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }
 
@@ -239,13 +230,7 @@ export function Footer() {
           {/* ======== Top grid: Brand | Links | Locations | Newsletter ======== */}
           <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-12">
             {/* ---- Brand section (spans 4 cols) ---- */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="lg:col-span-4"
-            >
+            <div className="lg:col-span-4">
               {/* Logo */}
               <button
                 onClick={() => setCurrentPage('home')}
@@ -277,27 +262,19 @@ export function Footer() {
               {/* Social / Contact icons */}
               <div className="mt-6 flex items-center gap-3">
                 {socialLinks.map((s) => (
-                  <motion.button
+                  <button
                     key={s.label}
                     aria-label={s.label}
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="glass-badge flex h-10 w-10 items-center justify-center rounded-full text-gray-500 transition-all duration-300 hover:text-amber-400 hover:shadow-lg hover:shadow-amber-500/10"
+                    className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-gray-400 transition-all duration-300 hover:bg-amber-500/10 hover:text-amber-400"
                   >
                     <s.icon className="h-4 w-4" />
-                  </motion.button>
+                  </button>
                 ))}
               </div>
-            </motion.div>
+            </div>
 
             {/* ---- Quick Links (spans 2 cols) ---- */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="lg:col-span-2"
-            >
+            <div className="lg:col-span-2">
               <div className="mb-5 flex items-center gap-2">
                 <Sparkles className="h-3.5 w-3.5 text-amber-500/70" />
                 <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400">
@@ -313,16 +290,10 @@ export function Footer() {
                   />
                 ))}
               </ul>
-            </motion.div>
+            </div>
 
             {/* ---- Top Locations (spans 2 cols) ---- */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="lg:col-span-2"
-            >
+            <div className="lg:col-span-2">
               <div className="mb-5 flex items-center gap-2">
                 <TrendingUp className="h-3.5 w-3.5 text-amber-500/70" />
                 <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400">
@@ -339,16 +310,10 @@ export function Footer() {
                   />
                 ))}
               </ul>
-            </motion.div>
+            </div>
 
             {/* ---- Newsletter (spans 4 cols) ---- */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="lg:col-span-4"
-            >
+            <div className="lg:col-span-4">
               <div className="mb-2 flex items-center gap-2">
                 <Mail className="h-3.5 w-3.5 text-amber-500/70" />
                 <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400">
@@ -363,7 +328,7 @@ export function Footer() {
               {!subscribed ? (
                 <form
                   onSubmit={handleSubscribe}
-                  className="glass-input rounded-xl relative flex items-stretch gap-0 overflow-hidden"
+                  className="glass-input relative flex items-stretch gap-0 overflow-hidden rounded-xl"
                 >
                   <input
                     type="email"
@@ -373,27 +338,21 @@ export function Footer() {
                     placeholder="your@email.com"
                     className="flex-1 bg-transparent px-4 py-3.5 text-sm text-gray-200 placeholder-gray-600 outline-none"
                   />
-                  <motion.button
+                  <button
                     type="submit"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="flex items-center gap-2 whitespace-nowrap bg-gradient-to-r from-amber-600 to-amber-500 px-5 text-sm font-medium text-gray-950 transition-shadow duration-300 hover:shadow-lg hover:shadow-amber-500/25"
+                    className="flex items-center gap-2 bg-gradient-to-r from-amber-600 to-emerald-600 px-5 text-sm font-semibold text-white transition-all duration-300 hover:brightness-110"
                   >
                     <Send className="h-4 w-4" />
                     Subscribe
-                  </motion.button>
+                  </button>
                 </form>
               ) : (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="glass-badge rounded-xl flex items-center gap-3 px-5 py-3.5"
-                >
+                <div className="flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 text-amber-400" />
                   <span className="text-sm text-amber-200">
                     Thanks for subscribing!
                   </span>
-                </motion.div>
+                </div>
               )}
 
               {/* Trusted line */}
@@ -401,7 +360,7 @@ export function Footer() {
                 <Shield className="h-3.5 w-3.5" />
                 <span className="text-[11px] tracking-wide">No spam, unsubscribe anytime</span>
               </div>
-            </motion.div>
+            </div>
           </div>
 
           {/* ======== Decorative Divider ======== */}
@@ -411,13 +370,12 @@ export function Footer() {
 
           {/* ======== Trust Badges ======== */}
           <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {trustBadges.map((badge, i) => (
+            {trustBadges.map((badge) => (
               <TrustBadge
                 key={badge.label}
                 icon={badge.icon}
                 label={badge.label}
                 sublabel={badge.sublabel}
-                delay={i * 0.1}
               />
             ))}
           </div>
@@ -428,13 +386,7 @@ export function Footer() {
           </div>
 
           {/* ======== Bottom bar ======== */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            className="mt-8 flex flex-col items-center justify-between gap-4 md:flex-row"
-          >
+          <div className="mt-8 flex flex-col items-center justify-between gap-4 md:flex-row">
             <div className="flex items-center gap-3">
               <Crown className="h-3.5 w-3.5 text-amber-500/40" />
               <p className="text-xs text-gray-500">
@@ -471,26 +423,19 @@ export function Footer() {
                 {t.common.contact}
               </button>
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
 
       {/* ======== Back to top button ======== */}
-      <AnimatePresence>
-        {showBackToTop && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.25 }}
-            onClick={scrollToTop}
-            aria-label="Back to top"
-            className="fixed right-6 bottom-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-amber-600 text-gray-950 shadow-lg shadow-amber-500/20 transition-shadow duration-300 hover:shadow-xl hover:shadow-amber-500/30"
-          >
-            <ArrowUp className="h-5 w-5" />
-          </motion.button>
-        )}
-      </AnimatePresence>
+      {showBackToTop && (
+        <button
+          onClick={scrollToTop}
+          className="fixed right-6 bottom-6 z-50 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-amber-600 text-gray-950 shadow-lg shadow-amber-500/20 transition-shadow duration-300 hover:shadow-xl hover:shadow-amber-500/30"
+        >
+          <ArrowUp className="h-5 w-5" />
+        </button>
+      )}
     </footer>
   );
 }

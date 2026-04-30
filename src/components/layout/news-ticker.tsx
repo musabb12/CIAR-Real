@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { motion } from 'framer-motion';
 import { Bell } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/use-translation';
 
@@ -60,10 +59,7 @@ export function NewsTicker() {
   const animName = rtl ? 'ticker-scroll-rtl' : 'ticker-scroll-ltr';
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
+    <div
       className="news-ticker-bar relative z-40 w-full glass-nav overflow-hidden"
       style={{ height: '40px' }}
       onMouseEnter={() => setPaused(true)}
@@ -100,6 +96,6 @@ export function NewsTicker() {
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

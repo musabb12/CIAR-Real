@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Share2, Link2, Check, Facebook, Twitter, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -38,13 +37,9 @@ export function SocialShare({ propertyTitle, propertyUrl }: SocialShareProps) {
         Share
       </Button>
 
-      <AnimatePresence>
+      <>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            className="absolute bottom-full right-0 mb-2 flex flex-col gap-2 rounded-xl border bg-card p-3 shadow-xl z-50"
+          <div className="absolute bottom-full right-0 mb-2 flex flex-col gap-2 rounded-xl border bg-card p-3 shadow-xl z-50">
           >
             {shareLinks.map((link) => (
               <a
@@ -65,9 +60,9 @@ export function SocialShare({ propertyTitle, propertyUrl }: SocialShareProps) {
               {copied ? <Check className="h-4 w-4 text-emerald-500" /> : <Link2 className="h-4 w-4" />}
               {copied ? 'Copied!' : 'Copy Link'}
             </button>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
     </div>
   );
 }

@@ -1,6 +1,5 @@
 'use client';
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Home, DollarSign, MapPin, ArrowRight, ArrowLeft, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -94,30 +93,19 @@ export function QuickMatchQuiz() {
       </Button>
 
       {/* Quiz Modal */}
-      <AnimatePresence>
+      <>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             onClick={() => setIsOpen(false)}
           >
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="w-full max-w-lg"
+            <div className="w-full max-w-lg">
               onClick={(e) => e.stopPropagation()}
             >
               <Card className="overflow-hidden border-0 shadow-2xl">
                 {/* Progress bar */}
                 <div className="h-1 bg-muted">
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-emerald-500 to-teal-400"
-                    animate={{ width: `${((currentStep + 1) / questions.length) * 100}%` }}
-                  />
-                </div>
+                  <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400">
+                    />
                 <CardContent className="p-8">
                   {/* Step indicator */}
                   <div className="mb-6 text-center text-sm text-muted-foreground">
@@ -125,13 +113,10 @@ export function QuickMatchQuiz() {
                   </div>
 
                   {/* Question */}
-                  <AnimatePresence mode="wait">
-                    <motion.div
+                  <>
+                    <div
                       key={currentStep}
-                      initial={{ opacity: 0, x: 50 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -50 }}
-                      className="text-center"
+                                            className="text-center"
                     >
                       <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 text-emerald-600">
                         {questions[currentStep].icon}
@@ -140,43 +125,40 @@ export function QuickMatchQuiz() {
 
                       <div className="space-y-3">
                         {questions[currentStep].options.map((option) => (
-                          <motion.button
+                          <button
                             key={option.value}
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => handleAnswer(option.value)}
-                            className={`w-full rounded-xl border-2 px-5 py-4 text-left text-sm font-medium transition-all ${
+                                                        className={`w-full rounded-xl border-2 px-5 py-4 text-left text-sm font-medium transition-all ${
                               answers[questions[currentStep].id] === option.value
                                 ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400'
                                 : 'border-border hover:border-emerald-300 hover:bg-emerald-50/50 dark:hover:border-emerald-800'
                             }`}
                           >
                             {option.label}
-                          </motion.button>
+                          </button>
                         ))}
                       </div>
-                    </motion.div>
-                  </AnimatePresence>
+                    </div>
+                  </>
 
                   {/* Navigation */}
                   <div className="mt-8 flex items-center justify-between">
                     {currentStep > 0 ? (
                       <Button variant="ghost" size="sm" onClick={() => setCurrentStep(currentStep - 1)}>
-                        <ArrowLeft className="mr-1 h-4 w-4" /> Back
+                        <ArrowLeft className="mr-1 h-4 w-4" /> Back>
                       </Button>
                     ) : (
                       <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)}>Cancel</Button>
                     )}
                     <Button variant="ghost" size="sm" onClick={resetQuiz}>
-                      <RotateCcw className="mr-1 h-4 w-4" /> Restart
+                      <RotateCcw className="mr-1 h-4 w-4" /> Restart>
                     </Button>
                   </div>
                 </CardContent>
               </Card>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
     </>
   );
 }

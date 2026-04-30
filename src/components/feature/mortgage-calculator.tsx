@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback, useEffect, useRef } from 'react';
-import { motion, AnimatePresence, useSpring, useTransform } from 'framer-motion';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import {
   Calculator,
   DollarSign,
@@ -120,31 +119,6 @@ function calculateMortgage(
 }
 
 // ---------------------------------------------------------------------------
-// AnimatedNumber — smooth counter using framer-motion springs
-// ---------------------------------------------------------------------------
-
-function AnimatedNumber({ value, prefix = '', suffix = '' }: { value: number; prefix?: string; suffix?: string }) {
-  const spring = useSpring(0, { stiffness: 120, damping: 30, mass: 1 });
-  const display = useTransform(spring, (v) =>
-    `${prefix}${Math.round(v).toLocaleString('en-US')}${suffix}`
-  );
-  const ref = useRef<HTMLSpanElement>(null);
-
-  useEffect(() => {
-    spring.set(value);
-  }, [spring, value]);
-
-  useEffect(() => {
-    const unsubscribe = display.on('change', (v) => {
-      if (ref.current) ref.current.textContent = v;
-    });
-    return unsubscribe;
-  }, [display]);
-
-  return <span ref={ref}>{`${prefix}${Math.round(value).toLocaleString('en-US')}${suffix}`}</span>;
-}
-
-// ---------------------------------------------------------------------------
 // CSS Pie Chart (no external chart library)
 // ---------------------------------------------------------------------------
 
@@ -169,13 +143,9 @@ function PieChart({
     <div className="relative flex flex-col items-center gap-4">
       {/* Pie circle */}
       <div className="relative">
-        <motion.div
-          className="size-44 sm:size-52 rounded-full shadow-lg"
+        <div className="size-44 sm:size-52 rounded-full shadow-lg">
           style={{ background: gradient }}
-          initial={{ scale: 0, rotate: -90 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ type: 'spring', stiffness: 100, damping: 18, delay: 0.2 }}
-        >
+                  >
           {/* Donut hole */}
           <div className="absolute inset-4 sm:inset-5 rounded-full bg-background flex items-center justify-center">
             <div className="text-center">
@@ -185,7 +155,7 @@ function PieChart({
               </p>
             </div>
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Legend */}
@@ -301,8 +271,7 @@ export function MortgageCalculator({
         {/* ── Header ── */}
         <CardHeader className="relative px-6 pb-0 pt-6 sm:px-8 sm:pt-8">
           {/* Decorative gradient bar */}
-          <div
-            className="absolute top-0 inset-x-0 h-1"
+          <div className="absolute top-0 inset-x-0 h-1">
             style={{
               background:
                 'linear-gradient(90deg, #0D9488 0%, #14B8A6 35%, #F59E0B 65%, #D97706 100%)',
@@ -329,31 +298,25 @@ export function MortgageCalculator({
               onClick={handleCopy}
               className="gap-1.5 text-xs shrink-0"
             >
-              <AnimatePresence mode="wait">
+              <>
                 {copied ? (
-                  <motion.span
+                  <span
                     key="check"
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0, opacity: 0 }}
-                    className="flex items-center gap-1.5"
+                                        className="flex items-center gap-1.5"
                   >
                     <Check className="size-3.5 text-emerald-600" />
                     Copied
-                  </motion.span>
+                  </span>
                 ) : (
-                  <motion.span
+                  <span
                     key="copy"
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0, opacity: 0 }}
-                    className="flex items-center gap-1.5"
+                                        className="flex items-center gap-1.5"
                   >
                     <Copy className="size-3.5" />
                     Export
-                  </motion.span>
+                  </span>
                 )}
-              </AnimatePresence>
+              </>
             </Button>
           </div>
         </CardHeader>
@@ -365,12 +328,8 @@ export function MortgageCalculator({
                 ══════════════════════════════════════════════ */}
             <div className="lg:col-span-3 flex flex-col gap-6">
               {/* ── Home Price ── */}
-              <motion.div
-                className="space-y-2.5"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.05 }}
-              >
+              <div className="space-y-2.5">
+                              >
                 <Label className="flex items-center gap-2 text-sm font-semibold">
                   <Home className="size-4 text-emerald-600" />
                   Home Price
@@ -387,15 +346,11 @@ export function MortgageCalculator({
                     className="pl-8 h-11 text-base font-semibold tabular-nums"
                   />
                 </div>
-              </motion.div>
+              </div>
 
               {/* ── Down Payment Slider ── */}
-              <motion.div
-                className="space-y-3"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-              >
+              <div className="space-y-3">
+                              >
                 <div className="flex items-center justify-between">
                   <Label className="flex items-center gap-2 text-sm font-semibold">
                     <ArrowDown className="size-4 text-emerald-600" />
@@ -426,17 +381,13 @@ export function MortgageCalculator({
                   <span>40%</span>
                   <span>50%</span>
                 </div>
-              </motion.div>
+              </div>
 
               {/* ── Interest Rate + Loan Term (side-by-side) ── */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {/* Interest Rate */}
-                <motion.div
-                  className="space-y-2.5"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.15 }}
-                >
+                <div className="space-y-2.5">
+                                  >
                   <Label className="flex items-center gap-2 text-sm font-semibold">
                     <Percent className="size-4 text-amber-500" />
                     Interest Rate
@@ -459,15 +410,11 @@ export function MortgageCalculator({
                     <Info className="size-3" />
                     Annual rate (1 – 15%)
                   </p>
-                </motion.div>
+                </div>
 
                 {/* Loan Term */}
-                <motion.div
-                  className="space-y-2.5"
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.2 }}
-                >
+                <div className="space-y-2.5">
+                                  >
                   <Label className="flex items-center gap-2 text-sm font-semibold">
                     <Clock className="size-4 text-amber-500" />
                     Loan Term
@@ -488,16 +435,12 @@ export function MortgageCalculator({
                     <Info className="size-3" />
                     {loanTerm * 12} monthly payments
                   </p>
-                </motion.div>
+                </div>
               </div>
 
               {/* ── Loan Amount Info ── */}
-              <motion.div
-                className="rounded-xl border border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/20 p-4"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.25 }}
-              >
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/20 p-4">
+                              >
                 <div className="flex items-center gap-2 mb-2">
                   <DollarSign className="size-4 text-emerald-600" />
                   <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
@@ -510,7 +453,7 @@ export function MortgageCalculator({
                 <p className="text-xs text-emerald-600/70 dark:text-emerald-400/60 mt-1">
                   {currency}{homePrice.toLocaleString()} &times; {(100 - downPaymentPercent) / 100}
                 </p>
-              </motion.div>
+              </div>
             </div>
 
             {/* ══════════════════════════════════════════════
@@ -518,16 +461,12 @@ export function MortgageCalculator({
                 ══════════════════════════════════════════════ */}
             <div className="lg:col-span-2 flex flex-col gap-6">
               {/* ── Monthly Payment Hero ── */}
-              <motion.div
-                className="relative overflow-hidden rounded-2xl p-6 text-center"
+              <div className="relative overflow-hidden rounded-2xl p-6 text-center">
                 style={{
                   background:
                     'linear-gradient(135deg, #0D9488 0%, #0F766E 50%, #065F46 100%)',
                 }}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: 'spring', stiffness: 100, damping: 18, delay: 0.15 }}
-              >
+                              >
                 {/* Decorative circles */}
                 <div className="pointer-events-none absolute -top-8 -right-8 size-32 rounded-full bg-white/10" />
                 <div className="pointer-events-none absolute -bottom-6 -left-6 size-24 rounded-full bg-white/5" />
@@ -539,36 +478,27 @@ export function MortgageCalculator({
 
                 <div className="relative mt-2 mb-1">
                   <span className="text-lg font-medium text-emerald-100">{currency}</span>
-                  <AnimatePresence mode="wait">
-                    <motion.span
+                  <>
+                    <span
                       key={breakdown.monthlyPayment.toFixed(2)}
                       className="text-4xl sm:text-5xl font-extrabold text-white tabular-nums tracking-tight"
-                      initial={{ y: 12, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: -12, opacity: 0 }}
-                      transition={{ duration: 0.25 }}
-                    >
-                      {breakdown.monthlyPayment.toLocaleString('en-US', {
+                                            >
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
-                    </motion.span>
-                  </AnimatePresence>
+                    </span>
+                  </>
                   <span className="text-sm text-emerald-200 ml-1">/mo</span>
                 </div>
 
                 <p className="relative text-xs text-emerald-200/70 mt-2">
                   For {loanTerm} years at {interestRate}% APR
                 </p>
-              </motion.div>
+              </div>
 
               {/* ── Pie Chart ── */}
-              <motion.div
-                className="glass-card rounded-xl p-5 flex flex-col items-center"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.3 }}
-              >
+              <div className="glass-card rounded-xl p-5 flex flex-col items-center">
+                              >
                 <p className="text-sm font-semibold mb-4 flex items-center gap-2">
                   <PieIcon className="size-4 text-emerald-600" />
                   Cost Breakdown
@@ -577,15 +507,11 @@ export function MortgageCalculator({
                   principalRatio={breakdown.principalRatio}
                   interestRatio={breakdown.interestRatio}
                 />
-              </motion.div>
+              </div>
 
               {/* ── Amortization Summary ── */}
-              <motion.div
-                className="space-y-0"
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.4 }}
-              >
+              <div className="space-y-0">
+                              >
                 <p className="text-sm font-semibold mb-3 flex items-center gap-2">
                   <TrendingUp className="size-4 text-amber-500" />
                   Loan Summary
@@ -613,7 +539,7 @@ export function MortgageCalculator({
                     subtext={`${((breakdown.principalRatio || 0) * 100).toFixed(1)}% of total`}
                   />
                 </div>
-              </motion.div>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -647,12 +573,8 @@ function SummaryRow({
       : 'text-amber-700 dark:text-amber-400';
 
   return (
-    <motion.div
-      className="flex items-center justify-between py-3 gap-4"
-      initial={{ opacity: 0, x: 8 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.3, delay }}
-    >
+    <div className="flex items-center justify-between py-3 gap-4">
+          >
       <div className="flex items-center gap-2.5 min-w-0">
         <span className={`inline-block size-2 rounded-full shrink-0 ${dotColor}`} />
         <span className="text-sm text-muted-foreground truncate">{label}</span>
@@ -663,7 +585,7 @@ function SummaryRow({
           <p className="text-[11px] text-muted-foreground mt-0.5">{subtext}</p>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }
 

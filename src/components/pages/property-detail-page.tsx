@@ -439,8 +439,8 @@ export function PropertyDetailPage() {
                       </div>
                     )}
                     <div>
-                      <p className="font-bold">{property.agent.user?.name ?? 'Agent'}</p>
-                      <p className="text-xs text-muted-foreground">{property.agent.title ?? 'Real Estate Agent'}</p>
+                      <p className="font-bold">{property.agent.user?.name ?? t.property.agent}</p>
+                      <p className="text-xs text-muted-foreground">{property.agent.title ?? t.labels.realEstateAgent}</p>
                       {property.agent.verified && (
                         <Badge variant="secondary" className="mt-1 text-[10px]">
                           <CheckCircle className="h-3 w-3 mr-1 text-primary" /> {t.agents.verified}

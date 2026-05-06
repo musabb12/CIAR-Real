@@ -60,6 +60,40 @@ export interface Translations {
     topDestinationsSubtitle: string;
     beds: string;
     baths: string;
+    photos: string;
+    photo: string;
+    agent: string;
+  };
+  // Common labels
+  labels: {
+    realEstateAgent: string;
+    noResults: string;
+    allFilters: string;
+    price: string;
+    area: string;
+  };
+  // Sort
+  sort: {
+    newest: string;
+    priceAsc: string;
+    priceDesc: string;
+  };
+  // Pagination
+  pagination: {
+    prev: string;
+    next: string;
+    showing: string;
+    of: string;
+    results: string;
+  };
+  // Filter labels
+  filter: {
+    bedroomsMin: string;
+    bathroomsMin: string;
+    priceMin: string;
+    priceMax: string;
+    areaMin: string;
+    areaMax: string;
   };
   // Property types
   propertyTypes: {
@@ -387,6 +421,36 @@ export const translations: Record<Locale, Translations> = {
       topDestinationsSubtitle: 'Browse properties in the most popular destinations',
       beds: 'beds',
       baths: 'baths',
+      photos: 'photos',
+      photo: 'photo',
+      agent: 'Agent',
+    },
+    labels: {
+      realEstateAgent: 'Real Estate Agent',
+      noResults: 'No results found',
+      allFilters: 'All Filters',
+      price: 'Price',
+      area: 'Area',
+    },
+    sort: {
+      newest: 'Newest',
+      priceAsc: 'Price: Low to High',
+      priceDesc: 'Price: High to Low',
+    },
+    pagination: {
+      prev: 'Previous',
+      next: 'Next',
+      showing: 'Showing',
+      of: 'of',
+      results: 'results',
+    },
+    filter: {
+      bedroomsMin: 'Min Bedrooms',
+      bathroomsMin: 'Min Bathrooms',
+      priceMin: 'Min Price',
+      priceMax: 'Max Price',
+      areaMin: 'Min Area',
+      areaMax: 'Max Area',
     },
     propertyTypes: {
       apartment: 'Apartment',
@@ -700,6 +764,36 @@ export const translations: Record<Locale, Translations> = {
       topDestinationsSubtitle: 'تصفح العقارات في الوجهات الأكثر شعبية',
       beds: 'غرف نوم',
       baths: 'حمامات',
+      photos: 'صور',
+      photo: 'صورة',
+      agent: 'وكيل',
+    },
+    labels: {
+      realEstateAgent: 'وكيل عقارات',
+      noResults: 'لا توجد نتائج',
+      allFilters: 'جميع الفلاتر',
+      price: 'السعر',
+      area: 'المساحة',
+    },
+    sort: {
+      newest: 'الأحدث',
+      priceAsc: 'السعر: من الأقل',
+      priceDesc: 'السعر: من الأعلى',
+    },
+    pagination: {
+      prev: 'السابق',
+      next: 'التالي',
+      showing: 'عرض',
+      of: 'من',
+      results: 'نتيجة',
+    },
+    filter: {
+      bedroomsMin: 'الحد الأدنى للغرف',
+      bathroomsMin: 'الحد الأدنى للحمامات',
+      priceMin: 'الحد الأدنى للسعر',
+      priceMax: 'الحد الأقصى للسعر',
+      areaMin: 'الحد الأدنى للمساحة',
+      areaMax: 'الحد الأقصى للمساحة',
     },
     propertyTypes: {
       apartment: 'شقة',
@@ -1013,6 +1107,36 @@ export const translations: Record<Locale, Translations> = {
       topDestinationsSubtitle: 'Parcourez les biens dans les destinations les plus populaires',
       beds: 'ch.',
       baths: 'SDB',
+      photos: 'photos',
+      photo: 'photo',
+      agent: 'Agent',
+    },
+    labels: {
+      realEstateAgent: 'Agent immobilier',
+      noResults: 'Aucun résultat',
+      allFilters: 'Tous les filtres',
+      price: 'Prix',
+      area: 'Surface',
+    },
+    sort: {
+      newest: 'Plus récent',
+      priceAsc: 'Prix croissant',
+      priceDesc: 'Prix décroissant',
+    },
+    pagination: {
+      prev: 'Précédent',
+      next: 'Suivant',
+      showing: 'Affichage',
+      of: 'sur',
+      results: 'résultats',
+    },
+    filter: {
+      bedroomsMin: 'Chambres min',
+      bathroomsMin: 'SDB min',
+      priceMin: 'Prix min',
+      priceMax: 'Prix max',
+      areaMin: 'Surface min',
+      areaMax: 'Surface max',
     },
     propertyTypes: {
       apartment: 'Appartement',
@@ -1326,6 +1450,36 @@ export const translations: Record<Locale, Translations> = {
       topDestinationsSubtitle: 'Explora propiedades en los destinos más populares',
       beds: 'hab.',
       baths: 'baños',
+      photos: 'fotos',
+      photo: 'foto',
+      agent: 'Agente',
+    },
+    labels: {
+      realEstateAgent: 'Agente inmobiliario',
+      noResults: 'Sin resultados',
+      allFilters: 'Todos los filtros',
+      price: 'Precio',
+      area: 'Área',
+    },
+    sort: {
+      newest: 'Más reciente',
+      priceAsc: 'Precio: menor a mayor',
+      priceDesc: 'Precio: mayor a menor',
+    },
+    pagination: {
+      prev: 'Anterior',
+      next: 'Siguiente',
+      showing: 'Mostrando',
+      of: 'de',
+      results: 'resultados',
+    },
+    filter: {
+      bedroomsMin: 'Mín. habitaciones',
+      bathroomsMin: 'Mín. baños',
+      priceMin: 'Precio mín.',
+      priceMax: 'Precio máx.',
+      areaMin: 'Área mín.',
+      areaMax: 'Área máx.',
     },
     propertyTypes: {
       apartment: 'Apartamento',
@@ -1639,6 +1793,36 @@ export const translations: Record<Locale, Translations> = {
       topDestinationsSubtitle: 'En popüler destinasyonlardaki emlakları gezin',
       beds: 'oda',
       baths: 'banyo',
+      photos: 'fotoğraf',
+      photo: 'fotoğraf',
+      agent: 'Danışman',
+    },
+    labels: {
+      realEstateAgent: 'Emlak Danışmanı',
+      noResults: 'Sonuç bulunamadı',
+      allFilters: 'Tüm Filtreler',
+      price: 'Fiyat',
+      area: 'Alan',
+    },
+    sort: {
+      newest: 'En yeni',
+      priceAsc: 'Fiyat: Düşükten yükseğe',
+      priceDesc: 'Fiyat: Yüksekten düşüğe',
+    },
+    pagination: {
+      prev: 'Önceki',
+      next: 'Sonraki',
+      showing: 'Gösterilen',
+      of: '/',
+      results: 'sonuç',
+    },
+    filter: {
+      bedroomsMin: 'Min Yatak Odası',
+      bathroomsMin: 'Min Banyo',
+      priceMin: 'Min Fiyat',
+      priceMax: 'Max Fiyat',
+      areaMin: 'Min Alan',
+      areaMax: 'Max Alan',
     },
     propertyTypes: {
       apartment: 'Daire',

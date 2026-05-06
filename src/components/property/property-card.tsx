@@ -43,12 +43,10 @@ const listingGradients: Record<ListingType, string> = {
   SHORT_TERM: 'bg-gradient-to-r from-amber-600 to-amber-500',
 };
 
-/** Human-readable label for property types */
-function formatPropertyType(type: string): string {
-  return type
-    .split('_')
-    .map((w) => w.charAt(0) + w.slice(1).toLowerCase())
-    .join(' ');
+/** Translate property type using i18n */
+function formatPropertyType(type: string, t: import('@/lib/i18n/translations').Translations): string {
+  const key = type.toLowerCase() as keyof typeof t.propertyTypes;
+  return t.propertyTypes[key] ?? type;
 }
 
 /** Status to translation key mapping */
@@ -210,7 +208,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
                 {t.property[listingTypeKeys[property.listingType]]}
               </Badge>
               <Badge className="border border-white/25 bg-black/40 px-2.5 py-0.5 text-[11px] font-medium text-white backdrop-blur-md">
-                {formatPropertyType(property.propertyType)}
+                {formatPropertyType(property.propertyType, t)}
               </Badge>
             </div>
 
@@ -285,7 +283,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
                 <div className="flex items-center gap-1 glass-badge rounded-lg px-2 py-0.5">
                   <Eye className="h-3 w-3 text-white/70" />
                   <span className="text-[10px] font-medium text-white/70">
-                    {imageCount} {imageCount === 1 ? 'photo' : 'photos'}
+                    {imageCount} {imageCount === 1 ? t.property.photo : t.property.photos}
                   </span>
                 </div>
               )}
@@ -354,7 +352,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
                   </div>
                 )}
                 <span className="max-w-[100px] truncate text-[11px] font-medium text-muted-foreground">
-                  {agentName ?? 'Agent'}
+                  {agentName ?? t.property.agent}
                 </span>
               </div>
 

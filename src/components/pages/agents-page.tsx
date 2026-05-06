@@ -181,7 +181,7 @@ export function AgentsPage() {
                       </Badge>
                     )}
                   </h2>
-                  <p className="text-sm text-muted-foreground">{selectedAgent.title || 'Real Estate Agent'}</p>
+                  <p className="text-sm text-muted-foreground">{selectedAgent.title || t.labels.realEstateAgent}</p>
                   {selectedAgent.company && (
                     <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                       <Briefcase className="h-3 w-3" />
@@ -352,9 +352,9 @@ function AgentCard({
 
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-sm truncate group-hover:text-primary transition-colors">
-              {agent.user?.name || 'Agent'}
+              {agent.user?.name || t.property.agent}
             </h3>
-            <p className="text-xs text-muted-foreground truncate">{agent.title || 'Real Estate Agent'}</p>
+            <p className="text-xs text-muted-foreground truncate">{agent.title || t.labels.realEstateAgent}</p>
             {agent.company && (
               <p className="text-[11px] text-muted-foreground/70 flex items-center gap-1 mt-0.5">
                 <Briefcase className="h-3 w-3" />

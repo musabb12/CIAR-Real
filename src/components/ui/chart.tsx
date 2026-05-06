@@ -285,11 +285,7 @@ function ChartLegendContent({
             {itemConfig?.icon && !hideIcon ? (
               <itemConfig.icon />
             ) : (
-              <div className="h-2 w-2 shrink-0 rounded-[2px]">
-                style={{
-                  backgroundColor: item.color,
-                }}
-              />
+              <div className="h-2 w-2 shrink-0 rounded-[2px]" style={{ backgroundColor: item.color }} />
             )}
             {itemConfig?.label}
           </div>

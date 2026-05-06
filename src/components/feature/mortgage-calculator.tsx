@@ -143,9 +143,7 @@ function PieChart({
     <div className="relative flex flex-col items-center gap-4">
       {/* Pie circle */}
       <div className="relative">
-        <div className="size-44 sm:size-52 rounded-full shadow-lg">
-          style={{ background: gradient }}
-                  >
+        <div className="size-44 sm:size-52 rounded-full shadow-lg" style={{ background: gradient }}>
           {/* Donut hole */}
           <div className="absolute inset-4 sm:inset-5 rounded-full bg-background flex items-center justify-center">
             <div className="text-center">
@@ -271,12 +269,10 @@ export function MortgageCalculator({
         {/* ── Header ── */}
         <CardHeader className="relative px-6 pb-0 pt-6 sm:px-8 sm:pt-8">
           {/* Decorative gradient bar */}
-          <div className="absolute top-0 inset-x-0 h-1">
-            style={{
+          <div className="absolute top-0 inset-x-0 h-1" style={{
               background:
                 'linear-gradient(90deg, #0D9488 0%, #14B8A6 35%, #F59E0B 65%, #D97706 100%)',
-            }}
-          />
+            }} />
 
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-3">
@@ -298,25 +294,17 @@ export function MortgageCalculator({
               onClick={handleCopy}
               className="gap-1.5 text-xs shrink-0"
             >
-              <>
-                {copied ? (
-                  <span
-                    key="check"
-                                        className="flex items-center gap-1.5"
-                  >
-                    <Check className="size-3.5 text-emerald-600" />
-                    Copied
-                  </span>
-                ) : (
-                  <span
-                    key="copy"
-                                        className="flex items-center gap-1.5"
-                  >
-                    <Copy className="size-3.5" />
-                    Export
-                  </span>
-                )}
-              </>
+              {copied ? (
+                <span key="check" className="flex items-center gap-1.5">
+                  <Check className="size-3.5 text-emerald-600" />
+                  Copied
+                </span>
+              ) : (
+                <span key="copy" className="flex items-center gap-1.5">
+                  <Copy className="size-3.5" />
+                  Export
+                </span>
+              )}
             </Button>
           </div>
         </CardHeader>
@@ -329,7 +317,6 @@ export function MortgageCalculator({
             <div className="lg:col-span-3 flex flex-col gap-6">
               {/* ── Home Price ── */}
               <div className="space-y-2.5">
-                              >
                 <Label className="flex items-center gap-2 text-sm font-semibold">
                   <Home className="size-4 text-emerald-600" />
                   Home Price
@@ -350,7 +337,6 @@ export function MortgageCalculator({
 
               {/* ── Down Payment Slider ── */}
               <div className="space-y-3">
-                              >
                 <div className="flex items-center justify-between">
                   <Label className="flex items-center gap-2 text-sm font-semibold">
                     <ArrowDown className="size-4 text-emerald-600" />
@@ -387,7 +373,6 @@ export function MortgageCalculator({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {/* Interest Rate */}
                 <div className="space-y-2.5">
-                                  >
                   <Label className="flex items-center gap-2 text-sm font-semibold">
                     <Percent className="size-4 text-amber-500" />
                     Interest Rate
@@ -414,7 +399,6 @@ export function MortgageCalculator({
 
                 {/* Loan Term */}
                 <div className="space-y-2.5">
-                                  >
                   <Label className="flex items-center gap-2 text-sm font-semibold">
                     <Clock className="size-4 text-amber-500" />
                     Loan Term
@@ -440,7 +424,6 @@ export function MortgageCalculator({
 
               {/* ── Loan Amount Info ── */}
               <div className="rounded-xl border border-emerald-500/20 bg-emerald-50/50 dark:bg-emerald-950/20 p-4">
-                              >
                 <div className="flex items-center gap-2 mb-2">
                   <DollarSign className="size-4 text-emerald-600" />
                   <span className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
@@ -461,12 +444,10 @@ export function MortgageCalculator({
                 ══════════════════════════════════════════════ */}
             <div className="lg:col-span-2 flex flex-col gap-6">
               {/* ── Monthly Payment Hero ── */}
-              <div className="relative overflow-hidden rounded-2xl p-6 text-center">
-                style={{
+              <div className="relative overflow-hidden rounded-2xl p-6 text-center" style={{
                   background:
                     'linear-gradient(135deg, #0D9488 0%, #0F766E 50%, #065F46 100%)',
-                }}
-                              >
+                }}>
                 {/* Decorative circles */}
                 <div className="pointer-events-none absolute -top-8 -right-8 size-32 rounded-full bg-white/10" />
                 <div className="pointer-events-none absolute -bottom-6 -left-6 size-24 rounded-full bg-white/5" />
@@ -478,16 +459,15 @@ export function MortgageCalculator({
 
                 <div className="relative mt-2 mb-1">
                   <span className="text-lg font-medium text-emerald-100">{currency}</span>
-                  <>
-                    <span
-                      key={breakdown.monthlyPayment.toFixed(2)}
-                      className="text-4xl sm:text-5xl font-extrabold text-white tabular-nums tracking-tight"
-                                            >
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}
-                    </span>
-                  </>
+                  <span
+                    key={breakdown.monthlyPayment.toFixed(2)}
+                    className="text-4xl sm:text-5xl font-extrabold text-white tabular-nums tracking-tight"
+                  >
+                    {breakdown.monthlyPayment.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
                   <span className="text-sm text-emerald-200 ml-1">/mo</span>
                 </div>
 
@@ -498,7 +478,6 @@ export function MortgageCalculator({
 
               {/* ── Pie Chart ── */}
               <div className="glass-card rounded-xl p-5 flex flex-col items-center">
-                              >
                 <p className="text-sm font-semibold mb-4 flex items-center gap-2">
                   <PieIcon className="size-4 text-emerald-600" />
                   Cost Breakdown
@@ -511,7 +490,6 @@ export function MortgageCalculator({
 
               {/* ── Amortization Summary ── */}
               <div className="space-y-0">
-                              >
                 <p className="text-sm font-semibold mb-3 flex items-center gap-2">
                   <TrendingUp className="size-4 text-amber-500" />
                   Loan Summary
@@ -574,7 +552,6 @@ function SummaryRow({
 
   return (
     <div className="flex items-center justify-between py-3 gap-4">
-          >
       <div className="flex items-center gap-2.5 min-w-0">
         <span className={`inline-block size-2 rounded-full shrink-0 ${dotColor}`} />
         <span className="text-sm text-muted-foreground truncate">{label}</span>

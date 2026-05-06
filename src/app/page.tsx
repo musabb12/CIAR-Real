@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { NewsTicker } from '@/components/layout/news-ticker';
@@ -21,11 +21,11 @@ import { Toaster } from 'sonner';
 
 export default function Home() {
   const { currentPage, currentUser, isAuthenticated, setFavorites, setFeatures, locale } = useAppStore();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 
   // Load favorites when user logs in
   useEffect(() => {

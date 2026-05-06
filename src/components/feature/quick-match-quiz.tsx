@@ -95,17 +95,13 @@ export function QuickMatchQuiz() {
       {/* Quiz Modal */}
       <>
         {isOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            onClick={() => setIsOpen(false)}
-          >
-            <div className="w-full max-w-lg">
-              onClick={(e) => e.stopPropagation()}
-            >
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={() => setIsOpen(false)}>
+            <div className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
               <Card className="overflow-hidden border-0 shadow-2xl">
                 {/* Progress bar */}
                 <div className="h-1 bg-muted">
-                  <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400">
-                    />
+                  <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400" />
+                </div>
                 <CardContent className="p-8">
                   {/* Step indicator */}
                   <div className="mb-6 text-center text-sm text-muted-foreground">
@@ -144,13 +140,13 @@ export function QuickMatchQuiz() {
                   <div className="mt-8 flex items-center justify-between">
                     {currentStep > 0 ? (
                       <Button variant="ghost" size="sm" onClick={() => setCurrentStep(currentStep - 1)}>
-                        <ArrowLeft className="mr-1 h-4 w-4" /> Back>
+                        <ArrowLeft className="mr-1 h-4 w-4" /> Back
                       </Button>
                     ) : (
                       <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)}>Cancel</Button>
                     )}
                     <Button variant="ghost" size="sm" onClick={resetQuiz}>
-                      <RotateCcw className="mr-1 h-4 w-4" /> Restart>
+                      <RotateCcw className="mr-1 h-4 w-4" /> Restart
                     </Button>
                   </div>
                 </CardContent>

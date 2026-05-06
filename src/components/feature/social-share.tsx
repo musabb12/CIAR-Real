@@ -40,7 +40,6 @@ export function SocialShare({ propertyTitle, propertyUrl }: SocialShareProps) {
       <>
         {isOpen && (
           <div className="absolute bottom-full right-0 mb-2 flex flex-col gap-2 rounded-xl border bg-card p-3 shadow-xl z-50">
-          >
             {shareLinks.map((link) => (
               <a
                 key={link.name}

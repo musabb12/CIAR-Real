@@ -72,10 +72,14 @@ export function SearchPage() {
 
       const res = await fetch(`/api/properties?${params.toString()}`);
       if (res.ok) {
-        const data: PaginatedResponse<Property> = await res.json();
+        const data = (await res.json()) as PaginatedResponse<Property> & {
+          pagination?: { total: number; totalPages: number; page: number; limit: number };
+        };
         setProperties(data.data ?? []);
-        setTotalResults(data.total ?? 0);
-        setTotalPages(data.totalPages ?? 1);
+        const total = data.pagination?.total ?? data.total ?? 0;
+        const totalPages = data.pagination?.totalPages ?? data.totalPages ?? 1;
+        setTotalResults(total);
+        setTotalPages(totalPages);
       }
     } catch {
       // silent

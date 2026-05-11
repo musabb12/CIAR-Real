@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { ListingType, PropertyType, Prisma, PropertyStatus } from '@prisma/client';
+import {
+  listPropertiesFromFirestore,
+  useFirestoreForPropertiesList,
+} from '@/lib/firestore-properties';
 
 const propertyInclude = {
   images: {
@@ -48,6 +52,34 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = Math.min(parseInt(searchParams.get('limit') || '12', 10), 30);
     const skip = (page - 1) * limit;
+
+    if (useFirestoreForPropertiesList()) {
+      try {
+        const out = await listPropertiesFromFirestore({
+          countryId,
+          cityId,
+          listingType,
+          propertyType,
+          priceMin,
+          priceMax,
+          bedrooms,
+          bathrooms,
+          areaMin,
+          areaMax,
+          isFeatured,
+          search,
+          sort,
+          page,
+          limit,
+        });
+        return NextResponse.json({
+          data: out.data,
+          pagination: out.pagination,
+        });
+      } catch (fireErr) {
+        console.error('Firestore properties list failed, using Prisma:', fireErr);
+      }
+    }
 
     // Build where clause
     const where: Prisma.PropertyWhereInput = {};

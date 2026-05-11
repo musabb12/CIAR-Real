@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { isFirebaseAdminConfigured } from '@/lib/firebase-admin';
+import { getPropertyFromFirestore } from '@/lib/firestore-properties';
 
 const propertyInclude = {
   images: {
@@ -33,6 +35,17 @@ export async function GET(
   try {
     const { id } = await params;
     const skipView = request.nextUrl.searchParams.get('skipView') === '1';
+
+    if (isFirebaseAdminConfigured()) {
+      try {
+        const fromFs = await getPropertyFromFirestore(id, skipView);
+        if (fromFs) {
+          return NextResponse.json(fromFs);
+        }
+      } catch (fireErr) {
+        console.error('Firestore property fetch failed, using Prisma:', fireErr);
+      }
+    }
 
     const property = await db.property.findUnique({
       where: { id },

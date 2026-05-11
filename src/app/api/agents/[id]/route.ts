@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import {
+  deleteAgentInFirestore,
+  getAgentDetailFromFirestore,
+  updateAgentInFirestore,
+} from '@/lib/firestore-platform';
 
 // GET /api/agents/[id] - Single agent with user info, company, and their properties
 export async function GET(
@@ -9,40 +13,7 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const agent = await db.agent.findUnique({
-      where: { id },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            avatar: true,
-            role: true,
-          },
-        },
-        company: true,
-        properties: {
-          include: {
-            images: {
-              orderBy: { order: 'asc' },
-              take: 1,
-            },
-            country: true,
-            city: true,
-            _count: {
-              select: { favorites: true, inquiries: true },
-            },
-          },
-          orderBy: { createdAt: 'desc' },
-          take: 10,
-        },
-        _count: {
-          select: { properties: true },
-        },
-      },
-    });
+    const agent = await getAgentDetailFromFirestore(id);
 
     if (!agent) {
       return NextResponse.json(
@@ -70,33 +41,12 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
-    const existing = await db.agent.findUnique({ where: { id } });
+    const existing = await getAgentDetailFromFirestore(id);
     if (!existing) {
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
     }
 
-    const updateData: Record<string, unknown> = {};
-    if (typeof body.bio === 'string' || body.bio === null) updateData.bio = body.bio;
-    if (typeof body.title === 'string' || body.title === null) updateData.title = body.title;
-    if (typeof body.license === 'string' || body.license === null) updateData.license = body.license;
-    if (typeof body.phone === 'string' || body.phone === null) updateData.phone = body.phone;
-    if (typeof body.whatsapp === 'string' || body.whatsapp === null) updateData.whatsapp = body.whatsapp;
-    if (typeof body.experience === 'number') updateData.experience = body.experience;
-    if (typeof body.rating === 'number') updateData.rating = body.rating;
-    if (typeof body.totalListings === 'number') updateData.totalListings = body.totalListings;
-    if (typeof body.totalSales === 'number') updateData.totalSales = body.totalSales;
-    if (typeof body.verified === 'boolean') updateData.verified = body.verified;
-    if (typeof body.companyId === 'string' || body.companyId === null) updateData.companyId = body.companyId;
-
-    const agent = await db.agent.update({
-      where: { id },
-      data: updateData,
-      include: {
-        user: { select: { id: true, name: true, email: true, phone: true, avatar: true } },
-        company: true,
-        _count: { select: { properties: true } },
-      },
-    });
+    const agent = await updateAgentInFirestore(id, body);
 
     return NextResponse.json(agent);
   } catch (error) {
@@ -113,13 +63,12 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    const existing = await db.agent.findUnique({ where: { id } });
+    const existing = await getAgentDetailFromFirestore(id);
     if (!existing) {
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
     }
 
-    await db.property.updateMany({ where: { agentId: id }, data: { agentId: null } });
-    await db.agent.delete({ where: { id } });
+    await deleteAgentInFirestore(id);
 
     return NextResponse.json({ message: 'Agent deleted successfully' });
   } catch (error) {

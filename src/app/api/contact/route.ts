@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { createContactMessageInFirestore } from '@/lib/firestore-platform';
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,14 +22,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const contactMessage = await db.contactMessage.create({
-      data: {
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        phone: phone?.trim() || null,
-        subject: subject?.trim() || null,
-        message: message.trim(),
-      },
+    const contactMessage = await createContactMessageInFirestore({
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      phone: phone?.trim() || null,
+      subject: subject?.trim() || null,
+      message: message.trim(),
     });
 
     return NextResponse.json(

@@ -1,23 +1,44 @@
-import { FieldValue, Timestamp, getFirestore, type Query } from 'firebase-admin/firestore';
-import { getFirebaseAdminApp, isFirebaseAdminConfigured } from '@/lib/firebase-admin';
+import { FieldValue, type Query } from 'firebase-admin/firestore';
+import { isFirebaseAdminConfigured } from '@/lib/firebase-admin';
+import {
+  FIRESTORE_COLLECTIONS,
+  asBoolean,
+  asNullableNumber,
+  asNullableString,
+  asNumber,
+  asString,
+  buildAgentSnapshot,
+  cleanUndefined,
+  col,
+  getAmenitiesByIds,
+  getLocationSnapshot,
+  makeId,
+  nowIso,
+  sortByCreatedDesc,
+  toIso,
+} from '@/lib/firestore-shared';
 import type {
-  Property,
+  Agent,
   Country,
+  ListingType,
+  Property,
+  PropertyAmenity,
+  PropertyImage,
+  PropertyStatus,
+  PropertyType,
   Region,
   City,
-  Agent,
-  User,
   UserRole,
-  PropertyImage,
-  ListingType,
-  PropertyType,
-  PropertyStatus,
 } from '@/types';
 
 const DEFAULT_CAP = 800;
 
-function collectionName(): string {
-  return process.env.FIRESTORE_PROPERTIES_COLLECTION?.trim() || 'properties';
+export function propertyCollectionName(): string {
+  return FIRESTORE_COLLECTIONS.properties;
+}
+
+function propertyCol() {
+  return col(FIRESTORE_COLLECTIONS.properties);
 }
 
 function maxFetchDocs(): number {
@@ -25,136 +46,161 @@ function maxFetchDocs(): number {
   return Math.min(Math.max(n, 50), 5000);
 }
 
-function toIso(v: unknown): string {
-  if (v instanceof Timestamp) return v.toDate().toISOString();
-  if (typeof v === 'string' && v) return v;
-  return new Date().toISOString();
+function mapPropertyImages(
+  propertyId: string,
+  imagesRaw: unknown
+): PropertyImage[] {
+  if (!Array.isArray(imagesRaw)) return [];
+  return imagesRaw.map((img, index) => {
+    const row = (img ?? {}) as Record<string, unknown>;
+    return {
+      id: asString(row.id, `fs-img-${propertyId}-${index}`),
+      url: asString(row.url),
+      alt: asNullableString(row.alt),
+      isCover: asBoolean(row.isCover, index === 0),
+      order: asNumber(row.order, index),
+      propertyId,
+    };
+  });
 }
 
-function asNum(v: unknown, fallback = 0): number {
-  if (typeof v === 'number' && !Number.isNaN(v)) return v;
-  if (typeof v === 'string' && v.trim() !== '') return Number(v);
-  return fallback;
+function mapPropertyAmenities(
+  propertyId: string,
+  amenitiesRaw: unknown
+): PropertyAmenity[] {
+  if (!Array.isArray(amenitiesRaw)) return [];
+  return amenitiesRaw.map((item, index) => {
+    const row = (item ?? {}) as Record<string, unknown>;
+    const amenity = (row.amenity ?? {}) as Record<string, unknown>;
+    const amenityId = asString(row.amenityId, asString(amenity.id, `amenity-${index}`));
+    return {
+      id: asString(row.id, `fs-pam-${propertyId}-${amenityId}`),
+      propertyId,
+      amenityId,
+      amenity: {
+        id: asString(amenity.id, amenityId),
+        name: asString(amenity.name),
+        icon: asNullableString(amenity.icon),
+        category: asNullableString(amenity.category),
+      },
+    };
+  });
 }
 
-function asStr(v: unknown, fallback = ''): string {
-  return typeof v === 'string' ? v : fallback;
-}
+function mapAgentSnapshot(raw: unknown): Agent | undefined {
+  if (!raw || typeof raw !== 'object') return undefined;
+  const agentRaw = raw as Record<string, unknown>;
+  const userRaw = (agentRaw.user ?? {}) as Record<string, unknown>;
+  const companyRaw =
+    agentRaw.company && typeof agentRaw.company === 'object'
+      ? (agentRaw.company as Record<string, unknown>)
+      : null;
 
-function asBool(v: unknown, fallback = false): boolean {
-  if (typeof v === 'boolean') return v;
-  return fallback;
-}
-
-function asNullableNum(v: unknown): number | null {
-  if (v === null || v === undefined) return null;
-  if (typeof v === 'number' && !Number.isNaN(v)) return v;
-  if (typeof v === 'string' && v.trim() !== '') return Number(v);
-  return null;
+  return {
+    id: asString(agentRaw.id),
+    userId: asString(agentRaw.userId),
+    user: userRaw.id
+      ? {
+          id: asString(userRaw.id),
+          email: asString(userRaw.email),
+          name: asNullableString(userRaw.name),
+          password: asNullableString(userRaw.password),
+          phone: asNullableString(userRaw.phone),
+          avatar: asNullableString(userRaw.avatar),
+          role: (userRaw.role as UserRole) ?? 'AGENT',
+          isActive: asBoolean(userRaw.isActive, true),
+          createdAt: toIso(userRaw.createdAt),
+          updatedAt: toIso(userRaw.updatedAt),
+        }
+      : undefined,
+    bio: asNullableString(agentRaw.bio),
+    title: asNullableString(agentRaw.title),
+    license: asNullableString(agentRaw.license),
+    phone: asNullableString(agentRaw.phone),
+    whatsapp: asNullableString(agentRaw.whatsapp),
+    experience: asNullableNumber(agentRaw.experience),
+    rating: asNumber(agentRaw.rating, 0),
+    totalListings: asNumber(agentRaw.totalListings, 0),
+    totalSales: asNumber(agentRaw.totalSales, 0),
+    verified: asBoolean(agentRaw.verified, false),
+    companyId: asNullableString(agentRaw.companyId),
+    company: companyRaw
+      ? {
+          id: asString(companyRaw.id),
+          name: asString(companyRaw.name),
+          logo: asNullableString(companyRaw.logo),
+          description: asNullableString(companyRaw.description),
+          phone: asNullableString(companyRaw.phone),
+          email: asNullableString(companyRaw.email),
+          website: asNullableString(companyRaw.website),
+          address: asNullableString(companyRaw.address),
+          founded: asNullableNumber(companyRaw.founded),
+          agentCount: asNumber(companyRaw.agentCount, 0),
+          listingCount: asNumber(companyRaw.listingCount, 0),
+          createdAt: toIso(companyRaw.createdAt),
+          updatedAt: toIso(companyRaw.updatedAt),
+        }
+      : undefined,
+    createdAt: toIso(agentRaw.createdAt),
+    updatedAt: toIso(agentRaw.updatedAt),
+  };
 }
 
 /** Map a Firestore document to the `Property` shape the UI expects. */
 export function firestoreDocToProperty(id: string, data: Record<string, unknown>): Property {
-  const imagesRaw = data.images;
-  const images: PropertyImage[] = Array.isArray(imagesRaw)
-    ? (imagesRaw as Record<string, unknown>[]).map((img, i) => ({
-        id: asStr(img.id, `fs-img-${id}-${i}`),
-        url: asStr(img.url, ''),
-        alt: img.alt === null || img.alt === undefined ? null : asStr(img.alt, ''),
-        isCover: asBool(img.isCover, i === 0),
-        order: asNum(img.order, i),
-        propertyId: id,
-      }))
-    : [];
-
   const country = (data.country as Country | undefined) ?? {
-    id: asStr(data.countryId, 'unknown'),
-    name: asStr((data as { countryName?: string }).countryName, ''),
-    code: asStr((data as { countryCode?: string }).countryCode, ''),
-    flag: (data.countryFlag as string | null) ?? null,
-    currency: (data.currency as string | null) ?? null,
-    currencySymbol: (data.currencySymbol as string | null) ?? '$',
+    id: asString(data.countryId, 'unknown'),
+    name: asString((data as { countryName?: string }).countryName, ''),
+    code: asString((data as { countryCode?: string }).countryCode, ''),
+    flag: asNullableString(data.countryFlag),
+    currency: asNullableString(data.currency),
+    currencySymbol: asNullableString(data.currencySymbol),
     isActive: true,
   };
 
   const region = (data.region as Region | undefined) ?? {
-    id: asStr(data.regionId, 'unknown'),
-    name: asStr((data as { regionName?: string }).regionName, ''),
-    countryId: asStr(data.countryId, ''),
+    id: asString(data.regionId, 'unknown'),
+    name: asString((data as { regionName?: string }).regionName, ''),
+    countryId: asString(data.countryId, ''),
   };
 
   const city = (data.city as City | undefined) ?? {
-    id: asStr(data.cityId, 'unknown'),
-    name: asStr((data as { cityName?: string }).cityName, ''),
-    regionId: asStr(data.regionId, ''),
+    id: asString(data.cityId, 'unknown'),
+    name: asString((data as { cityName?: string }).cityName, ''),
+    regionId: asString(data.regionId, ''),
   };
-
-  let agent: Agent | undefined;
-  const agentRaw = data.agent as Record<string, unknown> | undefined;
-  const userRaw = agentRaw?.user as Record<string, unknown> | undefined;
-  if (agentRaw && userRaw) {
-    const u: User = {
-      id: asStr(userRaw.id, 'u'),
-      email: asStr(userRaw.email, ''),
-      name: (userRaw.name as string | null) ?? null,
-      phone: (userRaw.phone as string | null) ?? null,
-      avatar: (userRaw.avatar as string | null) ?? null,
-      role: (userRaw.role as User['role']) ?? 'AGENT',
-      isActive: asBool(userRaw.isActive, true),
-      createdAt: toIso(userRaw.createdAt),
-      updatedAt: toIso(userRaw.updatedAt),
-    };
-    agent = {
-      id: asStr(agentRaw.id, 'a'),
-      userId: asStr(agentRaw.userId, u.id),
-      user: u,
-      bio: (agentRaw.bio as string | null) ?? null,
-      title: (agentRaw.title as string | null) ?? null,
-      license: (agentRaw.license as string | null) ?? null,
-      phone: (agentRaw.phone as string | null) ?? null,
-      whatsapp: (agentRaw.whatsapp as string | null) ?? null,
-      experience: asNullableNum(agentRaw.experience),
-      rating: asNum(agentRaw.rating, 0),
-      totalListings: asNum(agentRaw.totalListings, 0),
-      totalSales: asNum(agentRaw.totalSales, 0),
-      verified: asBool(agentRaw.verified, false),
-      companyId: (agentRaw.companyId as string | null) ?? null,
-      createdAt: toIso(agentRaw.createdAt),
-      updatedAt: toIso(agentRaw.updatedAt),
-    };
-  }
 
   return {
     id,
-    title: asStr(data.title, 'Property'),
-    slug: asStr(data.slug, id),
-    description: asStr(data.description, ''),
-    price: asNum(data.price, 0),
+    title: asString(data.title, 'Property'),
+    slug: asString(data.slug, id),
+    description: asString(data.description, ''),
+    price: asNumber(data.price, 0),
     listingType: (data.listingType as ListingType) ?? 'SALE',
     propertyType: (data.propertyType as PropertyType) ?? 'APARTMENT',
     status: (data.status as PropertyStatus) ?? 'AVAILABLE',
-    area: asNum(data.area, 0),
-    bedrooms: asNullableNum(data.bedrooms),
-    bathrooms: asNullableNum(data.bathrooms),
-    floors: asNullableNum(data.floors),
-    yearBuilt: asNullableNum(data.yearBuilt),
-    isFeatured: asBool(data.isFeatured, false),
-    views: asNum(data.views, 0),
-    countryId: asStr(data.countryId, country.id),
-    regionId: asStr(data.regionId, region.id),
-    cityId: asStr(data.cityId, city.id),
-    address: (data.address as string | null) ?? null,
-    latitude: asNullableNum(data.latitude),
-    longitude: asNullableNum(data.longitude),
-    agentId: (data.agentId as string | null) ?? null,
+    area: asNumber(data.area, 0),
+    bedrooms: asNullableNumber(data.bedrooms),
+    bathrooms: asNullableNumber(data.bathrooms),
+    floors: asNullableNumber(data.floors),
+    yearBuilt: asNullableNumber(data.yearBuilt),
+    isFeatured: asBoolean(data.isFeatured, false),
+    views: asNumber(data.views, 0),
+    countryId: asString(data.countryId, country.id),
+    regionId: asString(data.regionId, region.id),
+    cityId: asString(data.cityId, city.id),
+    address: asNullableString(data.address),
+    latitude: asNullableNumber(data.latitude),
+    longitude: asNullableNumber(data.longitude),
+    agentId: asNullableString(data.agentId),
     createdAt: toIso(data.createdAt),
     updatedAt: toIso(data.updatedAt),
     country,
     region,
     city,
-    agent,
-    images,
-    amenities: Array.isArray(data.amenities) ? (data.amenities as Property['amenities']) : [],
+    agent: mapAgentSnapshot(data.agent),
+    images: mapPropertyImages(id, data.images),
+    amenities: mapPropertyAmenities(id, data.amenities),
   };
 }
 
@@ -162,14 +208,10 @@ export function useFirestoreForPropertiesList(): boolean {
   return isFirebaseAdminConfigured();
 }
 
-function getDb() {
-  getFirebaseAdminApp();
-  return getFirestore();
-}
-
 export type PropertyListQuery = {
   countryId: string | null;
   cityId: string | null;
+  agentId?: string | null;
   listingType: string | null;
   propertyType: string | null;
   priceMin: string | null;
@@ -185,15 +227,20 @@ export type PropertyListQuery = {
   limit: number;
 };
 
+export async function listAllPropertiesFromFirestore(): Promise<Property[]> {
+  const snap = await propertyCol().orderBy('createdAt', 'desc').limit(maxFetchDocs()).get();
+  return sortByCreatedDesc(
+    snap.docs.map((doc) => firestoreDocToProperty(doc.id, doc.data() as Record<string, unknown>))
+  );
+}
+
 export async function listPropertiesFromFirestore(
   q: PropertyListQuery
 ): Promise<{ data: Property[]; pagination: { page: number; limit: number; total: number; totalPages: number } }> {
-  const db = getDb();
-  const col = db.collection(collectionName());
-
-  let query: Query = col as Query;
+  let query: Query = propertyCol() as unknown as Query;
   if (q.countryId) query = query.where('countryId', '==', q.countryId);
   if (q.cityId) query = query.where('cityId', '==', q.cityId);
+  if (q.agentId) query = query.where('agentId', '==', q.agentId);
   if (q.listingType) query = query.where('listingType', '==', q.listingType);
   if (q.propertyType) query = query.where('propertyType', '==', q.propertyType);
   if (q.isFeatured === 'true') query = query.where('isFeatured', '==', true);
@@ -206,9 +253,12 @@ export async function listPropertiesFromFirestore(
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     if (!msg.includes('index') && !msg.includes('FAILED_PRECONDITION')) throw err;
-    snap = await col.orderBy('createdAt', 'desc').limit(maxFetchDocs()).get();
+    snap = await propertyCol().orderBy('createdAt', 'desc').limit(maxFetchDocs()).get();
   }
-  let rows = snap.docs.map((d) => firestoreDocToProperty(d.id, d.data() as Record<string, unknown>));
+
+  let rows = snap.docs.map((doc) =>
+    firestoreDocToProperty(doc.id, doc.data() as Record<string, unknown>)
+  );
 
   const priceMin = q.priceMin ? parseFloat(q.priceMin) : null;
   const priceMax = q.priceMax ? parseFloat(q.priceMax) : null;
@@ -225,16 +275,24 @@ export async function listPropertiesFromFirestore(
   if (areaMin !== null) rows = rows.filter((p) => p.area >= areaMin);
   if (areaMax !== null) rows = rows.filter((p) => p.area <= areaMax);
   if (search) {
-    rows = rows.filter(
-      (p) =>
-        p.title.toLowerCase().includes(search) ||
-        p.description.toLowerCase().includes(search) ||
-        (p.address?.toLowerCase().includes(search) ?? false)
-    );
+    rows = rows.filter((p) => {
+      const blob = [
+        p.title,
+        p.description,
+        p.address ?? '',
+        p.city?.name ?? '',
+        p.region?.name ?? '',
+        p.country?.name ?? '',
+      ]
+        .join(' ')
+        .toLowerCase();
+      return blob.includes(search);
+    });
   }
 
   if (q.sort === 'price_asc') rows = [...rows].sort((a, b) => a.price - b.price);
   else if (q.sort === 'price_desc') rows = [...rows].sort((a, b) => b.price - a.price);
+  else rows = sortByCreatedDesc(rows);
 
   const total = rows.length;
   const skip = (q.page - 1) * q.limit;
@@ -256,14 +314,248 @@ export async function getPropertyFromFirestore(
   id: string,
   skipView: boolean
 ): Promise<Property | null> {
-  const db = getDb();
-  const ref = db.collection(collectionName()).doc(id);
+  const ref = propertyCol().doc(id);
   const snap = await ref.get();
   if (!snap.exists) return null;
   const raw = snap.data() as Record<string, unknown>;
   if (!skipView) {
     await ref.update({ views: FieldValue.increment(1) }).catch(() => {});
   }
-  const views = asNum(raw.views, 0) + (skipView ? 0 : 1);
+  const views = asNumber(raw.views, 0) + (skipView ? 0 : 1);
   return firestoreDocToProperty(id, { ...raw, views });
+}
+
+type PropertyWriteInput = {
+  title: string;
+  description: string;
+  price: number | string;
+  listingType: ListingType;
+  propertyType: PropertyType;
+  area: number | string;
+  bedrooms?: number | string | null;
+  bathrooms?: number | string | null;
+  floors?: number | string | null;
+  yearBuilt?: number | string | null;
+  isFeatured?: boolean;
+  status?: PropertyStatus;
+  countryId: string;
+  regionId: string;
+  cityId: string;
+  address?: string | null;
+  latitude?: number | string | null;
+  longitude?: number | string | null;
+  agentId?: string | null;
+  images?: Array<{ id?: string; url: string; alt?: string | null; isCover?: boolean; order?: number }>;
+  amenityIds?: string[];
+  slug?: string;
+};
+
+function createSlug(title: string): string {
+  const base = title
+    .toLowerCase()
+    .replace(/[^a-z0-9\u0600-\u06FF]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+  return `${base || 'property'}-${Date.now()}`;
+}
+
+function normalizeImages(
+  propertyId: string,
+  images: PropertyWriteInput['images'] | undefined,
+  existing: PropertyImage[]
+): PropertyImage[] {
+  const src = images ?? existing;
+  return src.map((img, index) => ({
+    id: img.id || makeId('img'),
+    url: img.url,
+    alt: img.alt ?? null,
+    isCover: typeof img.isCover === 'boolean' ? img.isCover : index === 0,
+    order: typeof img.order === 'number' ? img.order : index,
+    propertyId,
+  }));
+}
+
+async function buildAmenities(
+  propertyId: string,
+  amenityIds: string[] | undefined,
+  existing: PropertyAmenity[]
+): Promise<PropertyAmenity[]> {
+  if (!amenityIds) return existing;
+  const amenities = await getAmenitiesByIds(amenityIds);
+  return amenities.map((amenity) => ({
+    id: makeId('pam'),
+    propertyId,
+    amenityId: amenity.id,
+    amenity,
+  }));
+}
+
+async function buildStoredProperty(
+  propertyId: string,
+  input: PropertyWriteInput,
+  existing?: Property
+): Promise<Record<string, unknown>> {
+  const location = await getLocationSnapshot({
+    countryId: input.countryId,
+    regionId: input.regionId,
+    cityId: input.cityId,
+  });
+  const agent = await buildAgentSnapshot(input.agentId ?? null);
+  const images = normalizeImages(propertyId, input.images, existing?.images ?? []);
+  const amenities = await buildAmenities(propertyId, input.amenityIds, existing?.amenities ?? []);
+  const createdAt = existing?.createdAt ?? nowIso();
+
+  return cleanUndefined({
+    id: propertyId,
+    title: input.title,
+    slug: input.slug || existing?.slug || createSlug(input.title),
+    description: input.description,
+    price: asNumber(input.price, 0),
+    listingType: input.listingType,
+    propertyType: input.propertyType,
+    status: input.status || existing?.status || 'AVAILABLE',
+    area: asNumber(input.area, 0),
+    bedrooms: asNullableNumber(input.bedrooms),
+    bathrooms: asNullableNumber(input.bathrooms),
+    floors: asNullableNumber(input.floors),
+    yearBuilt: asNullableNumber(input.yearBuilt),
+    isFeatured: typeof input.isFeatured === 'boolean' ? input.isFeatured : (existing?.isFeatured ?? false),
+    views: existing?.views ?? 0,
+    countryId: location.country.id,
+    regionId: location.region.id,
+    cityId: location.city.id,
+    address: input.address ?? null,
+    latitude: asNullableNumber(input.latitude),
+    longitude: asNullableNumber(input.longitude),
+    agentId: input.agentId ?? null,
+    createdAt,
+    updatedAt: nowIso(),
+    country: location.country,
+    region: location.region,
+    city: location.city,
+    agent,
+    images,
+    amenities,
+    countryName: location.country.name,
+    regionName: location.region.name,
+    cityName: location.city.name,
+    countryCode: location.country.code,
+    currencySymbol: location.country.currencySymbol ?? '$',
+  });
+}
+
+export async function createPropertyInFirestore(input: PropertyWriteInput): Promise<Property> {
+  const id = makeId('prop');
+  const payload = await buildStoredProperty(id, input);
+  await propertyCol().doc(id).set(payload);
+  return firestoreDocToProperty(id, payload);
+}
+
+export async function updatePropertyInFirestore(
+  id: string,
+  input: Partial<PropertyWriteInput>
+): Promise<Property | null> {
+  const existing = await getPropertyFromFirestore(id, true);
+  if (!existing) return null;
+  const merged: PropertyWriteInput = {
+    title: input.title ?? existing.title,
+    description: input.description ?? existing.description,
+    price: input.price ?? existing.price,
+    listingType: input.listingType ?? existing.listingType,
+    propertyType: input.propertyType ?? existing.propertyType,
+    area: input.area ?? existing.area,
+    bedrooms: input.bedrooms ?? existing.bedrooms,
+    bathrooms: input.bathrooms ?? existing.bathrooms,
+    floors: input.floors ?? existing.floors,
+    yearBuilt: input.yearBuilt ?? existing.yearBuilt,
+    isFeatured: input.isFeatured ?? existing.isFeatured,
+    status: input.status ?? existing.status,
+    countryId: input.countryId ?? existing.countryId,
+    regionId: input.regionId ?? existing.regionId,
+    cityId: input.cityId ?? existing.cityId,
+    address: input.address ?? existing.address,
+    latitude: input.latitude ?? existing.latitude,
+    longitude: input.longitude ?? existing.longitude,
+    agentId: input.agentId ?? existing.agentId,
+    images: input.images ?? existing.images,
+    amenityIds: input.amenityIds,
+    slug: input.slug ?? existing.slug,
+  };
+  const payload = await buildStoredProperty(id, merged, existing);
+  await propertyCol().doc(id).set(payload);
+  return firestoreDocToProperty(id, payload);
+}
+
+async function deleteByForeignKey(collectionName: string, field: string, value: string) {
+  const snap = await col(collectionName as typeof FIRESTORE_COLLECTIONS[keyof typeof FIRESTORE_COLLECTIONS])
+    .where(field, '==', value)
+    .get();
+  if (snap.empty) return;
+  const batch = propertyCol().firestore.batch();
+  snap.docs.forEach((doc) => batch.delete(doc.ref));
+  await batch.commit();
+}
+
+export async function deletePropertyInFirestore(id: string): Promise<boolean> {
+  const ref = propertyCol().doc(id);
+  const snap = await ref.get();
+  if (!snap.exists) return false;
+  await Promise.all([
+    deleteByForeignKey(FIRESTORE_COLLECTIONS.favorites, 'propertyId', id),
+    deleteByForeignKey(FIRESTORE_COLLECTIONS.inquiries, 'propertyId', id),
+    deleteByForeignKey(FIRESTORE_COLLECTIONS.propertyReviews, 'propertyId', id),
+  ]);
+  await ref.delete();
+  return true;
+}
+
+export async function clearAgentFromProperties(agentId: string): Promise<void> {
+  const snap = await propertyCol().where('agentId', '==', agentId).get();
+  if (snap.empty) return;
+  const batch = propertyCol().firestore.batch();
+  snap.docs.forEach((doc) => {
+    batch.update(doc.ref, {
+      agentId: null,
+      agent: null,
+      updatedAt: nowIso(),
+    });
+  });
+  await batch.commit();
+}
+
+export async function refreshPropertiesForAgent(agentId: string): Promise<void> {
+  const snap = await propertyCol().where('agentId', '==', agentId).get();
+  if (snap.empty) return;
+  const agent = await buildAgentSnapshot(agentId);
+  const batch = propertyCol().firestore.batch();
+  snap.docs.forEach((doc) => {
+    batch.update(doc.ref, {
+      agent: agent ?? null,
+      updatedAt: nowIso(),
+    });
+  });
+  await batch.commit();
+}
+
+export async function refreshPropertiesForCountry(countryId: string): Promise<void> {
+  const snap = await propertyCol().where('countryId', '==', countryId).get();
+  if (snap.empty) return;
+  for (const doc of snap.docs) {
+    const row = firestoreDocToProperty(doc.id, doc.data() as Record<string, unknown>);
+    const location = await getLocationSnapshot({
+      countryId: row.countryId,
+      regionId: row.regionId,
+      cityId: row.cityId,
+    });
+    await doc.ref.update({
+      country: location.country,
+      region: location.region,
+      city: location.city,
+      countryName: location.country.name,
+      regionName: location.region.name,
+      cityName: location.city.name,
+      countryCode: location.country.code,
+      currencySymbol: location.country.currencySymbol ?? '$',
+      updatedAt: nowIso(),
+    });
+  }
 }

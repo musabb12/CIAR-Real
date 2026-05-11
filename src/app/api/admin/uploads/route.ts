@@ -1,7 +1,6 @@
 import { randomUUID } from 'crypto';
-import { mkdir, writeFile } from 'fs/promises';
-import path from 'path';
 import { NextResponse } from 'next/server';
+import { uploadBufferToFirebaseStorage } from '@/lib/firebase-storage';
 
 const MAX_IMAGE_SIZE = 8 * 1024 * 1024; // 8MB
 const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
@@ -23,24 +22,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Image is too large (max 8MB)' }, { status: 400 });
     }
 
-    const extension = file.name.split('.').pop()?.toLowerCase() || 'jpg';
-    const safeExt = extension.replace(/[^a-z0-9]/g, '') || 'jpg';
-    const fileName = `${Date.now()}-${randomUUID()}.${safeExt}`;
-
     const folderField = formData.get('folder');
-    const subFolder =
-      folderField === 'properties' ? path.join('uploads', 'properties') : path.join('uploads', 'page-backgrounds');
-    const relativeDir = subFolder;
-    const absoluteDir = path.join(process.cwd(), 'public', relativeDir);
-    await mkdir(absoluteDir, { recursive: true });
-
-    const absolutePath = path.join(absoluteDir, fileName);
     const buffer = Buffer.from(await file.arrayBuffer());
-    await writeFile(absolutePath, buffer);
+    const subFolder =
+      folderField === 'properties' ? 'uploads/properties' : 'uploads/page-backgrounds';
+    const uploaded = await uploadBufferToFirebaseStorage({
+      folder: subFolder,
+      fileName: `${Date.now()}-${randomUUID()}.${file.name.split('.').pop()?.toLowerCase() || 'jpg'}`,
+      contentType: file.type,
+      buffer,
+    });
 
     return NextResponse.json({
       ok: true,
-      url: `/${relativeDir}/${fileName}`,
+      url: uploaded.url,
     });
   } catch {
     return NextResponse.json({ error: 'Failed to upload image' }, { status: 500 });

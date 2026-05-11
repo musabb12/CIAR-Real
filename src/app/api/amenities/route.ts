@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { listAmenitiesFromFirestore } from '@/lib/firestore-platform';
 
 // GET /api/amenities - List all amenities
 export async function GET() {
   try {
-    const amenities = await db.amenity.findMany({
-      orderBy: [{ category: 'asc' }, { name: 'asc' }],
-    });
+    const amenities = await listAmenitiesFromFirestore();
 
     return NextResponse.json(amenities);
   } catch (error) {

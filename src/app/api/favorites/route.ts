@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import {
+  addFavoriteInFirestore,
+  listFavoritesForUser,
+  removeFavoriteInFirestore,
+} from '@/lib/firestore-platform';
 
 // GET /api/favorites - List favorites for a user
 export async function GET(request: NextRequest) {
@@ -14,22 +18,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const favorites = await db.favorite.findMany({
-      where: { userId },
-      include: {
-        property: {
-          include: {
-            images: {
-              orderBy: { order: 'asc' },
-              take: 1,
-            },
-            country: true,
-            city: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    const favorites = await listFavoritesForUser(userId);
 
     return NextResponse.json(favorites);
   } catch (error) {
@@ -54,54 +43,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if property exists
-    const property = await db.property.findUnique({
-      where: { id: propertyId },
-    });
-
-    if (!property) {
-      return NextResponse.json(
-        { error: 'Property not found' },
-        { status: 404 }
-      );
-    }
-
-    // Check if already favorited
-    const existing = await db.favorite.findUnique({
-      where: {
-        userId_propertyId: { userId, propertyId },
-      },
-    });
-
-    if (existing) {
-      return NextResponse.json(
-        { error: 'Property already in favorites' },
-        { status: 409 }
-      );
-    }
-
-    const favorite = await db.favorite.create({
-      data: { userId, propertyId },
-      include: {
-        property: {
-          include: {
-            images: {
-              orderBy: { order: 'asc' },
-              take: 1,
-            },
-            country: true,
-            city: true,
-          },
-        },
-      },
-    });
+    const favorite = await addFavoriteInFirestore(userId, propertyId);
 
     return NextResponse.json(favorite, { status: 201 });
   } catch (error) {
     console.error('Error adding favorite:', error);
     return NextResponse.json(
-      { error: 'Failed to add favorite' },
-      { status: 500 }
+      { error: error instanceof Error ? error.message : 'Failed to add favorite' },
+      { status: error instanceof Error && /already|not found/i.test(error.message) ? 409 : 500 }
     );
   }
 }
@@ -120,24 +69,14 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const existing = await db.favorite.findUnique({
-      where: {
-        userId_propertyId: { userId, propertyId },
-      },
-    });
+    const removed = await removeFavoriteInFirestore(userId, propertyId);
 
-    if (!existing) {
+    if (!removed) {
       return NextResponse.json(
         { error: 'Favorite not found' },
         { status: 404 }
       );
     }
-
-    await db.favorite.delete({
-      where: {
-        userId_propertyId: { userId, propertyId },
-      },
-    });
 
     return NextResponse.json({ message: 'Favorite removed successfully' });
   } catch (error) {

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
   Shield,
   Lock,
-  User,
+  Mail,
   LogIn,
   Loader2,
   ArrowLeft,
@@ -20,16 +20,12 @@ import { getPrimaryPageBackground } from '@/lib/page-backgrounds';
 import type { User as AppUser } from '@/types';
 import { toast } from 'sonner';
 
-// ─── HARDCODED ADMIN CREDENTIALS ───
-const ADMIN_USERNAME = 'CIAR-800';
-const ADMIN_PASSWORD = 'CIAR-REAL800';
-
 export function AdminLoginPage() {
   const router = useRouter();
   const { rtl } = useTranslation();
   const { setCurrentPage, login, contentSettings } = useAppStore();
 
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -63,35 +59,60 @@ export function AdminLoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!email.includes('@')) {
+      setError(tx('أدخل بريدًا إلكترونيًا صحيحًا', 'Enter a valid email address'));
+      return;
+    }
+
     setLoading(true);
+    try {
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          password,
+        }),
+      });
+      const data = await res.json();
 
-    await new Promise((r) => setTimeout(r, 350));
+      if (!res.ok) {
+        setError(
+          data.error ||
+            tx(
+              'فشل تسجيل الدخول. تحقق من البريد وكلمة المرور.',
+              'Sign-in failed. Check your email and password.',
+            ),
+        );
+        return;
+      }
 
-    if (username.trim() === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      const adminUser: AppUser = {
-        id: 'admin-ciar-800',
-        email: 'admin@ciar.com',
-        name: 'CIAR Admin',
-        phone: null,
-        avatar: null,
-        role: 'ADMIN',
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      login(adminUser);
+      if (data.user?.role !== 'ADMIN') {
+        await fetch('/api/logout', { method: 'POST' }).catch(() => {});
+        setError(
+          tx(
+            'هذا الحساب لا يملك صلاحية دخول لوحة الإدارة.',
+            'This account does not have access to the admin dashboard.',
+          ),
+        );
+        return;
+      }
+
+      login(data.user as AppUser);
       toast.success(tx('تم تسجيل الدخول كأدمن', 'Signed in as Admin'));
       setCurrentPage('admin');
       router.replace('/admin/dashboard');
-    } else {
+    } catch {
       setError(
         tx(
-          'بيانات الاعتماد غير صحيحة. يرجى التحقق والمحاولة مرة أخرى.',
-          'Invalid credentials. Please verify and try again.',
+          'حدث خطأ في الشبكة. حاول مرة أخرى.',
+          'A network error occurred. Please try again.',
         ),
       );
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (
@@ -150,18 +171,18 @@ export function AdminLoginPage() {
           <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
             <div>
               <label className="block text-[13px] font-semibold text-white/80 mb-1.5">
-                {tx('اسم المستخدم', 'Username')}
+                {tx('البريد الإلكتروني', 'Email')}
               </label>
               <div className="relative">
-                <User className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
+                <Mail className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/40" />
                 <input
-                  type="text"
+                  type="email"
                   required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="CIAR-XXX"
-                  autoComplete="off"
-                  className="auth-input h-11 w-full rounded-xl ps-10 pe-4 text-sm font-mono tracking-wider"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@realtyhub.com"
+                  autoComplete="email"
+                  className="auth-input h-11 w-full rounded-xl ps-10 pe-4 text-sm"
                 />
               </div>
             </div>
@@ -178,8 +199,8 @@ export function AdminLoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  autoComplete="new-password"
-                  className="auth-input h-11 w-full rounded-xl ps-10 pe-10 text-sm font-mono tracking-wider"
+                  autoComplete="current-password"
+                  className="auth-input h-11 w-full rounded-xl ps-10 pe-10 text-sm"
                 />
                 <button
                   type="button"

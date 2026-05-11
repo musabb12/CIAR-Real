@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import {
+  createNewsInFirestore,
+  deleteNewsInFirestore,
+  listNewsFromFirestore,
+  updateNewsInFirestore,
+} from '@/lib/firestore-platform';
 
 // GET /api/news — Active items by default. Use ?all=1 for admin (includes inactive).
 export async function GET(request: NextRequest) {
@@ -7,10 +12,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const all = searchParams.get('all') === '1';
 
-    const news = await db.newsItem.findMany({
-      where: all ? {} : { isActive: true },
-      orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
-    });
+    const news = await listNewsFromFirestore(all);
     return NextResponse.json(news);
   } catch (error) {
     console.error('Error fetching news:', error);
@@ -28,14 +30,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Content is required' }, { status: 400 });
     }
 
-    const news = await db.newsItem.create({
-      data: {
-        content: content.trim(),
-        link: link || null,
-        type: type || 'info',
-        order: order ?? 0,
-        isActive: isActive ?? true,
-      },
+    const news = await createNewsInFirestore({
+      content: content.trim(),
+      link: link || null,
+      type: type || 'info',
+      order: order ?? 0,
+      isActive: isActive ?? true,
     });
 
     return NextResponse.json(news, { status: 201 });
@@ -55,16 +55,11 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    const news = await db.newsItem.update({
-      where: { id },
-      data: {
-        ...(data.content !== undefined && { content: data.content.trim() }),
-        ...(data.link !== undefined && { link: data.link || null }),
-        ...(data.type !== undefined && { type: data.type }),
-        ...(data.order !== undefined && { order: data.order }),
-        ...(data.isActive !== undefined && { isActive: data.isActive }),
-      },
-    });
+    const news = await updateNewsInFirestore(id, data);
+
+    if (!news) {
+      return NextResponse.json({ error: 'News item not found' }, { status: 404 });
+    }
 
     return NextResponse.json(news);
   } catch (error) {
@@ -83,7 +78,10 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    await db.newsItem.delete({ where: { id } });
+    const deleted = await deleteNewsInFirestore(id);
+    if (!deleted) {
+      return NextResponse.json({ error: 'News item not found' }, { status: 404 });
+    }
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting news:', error);

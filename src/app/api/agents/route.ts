@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { listAgentsFromFirestore } from '@/lib/firestore-platform';
 
 // GET /api/agents - List agents with user info, company info, and property count
 export async function GET(request: NextRequest) {
@@ -7,31 +7,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const countryId = searchParams.get('countryId');
 
-    const agents = await db.agent.findMany({
-      where: countryId
-        ? {
-            properties: {
-              some: { countryId },
-            },
-          }
-        : undefined,
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            avatar: true,
-          },
-        },
-        company: true,
-        _count: {
-          select: { properties: true },
-        },
-      },
-      orderBy: { rating: 'desc' },
-    });
+    const agents = await listAgentsFromFirestore(countryId);
 
     return NextResponse.json(agents);
   } catch (error) {

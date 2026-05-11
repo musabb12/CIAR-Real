@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { createSessionToken, getSessionCookieOptions } from '@/lib/auth-token';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import {
+  getUserByEmail,
+  updateUserInFirestore,
+} from '@/lib/firestore-platform';
 
 const BCRYPT_HASH_REGEX = /^\$2[aby]\$\d{2}\$/;
 
@@ -40,30 +43,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = await db.user.findUnique({
-      where: { email: email.trim().toLowerCase() },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        password: true,
-        phone: true,
-        avatar: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-        agent: {
-          select: {
-            id: true,
-            title: true,
-            verified: true,
-            rating: true,
-            totalListings: true,
-            companyId: true,
-          },
-        },
-      },
-    });
+    const user = await getUserByEmail(email.trim().toLowerCase());
 
     if (!user) {
       return NextResponse.json(
@@ -96,10 +76,7 @@ export async function POST(request: NextRequest) {
       isValidPassword = password === storedPassword;
       if (isValidPassword) {
         const upgradedHash = await bcrypt.hash(password, 12);
-        await db.user.update({
-          where: { id: user.id },
-          data: { password: upgradedHash },
-        });
+        await updateUserInFirestore(user.id, { password: upgradedHash });
       }
     }
 

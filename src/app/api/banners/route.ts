@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import {
+  createBannerInFirestore,
+  listBannersFromFirestore,
+} from '@/lib/firestore-platform';
 
 // GET /api/banners - List banners
 export async function GET(request: NextRequest) {
@@ -8,16 +11,7 @@ export async function GET(request: NextRequest) {
     const position = searchParams.get('position');
     const isActive = searchParams.get('isActive');
 
-    const where: Record<string, unknown> = {};
-    if (position) where.position = position;
-    if (isActive !== null && isActive !== undefined) {
-      where.isActive = isActive === 'true';
-    }
-
-    const banners = await db.banner.findMany({
-      where,
-      orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
-    });
+    const banners = await listBannersFromFirestore({ position, isActive });
 
     return NextResponse.json(banners);
   } catch (error) {
@@ -42,16 +36,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const banner = await db.banner.create({
-      data: {
-        title,
-        subtitle: subtitle || null,
-        image: image || null,
-        link: link || null,
-        position: position || 'home',
-        order: order || 0,
-        isActive: isActive !== undefined ? isActive : true,
-      },
+    const banner = await createBannerInFirestore({
+      title,
+      subtitle: subtitle || null,
+      image: image || null,
+      link: link || null,
+      position: position || 'home',
+      order: order || 0,
+      isActive: isActive !== undefined ? isActive : true,
     });
 
     return NextResponse.json(banner, { status: 201 });

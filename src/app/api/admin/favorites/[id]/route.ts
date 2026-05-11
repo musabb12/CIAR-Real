@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { deleteFavoriteByIdInFirestore } from '@/lib/firestore-platform';
 
 /** DELETE /api/admin/favorites/[id] — Remove a favorite by its row id */
 export async function DELETE(
@@ -8,11 +8,10 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const existing = await db.favorite.findUnique({ where: { id } });
-    if (!existing) {
+    const deleted = await deleteFavoriteByIdInFirestore(id);
+    if (!deleted) {
       return NextResponse.json({ error: 'Favorite not found' }, { status: 404 });
     }
-    await db.favorite.delete({ where: { id } });
     return NextResponse.json({ message: 'Favorite removed' });
   } catch (error) {
     console.error('Error deleting favorite:', error);

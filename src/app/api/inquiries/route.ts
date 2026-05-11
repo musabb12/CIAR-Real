@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import {
+  createInquiryInFirestore,
+  listInquiriesFromFirestore,
+} from '@/lib/firestore-platform';
 
 // GET /api/inquiries - List inquiries
 export async function GET(request: NextRequest) {
@@ -8,31 +11,9 @@ export async function GET(request: NextRequest) {
     const propertyId = searchParams.get('propertyId');
     const status = searchParams.get('status');
 
-    const where: Record<string, unknown> = {};
-    if (propertyId) where.propertyId = propertyId;
-    if (status) where.status = status;
-
-    const inquiries = await db.inquiry.findMany({
-      where,
-      include: {
-        property: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            price: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            avatar: true,
-          },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
+    const inquiries = await listInquiriesFromFirestore({
+      propertyId,
+      status,
     });
 
     return NextResponse.json(inquiries);
@@ -58,51 +39,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if property exists
-    const property = await db.property.findUnique({
-      where: { id: propertyId },
-    });
-
-    if (!property) {
-      return NextResponse.json(
-        { error: 'Property not found' },
-        { status: 404 }
-      );
-    }
-
-    const inquiry = await db.inquiry.create({
-      data: {
-        propertyId,
-        userId: userId || null,
-        name,
-        email,
-        phone: phone || null,
-        message,
-        status: 'NEW',
-      },
-      include: {
-        property: {
-          select: {
-            id: true,
-            title: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
+    const inquiry = await createInquiryInFirestore({
+      propertyId,
+      userId: userId || null,
+      name,
+      email,
+      phone: phone || null,
+      message,
     });
 
     return NextResponse.json(inquiry, { status: 201 });
   } catch (error) {
     console.error('Error creating inquiry:', error);
     return NextResponse.json(
-      { error: 'Failed to create inquiry' },
-      { status: 500 }
+      { error: error instanceof Error ? error.message : 'Failed to create inquiry' },
+      { status: error instanceof Error && /not found/i.test(error.message) ? 404 : 500 }
     );
   }
 }

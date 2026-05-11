@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import {
+  deleteInquiryInFirestore,
+  updateInquiryInFirestore,
+} from '@/lib/firestore-platform';
 
 // PUT /api/inquiries/[id] - Update an inquiry (e.g., change status)
 export async function PUT(
@@ -10,37 +13,14 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
-    const existing = await db.inquiry.findUnique({
-      where: { id },
-    });
+    const inquiry = await updateInquiryInFirestore(id, body);
 
-    if (!existing) {
+    if (!inquiry) {
       return NextResponse.json(
         { error: 'Inquiry not found' },
         { status: 404 }
       );
     }
-
-    const { status, name, email, phone, message } = body;
-    const updateData: Record<string, unknown> = {};
-    if (status !== undefined) updateData.status = status;
-    if (name !== undefined) updateData.name = name;
-    if (email !== undefined) updateData.email = email;
-    if (phone !== undefined) updateData.phone = phone;
-    if (message !== undefined) updateData.message = message;
-
-    const inquiry = await db.inquiry.update({
-      where: { id },
-      data: updateData,
-      include: {
-        property: {
-          select: { id: true, title: true, slug: true, price: true },
-        },
-        user: {
-          select: { id: true, name: true, email: true, avatar: true },
-        },
-      },
-    });
 
     return NextResponse.json(inquiry);
   } catch (error) {
@@ -60,18 +40,14 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    const existing = await db.inquiry.findUnique({
-      where: { id },
-    });
+    const removed = await deleteInquiryInFirestore(id);
 
-    if (!existing) {
+    if (!removed) {
       return NextResponse.json(
         { error: 'Inquiry not found' },
         { status: 404 }
       );
     }
-
-    await db.inquiry.delete({ where: { id } });
 
     return NextResponse.json({ message: 'Inquiry deleted successfully' });
   } catch (error) {

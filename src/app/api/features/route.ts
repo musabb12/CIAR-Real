@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import {
+  createFeatureInFirestore,
+  listFeaturesFromFirestore,
+  updateFeatureInFirestore,
+} from '@/lib/firestore-platform';
 
 export async function GET() {
   try {
-    const features = await db.featureToggle.findMany({
-      orderBy: { order: 'asc' },
-    });
+    const features = await listFeaturesFromFirestore();
     return NextResponse.json(features);
   } catch {
     return NextResponse.json({ error: 'Failed to fetch features' }, { status: 500 });
@@ -18,10 +20,8 @@ export async function PUT(request: Request) {
     const { id, isEnabled } = body;
     if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
-    const updated = await db.featureToggle.update({
-      where: { id },
-      data: { isEnabled },
-    });
+    const updated = await updateFeatureInFirestore(id, { isEnabled });
+    if (!updated) return NextResponse.json({ error: 'Feature not found' }, { status: 404 });
     return NextResponse.json(updated);
   } catch {
     return NextResponse.json({ error: 'Failed to update feature' }, { status: 500 });
@@ -34,8 +34,14 @@ export async function POST(request: Request) {
     const { key, name, description, category, icon, isEnabled, order } = body;
     if (!key || !name) return NextResponse.json({ error: 'Key and name required' }, { status: 400 });
 
-    const feature = await db.featureToggle.create({
-      data: { key, name, description, category: category || 'general', icon, isEnabled: isEnabled ?? true, order: order ?? 0 },
+    const feature = await createFeatureInFirestore({
+      key,
+      name,
+      description,
+      category: category || 'general',
+      icon,
+      isEnabled: isEnabled ?? true,
+      order: order ?? 0,
     });
     return NextResponse.json(feature, { status: 201 });
   } catch (err: unknown) {

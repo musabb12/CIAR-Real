@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { createSessionToken, getSessionCookieOptions } from '@/lib/auth-token';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import {
+  createUserInFirestore,
+  getUserByEmail,
+} from '@/lib/firestore-platform';
 
 // POST /api/register - Create a new user account
 export async function POST(request: NextRequest) {
@@ -47,9 +50,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if email already exists
-    const existingUser = await db.user.findUnique({
-      where: { email: email.toLowerCase() },
-    });
+    const existingUser = await getUserByEmail(email.toLowerCase());
 
     if (existingUser) {
       return NextResponse.json(
@@ -62,26 +63,13 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 12);
 
     // Create the user
-    const user = await db.user.create({
-      data: {
-        name,
-        email: email.toLowerCase(),
-        password: hashedPassword,
-        phone: (typeof phone === 'string' && phone.trim().length > 0) ? phone.trim() : null,
-        role: 'USER',
-        isActive: true,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        phone: true,
-        avatar: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+    const user = await createUserInFirestore({
+      name: name.trim(),
+      email: email.toLowerCase(),
+      password: hashedPassword,
+      phone: (typeof phone === 'string' && phone.trim().length > 0) ? phone.trim() : null,
+      role: 'USER',
+      isActive: true,
     });
 
     const sessionToken = createSessionToken({

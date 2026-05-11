@@ -12,7 +12,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:reset": "prisma migrate reset",
-    "db:seed-firestore": "node scripts/seed-firestore-properties.cjs"
+    "db:seed-firestore": "node scripts/seed-firestore-properties.cjs",
+    "db:migrate-firestore": "node scripts/migrate-prisma-to-firestore.cjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -1,24 +1,10 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { listAllFavoritesForAdmin } from '@/lib/firestore-platform';
 
 /** GET /api/admin/favorites — All favorites with user + property (admin dashboard) */
 export async function GET() {
   try {
-    const favorites = await db.favorite.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 500,
-      include: {
-        user: {
-          select: { id: true, name: true, email: true },
-        },
-        property: {
-          include: {
-            country: { select: { name: true } },
-            city: { select: { name: true } },
-          },
-        },
-      },
-    });
+    const favorites = await listAllFavoritesForAdmin();
     return NextResponse.json(favorites);
   } catch (error) {
     console.error('Error fetching favorites:', error);

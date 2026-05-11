@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { UserRole } from '@prisma/client';
+import {
+  deleteUserInFirestore,
+  getUserDetailFromFirestore,
+  updateUserInFirestore,
+} from '@/lib/firestore-platform';
 
 // GET /api/users/[id] - Get single user
 export async function GET(
@@ -10,31 +13,7 @@ export async function GET(
   try {
     const { id } = await params;
 
-    const user = await db.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        phone: true,
-        avatar: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-        agent: {
-          include: {
-            company: true,
-          },
-        },
-        _count: {
-          select: {
-            favorites: true,
-            inquiries: true,
-          },
-        },
-      },
-    });
+    const user = await getUserDetailFromFirestore(id);
 
     if (!user) {
       return NextResponse.json(
@@ -62,9 +41,7 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
-    const existing = await db.user.findUnique({
-      where: { id },
-    });
+    const existing = await getUserDetailFromFirestore(id);
 
     if (!existing) {
       return NextResponse.json(
@@ -73,29 +50,12 @@ export async function PUT(
       );
     }
 
-    const updateData: Record<string, unknown> = {};
-    if (body.name !== undefined) updateData.name = body.name;
-    if (body.phone !== undefined) updateData.phone = body.phone;
-    if (body.avatar !== undefined) updateData.avatar = body.avatar;
-    if (body.isActive !== undefined) updateData.isActive = body.isActive;
-    if (body.role && Object.values(UserRole).includes(body.role as UserRole)) {
-      updateData.role = body.role;
-    }
-
-    const user = await db.user.update({
-      where: { id },
-      data: updateData,
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        phone: true,
-        avatar: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+    const user = await updateUserInFirestore(id, {
+      ...(body.name !== undefined ? { name: body.name } : {}),
+      ...(body.phone !== undefined ? { phone: body.phone } : {}),
+      ...(body.avatar !== undefined ? { avatar: body.avatar } : {}),
+      ...(body.isActive !== undefined ? { isActive: body.isActive } : {}),
+      ...(body.role !== undefined ? { role: body.role } : {}),
     });
 
     return NextResponse.json(user);
@@ -116,9 +76,7 @@ export async function DELETE(
   try {
     const { id } = await params;
 
-    const existing = await db.user.findUnique({
-      where: { id },
-    });
+    const existing = await getUserDetailFromFirestore(id);
 
     if (!existing) {
       return NextResponse.json(
@@ -127,14 +85,7 @@ export async function DELETE(
       );
     }
 
-    // Delete related records
-    await db.favorite.deleteMany({ where: { userId: id } });
-    await db.inquiry.deleteMany({ where: { userId: id } });
-    await db.property.updateMany({
-      where: { agentId: id },
-      data: { agentId: null },
-    });
-    await db.user.delete({ where: { id } });
+    await deleteUserInFirestore(id);
 
     return NextResponse.json({ message: 'User deleted successfully' });
   } catch (error) {

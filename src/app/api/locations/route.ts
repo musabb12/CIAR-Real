@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { Prisma } from '@prisma/client';
+import {
+  createCountryInFirestore,
+  listLocationsFromFirestore,
+} from '@/lib/firestore-platform';
 
 // GET /api/locations - Return nested countries → regions → cities
 export async function GET(request: NextRequest) {
@@ -9,40 +11,9 @@ export async function GET(request: NextRequest) {
     const includeProperties = searchParams.get('includeProperties') === 'true';
     const includeInactive = searchParams.get('includeInactive') === 'true';
 
-    const countriesInclude: Prisma.CountryInclude = {
-      regions: {
-        orderBy: { name: 'asc' },
-        include: {
-          cities: {
-            orderBy: { name: 'asc' },
-          },
-        },
-      },
-    };
-
-    if (includeProperties) {
-      countriesInclude.regions.include = {
-        cities: {
-          orderBy: { name: 'asc' },
-          include: {
-            _count: {
-              select: { properties: true },
-            },
-          },
-        },
-        _count: {
-          select: { properties: true },
-        },
-      };
-      countriesInclude._count = {
-        select: { properties: true },
-      };
-    }
-
-    const countries = await db.country.findMany({
-      where: includeInactive ? undefined : { isActive: true },
-      orderBy: { name: 'asc' },
-      include: countriesInclude,
+    const countries = await listLocationsFromFirestore({
+      includeProperties,
+      includeInactive,
     });
 
     return NextResponse.json(countries);
@@ -68,14 +39,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Name and code are required' }, { status: 400 });
     }
 
-    const created = await db.country.create({
-      data: {
-        name,
-        code,
-        flag,
-        currency,
-        isActive: true,
-      },
+    const created = await createCountryInFirestore({
+      name,
+      code,
+      flag,
+      currency,
     });
 
     return NextResponse.json(created, { status: 201 });

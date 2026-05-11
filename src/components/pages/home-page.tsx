@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Search, PhoneCall, Home, ArrowRight, MapPin, Building2, Globe, Users,
   Briefcase, Star, Quote, CheckCircle, Shield, Building, Layers, Warehouse,
@@ -22,6 +22,27 @@ import { PropertyCard } from '@/components/property/property-card';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import type { Property, Country } from '@/types';
+
+function propertiesFromApiPayload(data: unknown): Property[] {
+  if (Array.isArray(data)) return data as Property[];
+  if (data && typeof data === 'object') {
+    const d = data as { data?: unknown; properties?: unknown };
+    if (Array.isArray(d.data)) return d.data as Property[];
+    if (Array.isArray(d.properties)) return d.properties as Property[];
+  }
+  return [];
+}
+
+async function fetchPropertyList(url: string): Promise<Property[]> {
+  const res = await fetch(url);
+  if (!res.ok) return [];
+  try {
+    const json = await res.json();
+    return propertiesFromApiPayload(json);
+  } catch {
+    return [];
+  }
+}
 
 // ─── AnimatedCounter ───────────────────────────────────────────
 function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: string }) {
@@ -50,6 +71,28 @@ const testimonials = [
   { name: 'Ahmed Al-Rashid', role: 'Property Owner', text: 'I listed my properties on CIAR and received quality inquiries within days. Truly a global platform.', rating: 5 },
   { name: 'Elena Kowalski', role: 'Buyer', text: 'From browsing to closing, CIAR provided a seamless experience. Highly recommended for anyone in real estate.', rating: 5 },
 ];
+
+// ─── Hero carousel: 16 elegant property images ──────────────────
+const heroImages = [
+  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=2000&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=2000&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=2000&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=2000&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=2000&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=2000&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=2000&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=2000&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=2000&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1600210492493-0946911123ea?w=2000&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=2000&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?w=2000&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=2000&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=2000&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1599809275671-b5942cabc7a2?w=2000&q=80&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=2000&q=80&auto=format&fit=crop',
+];
+
+const HERO_SLIDE_DURATION_MS = 5500;
 
 const stats = [
   { value: 60, label: 'hero.countries', suffix: '+', icon: Globe },
@@ -98,7 +141,7 @@ const paymentMethods = [
 // ─── Component ─────────────────────────────────────────────────
 export function HomePage() {
   const { t } = useTranslation();
-  const { setCurrentPage, setFilters, resetFilters } = useAppStore();
+  const { setCurrentPage, setFilters, resetFilters, designSettings, contentSettings, filters } = useAppStore();
   const [featured, setFeatured] = useState<Property[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,19 +149,37 @@ export function HomePage() {
   const [searchType, setSearchType] = useState('');
   const [searchListing, setSearchListing] = useState('');
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const [activeHero, setActiveHero] = useState(0);
+  const [prevHero, setPrevHero] = useState(-1);
+  const [heroProgress, setHeroProgress] = useState(0);
 
-  // Fetch data
+  const effectiveHeroImages = useMemo(() => {
+    const customHero = designSettings.heroImageUrl?.trim();
+    if (!customHero) return heroImages;
+    return [customHero, ...heroImages.filter((img) => img !== customHero)];
+  }, [designSettings.heroImageUrl]);
+
+  // Fetch data (featured: prefer visitor country, then global featured, then latest listings)
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        const [featRes, locRes] = await Promise.all([
-          fetch('/api/properties?isFeatured=true&limit=6'),
+        const baseFeatured = new URLSearchParams({ isFeatured: 'true', limit: '6' });
+        const withCountry = new URLSearchParams(baseFeatured);
+        if (filters.countryId) withCountry.set('countryId', filters.countryId);
+
+        const [featuredList, locRes] = await Promise.all([
+          (async (): Promise<Property[]> => {
+            if (filters.countryId) {
+              const local = await fetchPropertyList(`/api/properties?${withCountry.toString()}`);
+              if (local.length > 0) return local;
+            }
+            const globalFeatured = await fetchPropertyList(`/api/properties?${baseFeatured.toString()}`);
+            if (globalFeatured.length > 0) return globalFeatured;
+            return fetchPropertyList('/api/properties?limit=6&sort=newest');
+          })(),
           fetch('/api/locations?includeProperties=true'),
         ]);
-        if (featRes.ok) {
-          const data = await featRes.json();
-          setFeatured(data.data ?? data.properties ?? data ?? []);
-        }
+        setFeatured(featuredList);
         if (locRes.ok) {
           const data = await locRes.json();
           setCountries(data.countries ?? data ?? []);
@@ -127,7 +188,7 @@ export function HomePage() {
       finally { setLoading(false); }
     };
     fetchAll();
-  }, []);
+  }, [filters.countryId]);
 
   // Auto-rotate testimonials
   useEffect(() => {
@@ -136,6 +197,39 @@ export function HomePage() {
     }, 5000);
     return () => clearInterval(timer);
   }, []);
+
+  // Auto-rotate hero images (16-image elegant carousel)
+  useEffect(() => {
+    const slideTimer = setInterval(() => {
+      setPrevHero(activeHero);
+      setActiveHero((prev) => (prev + 1) % effectiveHeroImages.length);
+    }, HERO_SLIDE_DURATION_MS);
+    return () => clearInterval(slideTimer);
+  }, [activeHero, effectiveHeroImages.length]);
+
+  // Hero progress bar (smooth tick)
+  useEffect(() => {
+    setHeroProgress(0);
+    const start = Date.now();
+    const tick = setInterval(() => {
+      const elapsed = Date.now() - start;
+      const pct = Math.min(100, (elapsed / HERO_SLIDE_DURATION_MS) * 100);
+      setHeroProgress(pct);
+    }, 60);
+    return () => clearInterval(tick);
+  }, [activeHero]);
+
+  // Preload next hero image for buttery transitions
+  useEffect(() => {
+    const next = (activeHero + 1) % effectiveHeroImages.length;
+    const img = new Image();
+    img.src = effectiveHeroImages[next];
+  }, [activeHero, effectiveHeroImages]);
+
+  const goToHero = useCallback((idx: number) => {
+    setPrevHero(activeHero);
+    setActiveHero(idx);
+  }, [activeHero]);
 
   const handleSearch = useCallback(() => {
     resetFilters();
@@ -153,19 +247,52 @@ export function HomePage() {
   }, [resetFilters, setCurrentPage]);
 
   const delay = (ms: number) => ({ animationDelay: `${ms}ms`, opacity: 0 } as React.CSSProperties);
+  const homeContent = contentSettings.home;
+  const heroTitle = homeContent.title?.trim() || 'CIAR';
+  const heroSubtitle = homeContent.subtitle?.trim() || t.hero.subtitle;
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* ─── 1. HERO ─── */}
-      <section className="relative flex min-h-[90vh] items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1920&q=80')] bg-cover bg-center" />
-        <div className="absolute inset-0 hero-gradient" />
+      <section className="relative flex min-h-[92vh] items-center justify-center overflow-hidden">
+        {/* 16-image elegant Ken-Burns carousel */}
+        <div className="hero-carousel" aria-hidden="true">
+          {effectiveHeroImages.map((src, i) => (
+            <div
+              key={src}
+              className={`hero-carousel-slide ${
+                i === activeHero ? 'is-active' : i === prevHero ? 'is-prev' : ''
+              }`}
+              style={{ backgroundImage: `url(${src})` }}
+            />
+          ))}
+        </div>
+        <div className="hero-overlay" />
+        <div className="hero-grain" />
+
+        {/* Top progress bar */}
+        <div className="hero-progress">
+          <div className="hero-progress-bar" style={{ width: `${heroProgress}%` }} />
+        </div>
+
+        {/* Slide dots */}
+        <div className="hero-dots">
+          {effectiveHeroImages.map((_, i) => (
+            <button
+              key={i}
+              className={`hero-dot ${i === activeHero ? 'is-active' : ''}`}
+              onClick={() => goToHero(i)}
+              aria-label={`الانتقال إلى الصورة ${i + 1}`}
+            />
+          ))}
+        </div>
+
         <div className="relative z-10 w-full max-w-6xl mx-auto px-4 py-20 flex flex-col items-center text-center">
-          <h1 className="animate-fade-in-up font-heading text-6xl sm:text-7xl md:text-8xl font-bold tracking-tight text-white mb-4" style={delay(0)}>
-            CIAR
+          <h1 className="animate-fade-in-up font-heading text-6xl sm:text-7xl md:text-8xl font-bold tracking-tight text-white mb-4 drop-shadow-[0_4px_30px_rgba(0,0,0,0.45)]" style={delay(0)}>
+            {heroTitle}
           </h1>
-          <p className="animate-fade-in-up text-lg sm:text-xl text-white/80 max-w-2xl mb-10" style={delay(150)}>
-            {t.hero.subtitle}
+          <p className="animate-fade-in-up text-lg sm:text-xl text-white/85 max-w-2xl mb-10 drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]" style={delay(150)}>
+            {heroSubtitle}
           </p>
 
           {/* Search Bar */}

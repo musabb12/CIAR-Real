@@ -1,10 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import bcrypt from 'bcryptjs';
+import { createSessionToken, getSessionCookieOptions } from '@/lib/auth-token';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 
 // POST /api/register - Create a new user account
 export async function POST(request: NextRequest) {
   try {
+    const ip = getClientIp(request.headers);
+    const rate = checkRateLimit(`register:${ip}`, 5, 60_000);
+    if (!rate.allowed) {
+      return NextResponse.json(
+        { error: 'Too many registration attempts. Please try again later.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(rate.retryAfterSec),
+          },
+        }
+      );
+    }
+
     const body = await request.json();
     const { name, email, password, phone } = body;
 
@@ -68,10 +84,18 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({
-      user,
-      token: `mock-jwt-token-${user.id}-${Date.now()}`,
+    const sessionToken = createSessionToken({
+      id: user.id,
+      email: user.email,
+      role: user.role,
     });
+    const response = NextResponse.json({
+      user,
+      token: sessionToken,
+    });
+    const cookieOptions = getSessionCookieOptions();
+    response.cookies.set(cookieOptions.name, sessionToken, cookieOptions);
+    return response;
   } catch (error) {
     console.error('Error during registration:', error);
     return NextResponse.json(

@@ -117,6 +117,7 @@ model Country {
   currency      String?        // USD, EUR, AED, etc.
   currencySymbol String?
   isActive      Boolean        @default(true)
+  isFeatured    Boolean        @default(false)
   createdAt     DateTime       @default(now())
 
   // Relations
@@ -341,6 +342,15 @@ model ContactMessage {
   message       String
   status        String         @default("NEW") // NEW, READ, REPLIED, ARCHIVED
   isRead        Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+// ==================== SITE SETTINGS ====================
+
+model SiteSetting {
+  key           String         @id
+  value         String
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 }

@@ -80,6 +80,7 @@ export interface Country {
   currency: string | null;
   currencySymbol: string | null;
   isActive: boolean;
+  isFeatured?: boolean;
   regions?: Region[];
 }
 
@@ -223,7 +224,9 @@ export type AppPage =
   | 'favorites'
   | 'contact'
   | 'admin'
-  | 'admin-login';
+  | 'admin-login'
+  | 'register'
+  | 'login';
 
 export interface AdminTab {
   id: string;
@@ -262,6 +265,51 @@ export interface FeatureToggle {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface SiteDesignSettings {
+  primaryColor: string;
+  accentColor: string;
+  heroImageUrl: string;
+}
+
+export interface SiteSocialSettings {
+  website: string;
+  email: string;
+  phone: string;
+  whatsapp: string;
+  telegram: string;
+  facebook: string;
+  instagram: string;
+  x: string;
+  youtube: string;
+  linkedin: string;
+  tiktok: string;
+}
+
+export type ManagedPageKey =
+  | 'home'
+  | 'search'
+  | 'agents'
+  | 'contact'
+  | 'favorites'
+  | 'login'
+  | 'register'
+  | 'admin-login';
+
+export interface PageContentEntry {
+  title?: string;
+  subtitle?: string;
+  badgeText?: string;
+  backgroundImageUrl?: string;
+  backgroundImageUrls?: string[];
+  hideBadge?: boolean;
+  textAlign?: 'start' | 'center' | 'end';
+  titleSize?: 'md' | 'lg' | 'xl';
+  overlayOpacity?: number;
+  contentMaxWidth?: 'md' | 'lg' | 'xl';
+}
+
+export type SiteContentSettings = Record<ManagedPageKey, PageContentEntry>;
 
 export interface PropertyReview {
   id: string;

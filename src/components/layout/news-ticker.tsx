@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { Bell } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/use-translation';
+import { onInvalidate } from '@/lib/admin-events';
 
 interface NewsItem {
   id: string;
@@ -41,18 +42,26 @@ export function NewsTicker() {
   const [paused, setPaused] = useState(false);
   const tickerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  const loadNews = useCallback(() => {
     fetch('/api/news')
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          setNews(data);
+          setNews(data as NewsItem[]);
         }
       })
       .catch(() => {
         // Use fallback news items
       });
   }, []);
+
+  useEffect(() => {
+    loadNews();
+  }, [loadNews]);
+
+  useEffect(() => {
+    return onInvalidate('news', loadNews);
+  }, [loadNews]);
 
   const label = typeLabels[locale] || 'Breaking';
   const animDuration = `${Math.max(news.length * 6, 20)}s`;

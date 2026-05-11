@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
-// GET /api/news - Get all active news items
-export async function GET() {
+// GET /api/news — Active items by default. Use ?all=1 for admin (includes inactive).
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const all = searchParams.get('all') === '1';
+
     const news = await db.newsItem.findMany({
-      where: { isActive: true },
-      orderBy: { order: 'asc' },
+      where: all ? {} : { isActive: true },
+      orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
     });
     return NextResponse.json(news);
   } catch (error) {

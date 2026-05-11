@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import { useAppStore } from '@/store/app-store';
+import { PageHero } from '@/components/layout/page-hero';
 
 export function ContactPage() {
   const { t, rtl } = useTranslation();
@@ -69,24 +70,13 @@ export function ContactPage() {
 
   return (
     <div dir={rtl ? 'rtl' : 'ltr'}>
-      {/* Hero Section */}
-      <section className="relative overflow-hidden py-20 sm:py-28">
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-50 via-white to-emerald-50/30 dark:from-gray-900 dark:via-gray-950 dark:to-gray-900" />
-        <div className="absolute top-0 start-0 h-72 w-72 rounded-full bg-amber-200/20 blur-3xl dark:bg-amber-500/5" />
-        <div className="absolute bottom-0 end-0 h-72 w-72 rounded-full bg-emerald-200/20 blur-3xl dark:bg-emerald-500/5" />
-
-        <div className="relative mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8 animate-fade-in-up">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-emerald-600 shadow-lg shadow-amber-500/25">
-            <MessageSquare className="h-7 w-7 text-white" />
-          </div>
-          <h1 className="font-heading text-4xl font-bold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
-            {cp.title}
-          </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-gray-600 dark:text-gray-400">
-            {cp.subtitle}
-          </p>
-        </div>
-      </section>
+      <PageHero
+        variant="contact"
+        icon={MessageSquare}
+        badgeText={cp.title}
+        title={cp.title}
+        subtitle={cp.subtitle}
+      />
 
       {/* Contact Form + Info Cards */}
       <section className="relative py-12 sm:py-16">

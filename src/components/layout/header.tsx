@@ -48,7 +48,6 @@ const navConfig: {
   { page: 'agents', labelKey: 'agents', icon: <Users className="h-4 w-4" /> },
   { page: 'contact', labelKey: 'contact', icon: <MessageSquare className="h-4 w-4" /> },
   { page: 'favorites', labelKey: 'favorites', icon: <Heart className="h-4 w-4" /> },
-  { page: 'admin', labelKey: 'admin', icon: <LayoutDashboard className="h-4 w-4" />, showAdmin: true },
 ];
 
 // ============================================================
@@ -62,9 +61,9 @@ const NOTIFICATION_COUNT = 3;
 // ============================================================
 
 const demoAccounts = [
-  { email: 'admin@ciar.com', role: 'Admin', icon: <Shield className="h-3.5 w-3.5" /> },
-  { email: 'john.doe@email.com', role: 'User', icon: <User className="h-3.5 w-3.5" /> },
-  { email: 'agent1@luxuryestates.com', role: 'Agent', icon: <Building2 className="h-3.5 w-3.5" /> },
+  { email: 'admin@realtyhub.com', role: 'Admin', icon: <Shield className="h-3.5 w-3.5" /> },
+  { email: 'john.doe@example.com', role: 'User', icon: <User className="h-3.5 w-3.5" /> },
+  { email: 'sarah.johnson@globalrealty.com', role: 'Agent', icon: <Building2 className="h-3.5 w-3.5" /> },
 ];
 
 // ============================================================
@@ -89,6 +88,7 @@ export function Header() {
   const [langMenuOpen, setLangMenuOpen] = useState(false);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerForm, setRegisterForm] = useState({ name: '', email: '', password: '', phone: '' });
   const [registerError, setRegisterError] = useState('');
@@ -219,13 +219,17 @@ export function Header() {
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: loginEmail, password: 'any' }),
+        body: JSON.stringify({
+          email: loginEmail.trim().toLowerCase(),
+          password: loginPassword,
+        }),
       });
       if (res.ok) {
         const data = await res.json();
         login(data.user);
         setShowLoginDialog(false);
         setLoginEmail('');
+        setLoginPassword('');
       }
     } catch (err) {
       console.error('Login failed:', err);
@@ -236,6 +240,20 @@ export function Header() {
     setCurrentPage(page);
     setMobileMenuOpen(false);
     setUserMenuOpen(false);
+  };
+
+  const handleLogout = async (options?: { closeMenus?: boolean }) => {
+    try {
+      await fetch('/api/logout', { method: 'POST' });
+    } catch {
+      // Ignore network issues; still clear local auth state.
+    } finally {
+      logout();
+      if (options?.closeMenus) {
+        setUserMenuOpen(false);
+        setMobileMenuOpen(false);
+      }
+    }
   };
 
   // ============================================================
@@ -289,18 +307,17 @@ export function Header() {
             onClick={() => handleNavClick('home')}
             className="group flex items-center gap-2.5 transition-opacity hover:opacity-80"
           >
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-emerald-600 shadow-lg shadow-amber-500/20 transition-shadow duration-300 group-hover:shadow-amber-500/40">
-              <Building2 className="h-4 w-4 text-white" />
-            </div>
-            <span className="font-heading bg-gradient-to-r from-amber-600 via-amber-500 to-emerald-600 bg-clip-text text-2xl font-bold tracking-wide text-transparent">
-              CIAR
-            </span>
+            <img
+              src="/logo-transparent.png"
+              alt="CIAR"
+              className="h-14 sm:h-16 lg:h-20 w-auto object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.25)]"
+            />
           </button>
 
           {/* ---- Desktop Navigation ---- */}
           <nav className="hidden items-center gap-0.5 lg:flex">
             {navConfig.map((item) => {
-              if (item.showAdmin && !isAuthenticated) return null;
+              if (item.showAdmin && currentUser?.role !== 'ADMIN') return null;
               const isActive =
                 currentPage === item.page ||
                 (item.page === 'search' && currentPage === 'property-detail');
@@ -441,7 +458,7 @@ export function Header() {
               </Button>
             )}
 
-            {/* ---- User Menu / Login ---- */}
+            {/* ---- User Menu / Login / Register ---- */}
             {isAuthenticated ? (
               <div className="relative">
                 <Button
@@ -491,8 +508,7 @@ export function Header() {
                     )}
                     <button
                       onClick={() => {
-                        logout();
-                        setUserMenuOpen(false);
+                        void handleLogout({ closeMenus: true });
                       }}
                       className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-rose-500 transition-colors hover:bg-rose-500/10"
                     >
@@ -503,14 +519,25 @@ export function Header() {
                 )}
               </div>
             ) : (
-              <Button
-                onClick={() => setShowLoginDialog(true)}
-                className="hidden h-8 rounded-lg bg-gradient-to-r from-amber-600 to-emerald-600 px-4 text-[13px] font-semibold tracking-wide text-white shadow-md shadow-amber-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/30 hover:brightness-105 lg:flex"
-                size="sm"
-              >
-                <LogIn className="me-1.5 h-3.5 w-3.5" />
-                {t.nav.signIn}
-              </Button>
+              <div className="hidden lg:flex items-center gap-2">
+                <Button
+                  onClick={() => handleNavClick('login')}
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 rounded-lg px-3 text-[13px] font-medium"
+                >
+                  <LogIn className="me-1.5 h-3.5 w-3.5" />
+                  {t.nav.signIn}
+                </Button>
+                <Button
+                  onClick={() => handleNavClick('register')}
+                  className="h-8 rounded-lg bg-gradient-to-r from-amber-600 to-emerald-600 px-4 text-[13px] font-semibold tracking-wide text-white shadow-md shadow-amber-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/30 hover:brightness-105"
+                  size="sm"
+                >
+                  <UserPlus className="me-1.5 h-3.5 w-3.5" />
+                  {t.auth.signUp}
+                </Button>
+              </div>
             )}
 
             {/* ---- Mobile Menu Toggle ---- */}
@@ -541,12 +568,11 @@ export function Header() {
               onClick={() => handleNavClick('home')}
               className="flex items-center gap-2.5"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500 to-emerald-600 shadow-lg shadow-amber-500/20">
-                <Building2 className="h-4 w-4 text-white" />
-              </div>
-              <span className="font-heading bg-gradient-to-r from-amber-600 via-amber-500 to-emerald-600 bg-clip-text text-2xl font-bold tracking-wide text-transparent">
-                CIAR
-              </span>
+              <img
+                src="/logo-transparent.png"
+                alt="CIAR"
+                className="h-14 sm:h-16 w-auto object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.25)]"
+              />
             </button>
             <Button
               variant="ghost"
@@ -578,7 +604,7 @@ export function Header() {
           <nav className="flex-1 overflow-y-auto px-4 pt-6 sm:px-6">
             <div className="space-y-1">
               {navConfig.map((item) => {
-                if (item.showAdmin && !isAuthenticated) return null;
+                if (item.showAdmin && currentUser?.role !== 'ADMIN') return null;
                 const isActive =
                   currentPage === item.page ||
                   (item.page === 'search' && currentPage === 'property-detail');
@@ -618,16 +644,30 @@ export function Header() {
           {/* Mobile Menu Footer */}
           <div className="border-t border-gray-100 px-4 py-4 dark:border-white/5 sm:px-6">
             {!isAuthenticated ? (
-              <Button
-                onClick={() => {
-                  setShowLoginDialog(true);
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full rounded-xl bg-gradient-to-r from-amber-600 to-emerald-600 text-[13px] font-semibold tracking-wide text-white shadow-lg shadow-amber-500/20"
-              >
-                <LogIn className="me-2 h-4 w-4" />
-                {t.nav.signIn}
-              </Button>
+              <div className="space-y-2">
+                <Button
+                  onClick={() => handleNavClick('register')}
+                  className="w-full rounded-xl bg-gradient-to-r from-amber-600 to-emerald-600 text-[13px] font-semibold tracking-wide text-white shadow-lg shadow-amber-500/20"
+                >
+                  <UserPlus className="me-2 h-4 w-4" />
+                  {t.auth.signUp}
+                </Button>
+                <Button
+                  onClick={() => handleNavClick('login')}
+                  variant="outline"
+                  className="w-full rounded-xl text-[13px] font-semibold"
+                >
+                  <LogIn className="me-2 h-4 w-4" />
+                  {t.nav.signIn}
+                </Button>
+                <a
+                  href="/admin"
+                  className="w-full text-center text-[12px] text-muted-foreground hover:text-amber-600 transition-colors py-2 inline-flex items-center justify-center gap-1.5"
+                >
+                  <Shield className="h-3 w-3" />
+                  {locale === 'ar' ? 'دخول الأدمن' : 'Admin login'}
+                </a>
+              </div>
             ) : (
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-emerald-600 text-sm font-bold text-white">
@@ -645,8 +685,7 @@ export function Header() {
                   variant="ghost"
                   size="icon"
                   onClick={() => {
-                    logout();
-                    setMobileMenuOpen(false);
+                    void handleLogout({ closeMenus: true });
                   }}
                   className="h-8 w-8 rounded-full text-rose-500 hover:bg-rose-500/10"
                 >
@@ -719,6 +758,23 @@ export function Header() {
                           value={loginEmail}
                           onChange={(e) => setLoginEmail(e.target.value)}
                           placeholder="admin@ciar.com"
+                          required
+                          className="h-11 w-full rounded-xl border border-gray-200/60 bg-gray-50/50 ps-10 pe-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-amber-500/50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-white/10"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-[13px] font-semibold tracking-wide text-gray-600 dark:text-gray-300">
+                        {t.auth.password}
+                      </label>
+                      <div className="relative">
+                        <Lock className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <input
+                          type="password"
+                          value={loginPassword}
+                          onChange={(e) => setLoginPassword(e.target.value)}
+                          placeholder="••••••••"
                           required
                           className="h-11 w-full rounded-xl border border-gray-200/60 bg-gray-50/50 ps-10 pe-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-amber-500/50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-white/10"
                         />

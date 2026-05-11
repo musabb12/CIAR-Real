@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
+import { PageHero } from '@/components/layout/page-hero';
 import type { Favorite, Property } from '@/types';
 
 // ─── Component ──────────────────────────────────────────────────
@@ -109,23 +110,13 @@ export function FavoritesPage() {
   // ─── Authenticated ───
   return (
     <div className="min-h-screen">
-      {/* ─── Header Section ─── */}
-      <section className="hero-gradient-mesh relative py-12 sm:py-16 px-4">
-        <div className="relative z-10 max-w-7xl mx-auto">
-          <div className="text-center">
-            <Badge variant="secondary" className="mb-3">
-              <Heart className="h-3.5 w-3.5 mr-1.5 fill-red-400 text-red-400" />
-              {t.favorites.myFavorites}
-            </Badge>
-            <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-bold mb-3">
-              {t.favorites.title}
-            </h1>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              {favoritesWithProperties.length} {t.property.viewDetails}
-            </p>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        variant="favorites"
+        icon={Heart}
+        badgeText={t.favorites.myFavorites}
+        title={t.favorites.title}
+        subtitle={`${favoritesWithProperties.length} ${t.property.viewDetails}`}
+      />
 
       <div className="max-w-7xl mx-auto px-4 py-10">
         {/* ─── Loading ─── */}

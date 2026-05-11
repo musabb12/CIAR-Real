@@ -32,6 +32,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const skipView = request.nextUrl.searchParams.get('skipView') === '1';
 
     const property = await db.property.findUnique({
       where: { id },
@@ -45,13 +46,13 @@ export async function GET(
       );
     }
 
-    // Increment views
-    await db.property.update({
-      where: { id },
-      data: { views: { increment: 1 } },
-    });
-
-    property.views += 1;
+    if (!skipView) {
+      await db.property.update({
+        where: { id },
+        data: { views: { increment: 1 } },
+      });
+      property.views += 1;
+    }
 
     return NextResponse.json(property);
   } catch (error) {

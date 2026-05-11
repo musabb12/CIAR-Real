@@ -13,6 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
+import { PageHero } from '@/components/layout/page-hero';
 import type { Agent, Property } from '@/types';
 
 // ─── Component ──────────────────────────────────────────────────
@@ -94,60 +95,51 @@ export function AgentsPage() {
 
   return (
     <div className="min-h-screen">
-      {/* ─── Header Section ─── */}
-      <section className="hero-gradient-mesh relative py-12 sm:py-16 px-4">
-        <div className="relative z-10 max-w-7xl mx-auto">
-          <div className="text-center mb-8">
-            <Badge variant="secondary" className="mb-3">
-              <Users className="h-3.5 w-3.5 mr-1.5" />
-              {t.agents.ourAgents}
-            </Badge>
-            <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-bold mb-3">
-              {t.agents.title}
-            </h1>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              {t.agents.ourAgents} — {t.search.featuredSubtitle}
-            </p>
-          </div>
-
-          {/* Search */}
-          <div className="max-w-md mx-auto">
-            <div className="glass-card rounded-2xl p-2 flex items-center gap-2">
-              <Search className="h-5 w-5 text-muted-foreground ml-3 shrink-0" />
-              <input
-                type="text"
-                placeholder={`${t.admin.search} ${t.agents.title}...`}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 bg-transparent border-0 outline-none text-sm py-2 placeholder:text-muted-foreground/60"
-              />
-              {searchQuery && (
-                <button onClick={() => setSearchQuery('')} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
-                  <X className="h-4 w-4 text-muted-foreground" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="flex items-center justify-center gap-6 mt-8">
-            <div className="glass-stat rounded-xl px-4 py-2 text-center">
-              <div className="text-xl font-bold">{agents.length}</div>
-              <div className="text-[10px] text-muted-foreground">{t.agents.title}</div>
-            </div>
-            <div className="glass-stat rounded-xl px-4 py-2 text-center">
-              <div className="text-xl font-bold">{agents.filter((a) => a.verified).length}</div>
-              <div className="text-[10px] text-muted-foreground">{t.agents.verified}</div>
-            </div>
-            <div className="glass-stat rounded-xl px-4 py-2 text-center">
-              <div className="text-xl font-bold">
-                {agents.reduce((sum, a) => sum + (a.totalListings || 0), 0)}
-              </div>
-              <div className="text-[10px] text-muted-foreground">{t.agents.listings}</div>
-            </div>
+      {/* ─── Hero Section ─── */}
+      <PageHero
+        variant="agents"
+        icon={Users}
+        badgeText={t.agents.ourAgents}
+        title={t.agents.title}
+        subtitle={t.agents.ourAgents}
+      >
+        {/* Search */}
+        <div className="max-w-md mx-auto">
+          <div className="glass-card rounded-2xl p-2 flex items-center gap-2 bg-white/85 dark:bg-black/40 backdrop-blur-md border border-white/20">
+            <Search className="h-5 w-5 text-muted-foreground ml-3 shrink-0" />
+            <input
+              type="text"
+              placeholder={`${t.admin.search} ${t.agents.title}...`}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 bg-transparent border-0 outline-none text-sm py-2 placeholder:text-muted-foreground/60"
+            />
+            {searchQuery && (
+              <button onClick={() => setSearchQuery('')} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
+                <X className="h-4 w-4 text-muted-foreground" />
+              </button>
+            )}
           </div>
         </div>
-      </section>
+
+        {/* Stats */}
+        <div className="flex items-center justify-center gap-3 sm:gap-6 mt-8">
+          <div className="rounded-xl px-4 py-2 text-center bg-white/10 backdrop-blur-md border border-white/15 text-white">
+            <div className="text-xl font-bold">{agents.length}</div>
+            <div className="text-[10px] text-white/70">{t.agents.title}</div>
+          </div>
+          <div className="rounded-xl px-4 py-2 text-center bg-white/10 backdrop-blur-md border border-white/15 text-white">
+            <div className="text-xl font-bold">{agents.filter((a) => a.verified).length}</div>
+            <div className="text-[10px] text-white/70">{t.agents.verified}</div>
+          </div>
+          <div className="rounded-xl px-4 py-2 text-center bg-white/10 backdrop-blur-md border border-white/15 text-white">
+            <div className="text-xl font-bold">
+              {agents.reduce((sum, a) => sum + (a.totalListings || 0), 0)}
+            </div>
+            <div className="text-[10px] text-white/70">{t.agents.listings}</div>
+          </div>
+        </div>
+      </PageHero>
 
       <div className="max-w-7xl mx-auto px-4 py-10">
         {/* ─── Selected Agent Detail Panel ─── */}

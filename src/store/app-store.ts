@@ -1,5 +1,16 @@
 import { create } from 'zustand';
-import type { User, PropertyFilters, AppPage, Favorite } from '@/types';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import type {
+  User,
+  PropertyFilters,
+  AppPage,
+  Favorite,
+  SiteDesignSettings,
+  SiteSocialSettings,
+  SiteContentSettings,
+  ManagedPageKey,
+  PageContentEntry,
+} from '@/types';
 import type { Locale } from '@/lib/i18n';
 
 // ============================================================
@@ -9,7 +20,39 @@ import type { Locale } from '@/lib/i18n';
 const defaultFilters: PropertyFilters = {
   sort: 'newest',
   page: 1,
-  limit: 12,
+  limit: 30,
+};
+
+const defaultDesignSettings: SiteDesignSettings = {
+  primaryColor: '#0D9488',
+  accentColor: '#F59E0B',
+  heroImageUrl:
+    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=2000&q=80&auto=format&fit=crop',
+};
+
+const defaultContentSettings: SiteContentSettings = {
+  home: {},
+  search: {},
+  agents: {},
+  contact: {},
+  favorites: {},
+  login: {},
+  register: {},
+  'admin-login': {},
+};
+
+const defaultSocialSettings: SiteSocialSettings = {
+  website: '',
+  email: '',
+  phone: '',
+  whatsapp: '',
+  telegram: '',
+  facebook: '',
+  instagram: '',
+  x: '',
+  youtube: '',
+  linkedin: '',
+  tiktok: '',
 };
 
 // ============================================================
@@ -61,13 +104,33 @@ interface AppState {
   setFeatures: (features: Record<string, boolean>) => void;
   toggleFeature: (key: string, enabled: boolean) => void;
   isFeatureEnabled: (key: string) => boolean;
+
+  // Site design controls (admin)
+  designSettings: SiteDesignSettings;
+  updateDesignSettings: (partial: Partial<SiteDesignSettings>) => void;
+  resetDesignSettings: () => void;
+
+  // Per-page content controls (admin)
+  contentSettings: SiteContentSettings;
+  updatePageContent: (page: ManagedPageKey, partial: PageContentEntry) => void;
+  resetPageContent: (page?: ManagedPageKey) => void;
+  socialSettings: SiteSocialSettings;
+  updateSocialSettings: (partial: Partial<SiteSocialSettings>) => void;
+  resetSocialSettings: () => void;
+  hydrateSiteSettings: (payload: {
+    designSettings?: Partial<SiteDesignSettings>;
+    contentSettings?: Partial<SiteContentSettings>;
+    socialSettings?: Partial<SiteSocialSettings>;
+  }) => void;
 }
 
 // ============================================================
 // Store
 // ============================================================
 
-export const useAppStore = create<AppState>((set, get) => ({
+export const useAppStore = create<AppState>()(
+  persist(
+    (set, get) => ({
   // ---- Navigation ----
   currentPage: 'home',
   selectedPropertyId: null,
@@ -152,7 +215,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   searchQuery: '',
 
   // ---- i18n ----
-  locale: 'en' as Locale,
+  locale: 'ar' as Locale,
   setLocale: (locale) => set({ locale }),
 
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
@@ -163,9 +226,77 @@ export const useAppStore = create<AppState>((set, get) => ({
   features: {},
   setFeatures: (features) => set({ features }),
   toggleFeature: (key, enabled) => set((state) => ({ features: { ...state.features, [key]: enabled } })),
-  isFeatureEnabled: (key) => {
-    const state = get();
-    if (Object.keys(state.features).length === 0) return true; // Default enabled if not loaded
-    return state.features[key] ?? true;
-  },
-}));
+      isFeatureEnabled: (key) => {
+        const state = get();
+        if (Object.keys(state.features).length === 0) return true; // Default enabled if not loaded
+        return state.features[key] ?? true;
+      },
+
+      // ---- Design settings ----
+      designSettings: { ...defaultDesignSettings },
+      updateDesignSettings: (partial) =>
+        set((state) => ({
+          designSettings: { ...state.designSettings, ...partial },
+        })),
+      resetDesignSettings: () =>
+        set({
+          designSettings: { ...defaultDesignSettings },
+        }),
+
+      // ---- Content settings ----
+      contentSettings: { ...defaultContentSettings },
+      updatePageContent: (page, partial) =>
+        set((state) => ({
+          contentSettings: {
+            ...state.contentSettings,
+            [page]: { ...state.contentSettings[page], ...partial },
+          },
+        })),
+      resetPageContent: (page) =>
+        set((state) => ({
+          contentSettings: page
+            ? {
+                ...state.contentSettings,
+                [page]: {},
+              }
+            : { ...defaultContentSettings },
+        })),
+      socialSettings: { ...defaultSocialSettings },
+      updateSocialSettings: (partial) =>
+        set((state) => ({
+          socialSettings: { ...state.socialSettings, ...partial },
+        })),
+      resetSocialSettings: () =>
+        set({
+          socialSettings: { ...defaultSocialSettings },
+        }),
+      hydrateSiteSettings: (payload) =>
+        set((state) => ({
+          designSettings: {
+            ...state.designSettings,
+            ...(payload.designSettings ?? {}),
+          },
+          contentSettings: {
+            ...state.contentSettings,
+            ...(payload.contentSettings ?? {}),
+          },
+          socialSettings: {
+            ...state.socialSettings,
+            ...(payload.socialSettings ?? {}),
+          },
+        })),
+    }),
+    {
+      name: 'ciar-app-store',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        currentUser: state.currentUser,
+        isAuthenticated: state.isAuthenticated,
+        locale: state.locale,
+        designSettings: state.designSettings,
+        contentSettings: state.contentSettings,
+        socialSettings: state.socialSettings,
+      }),
+    },
+  ),
+);

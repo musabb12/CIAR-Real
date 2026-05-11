@@ -1,4 +1,5 @@
 import { PrismaClient, UserRole, ListingType, PropertyType, PropertyStatus } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
@@ -893,12 +894,12 @@ async function main() {
 
   // Create admin + 2 regular users
   const createdUsers = await Promise.all(
-    usersData.map((u) =>
+    usersData.map(async (u) =>
       prisma.user.create({
         data: {
           email: u.email,
           name: u.name,
-          password: u.password,
+          password: await bcrypt.hash(u.password, 12),
           phone: u.phone,
           avatar: u.avatar,
           role: u.role,
@@ -918,7 +919,7 @@ async function main() {
       data: {
         email: agentData.email,
         name: agentData.name,
-        password: 'agent123',
+        password: await bcrypt.hash('agent123', 12),
         phone: agentData.phone,
         role: UserRole.AGENT,
         isActive: true,

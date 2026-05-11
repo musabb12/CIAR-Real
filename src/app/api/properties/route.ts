@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { ListingType, PropertyType, Prisma } from '@prisma/client';
+import { ListingType, PropertyType, Prisma, PropertyStatus } from '@prisma/client';
 
 const propertyInclude = {
   images: {
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
     // Pagination
     const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '12', 10);
+    const limit = Math.min(parseInt(searchParams.get('limit') || '12', 10), 30);
     const skip = (page - 1) * limit;
 
     // Build where clause
@@ -126,6 +126,7 @@ export async function POST(request: NextRequest) {
       floors,
       yearBuilt,
       isFeatured,
+      status,
       countryId,
       regionId,
       cityId,
@@ -157,6 +158,10 @@ export async function POST(request: NextRequest) {
         floors: floors ? parseInt(floors, 10) : null,
         yearBuilt: yearBuilt ? parseInt(yearBuilt, 10) : null,
         isFeatured: isFeatured || false,
+        status:
+          status && Object.values(PropertyStatus).includes(status as PropertyStatus)
+            ? (status as PropertyStatus)
+            : PropertyStatus.AVAILABLE,
         countryId,
         regionId,
         cityId,

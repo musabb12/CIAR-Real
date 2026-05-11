@@ -7,6 +7,7 @@ import {
   Phone,
   MapPin,
   Globe,
+  MessageCircle,
   ArrowRight,
   ArrowUp,
   Shield,
@@ -20,6 +21,10 @@ import {
   Crown,
   TrendingUp,
   Lock,
+  Instagram,
+  Facebook,
+  Linkedin,
+  Youtube,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppStore } from '@/store/app-store';
@@ -122,7 +127,7 @@ function GoldDivider() {
 /*  Footer                                                            */
 /* ------------------------------------------------------------------ */
 export function Footer() {
-  const { setCurrentPage } = useAppStore();
+  const { setCurrentPage, socialSettings } = useAppStore();
   const { t } = useTranslation();
 
   // Newsletter state
@@ -198,11 +203,15 @@ export function Footer() {
   ];
 
   const socialLinks = [
-    { icon: Globe, label: 'Website' },
-    { icon: Mail, label: 'Email' },
-    { icon: Phone, label: 'Phone' },
-    { icon: MapPin, label: 'Location' },
-  ];
+    { icon: Globe, label: 'Website', href: socialSettings.website },
+    { icon: Mail, label: 'Email', href: socialSettings.email ? `mailto:${socialSettings.email}` : '' },
+    { icon: Phone, label: 'Phone', href: socialSettings.phone ? `tel:${socialSettings.phone}` : '' },
+    { icon: MessageCircle, label: 'WhatsApp', href: socialSettings.whatsapp ? `https://wa.me/${socialSettings.whatsapp.replace(/[^\d]/g, '')}` : '' },
+    { icon: Instagram, label: 'Instagram', href: socialSettings.instagram },
+    { icon: Facebook, label: 'Facebook', href: socialSettings.facebook },
+    { icon: Linkedin, label: 'LinkedIn', href: socialSettings.linkedin },
+    { icon: Youtube, label: 'YouTube', href: socialSettings.youtube },
+  ].filter((item) => Boolean(item.href));
 
   return (
     <footer className="mt-auto relative">
@@ -236,12 +245,11 @@ export function Footer() {
                 onClick={() => setCurrentPage('home')}
                 className="flex items-center gap-3 transition-opacity hover:opacity-80"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-700/10 ring-1 ring-amber-500/20">
-                  <Crown className="h-5 w-5 text-amber-400" />
-                </div>
-                <span className="font-heading bg-gradient-to-r from-amber-300 via-amber-400 to-amber-200 bg-clip-text text-transparent text-2xl font-bold tracking-wide">
-                  CIAR
-                </span>
+                <img
+                  src="/logo-transparent.png"
+                  alt="CIAR"
+                  className="h-20 w-auto object-contain"
+                />
               </button>
 
               {/* Tagline */}
@@ -262,13 +270,16 @@ export function Footer() {
               {/* Social / Contact icons */}
               <div className="mt-6 flex items-center gap-3">
                 {socialLinks.map((s) => (
-                  <button
+                  <a
                     key={s.label}
                     aria-label={s.label}
+                    href={s.href}
+                    target="_blank"
+                    rel="noreferrer"
                     className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-gray-400 transition-all duration-300 hover:bg-amber-500/10 hover:text-amber-400"
                   >
                     <s.icon className="h-4 w-4" />
-                  </button>
+                  </a>
                 ))}
               </div>
             </div>
@@ -391,13 +402,13 @@ export function Footer() {
               <Crown className="h-3.5 w-3.5 text-amber-500/40" />
               <p className="text-xs text-gray-500">
                 &copy; {new Date().getFullYear()}{' '}
-                <button
-                  onClick={() => setCurrentPage('admin-login')}
-                  className="font-heading text-amber-400/60 font-semibold cursor-default select-none"
-                  title=""
+                <a
+                  href="/admin"
+                  className="font-heading text-amber-400/60 font-semibold select-none hover:text-amber-300/80 transition-colors"
+                  title="Admin"
                 >
                   CIAR
-                </button>.{' '}
+                </a>.{' '}
                 {t.footer.rights}
               </p>
             </div>

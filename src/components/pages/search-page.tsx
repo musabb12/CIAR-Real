@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PropertyCard } from '@/components/property/property-card';
+import { PageHero } from '@/components/layout/page-hero';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import type { Property, Country, PaginatedResponse } from '@/types';
@@ -47,8 +48,8 @@ export function SearchPage() {
   const [loading, setLoading] = useState(true);
   const [totalResults, setTotalResults] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
-  const [showFilters, setShowFilters] = useState(false);
   const [mobileFilters, setMobileFilters] = useState(false);
+  const [autoCountryApplied, setAutoCountryApplied] = useState(false);
 
   // Fetch properties
   const fetchProperties = useCallback(async () => {
@@ -91,10 +92,32 @@ export function SearchPage() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (autoCountryApplied || countries.length === 0 || filters.countryId) return;
+    fetch('/api/geo-country')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        const code = String(data?.countryCode ?? '').toUpperCase();
+        if (!code) return;
+        const matched = countries.find((c) => c.code?.toUpperCase() === code);
+        if (matched) {
+          setFilters({ countryId: matched.id, page: 1 });
+        }
+      })
+      .catch(() => {})
+      .finally(() => setAutoCountryApplied(true));
+  }, [autoCountryApplied, countries, filters.countryId, setFilters]);
+
   // Fetch properties when filters change
   useEffect(() => {
     fetchProperties();
   }, [fetchProperties]);
+
+  // Force search page to display up to 30 per page.
+  useEffect(() => {
+    if ((filters.limit ?? 30) === 30) return;
+    setFilters({ limit: 30, page: 1 });
+  }, [filters.limit, setFilters]);
 
   // Handle page change
   const goToPage = (page: number) => {
@@ -123,64 +146,48 @@ export function SearchPage() {
 
   return (
     <div className="min-h-screen">
-      {/* ─── Header Section ─── */}
-      <section className="hero-gradient-mesh relative py-12 sm:py-16 px-4">
-        <div className="relative z-10 max-w-7xl mx-auto">
-          <div className="text-center mb-8">
-            <Badge variant="secondary" className="mb-3">
-              <Search className="h-3.5 w-3.5 mr-1.5" />
-              {t.search.title}
-            </Badge>
-            <h1 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-bold mb-3">
-              {t.nav.properties}
-            </h1>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              {t.hero.featuredSubtitle}
-            </p>
-          </div>
-
-          {/* Search Bar */}
-          <div className="max-w-2xl mx-auto">
-            <div className="glass-card rounded-2xl p-2 flex items-center gap-2">
-              <Search className="h-5 w-5 text-muted-foreground ml-3 shrink-0" />
-              <input
-                type="text"
-                placeholder={t.hero.searchPlaceholder}
-                value={filters.search || ''}
-                onChange={(e) => setFilters({ search: e.target.value || undefined, page: 1 })}
-                className="flex-1 bg-transparent border-0 outline-none text-sm py-2 placeholder:text-muted-foreground/60"
-              />
-              {filters.search && (
-                <button
-                  onClick={() => setFilters({ search: undefined, page: 1 })}
-                  className="p-1.5 rounded-lg hover:bg-muted transition-colors"
-                >
-                  <X className="h-4 w-4 text-muted-foreground" />
-                </button>
-              )}
-              <Button
-                onClick={() => setShowFilters(!showFilters)}
-                variant="outline"
-                size="sm"
-                className="shrink-0 rounded-xl"
+      {/* ─── Hero Section ─── */}
+      <PageHero
+        variant="search"
+        icon={Search}
+        badgeText={t.search.title}
+        title={t.nav.properties}
+        subtitle={t.hero.featuredSubtitle}
+      >
+        <div className="max-w-2xl mx-auto">
+          <div className="glass-card rounded-2xl p-2 flex items-center gap-2 bg-white/85 dark:bg-black/40 backdrop-blur-md border border-white/20">
+            <Search className="h-5 w-5 text-muted-foreground ml-3 shrink-0" />
+            <input
+              type="text"
+              placeholder={t.hero.searchPlaceholder}
+              value={filters.search || ''}
+              onChange={(e) => setFilters({ search: e.target.value || undefined, page: 1 })}
+              className="flex-1 bg-transparent border-0 outline-none text-sm py-2 placeholder:text-muted-foreground/60"
+            />
+            {filters.search && (
+              <button
+                onClick={() => setFilters({ search: undefined, page: 1 })}
+                className="p-1.5 rounded-lg hover:bg-muted transition-colors"
               >
-                <SlidersHorizontal className="h-4 w-4 mr-1.5" />
-                {t.search.filters}
-                {activeFilterCount > 0 && (
-                  <Badge className="ml-1.5 h-5 w-5 p-0 flex items-center justify-center text-[10px] rounded-full bg-primary text-primary-foreground">
-                    {activeFilterCount}
-                  </Badge>
-                )}
-              </Button>
+                <X className="h-4 w-4 text-muted-foreground" />
+              </button>
+            )}
+            <div className="shrink-0 inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs font-medium bg-background/70">
+              <SlidersHorizontal className="h-3.5 w-3.5 text-primary" />
+              {t.search.filters}
+              {activeFilterCount > 0 && (
+                <Badge className="h-5 w-5 p-0 flex items-center justify-center text-[10px] rounded-full bg-primary text-primary-foreground">
+                  {activeFilterCount}
+                </Badge>
+              )}
             </div>
           </div>
         </div>
-      </section>
+      </PageHero>
 
       <div className="max-w-7xl mx-auto px-4">
         {/* ─── Filters Panel ─── */}
-        {showFilters && (
-          <div className="animate-fade-in-up -mt-4 mb-8 glass-card rounded-2xl p-6">
+        <div className="animate-fade-in-up -mt-4 mb-8 glass-card rounded-2xl p-6">
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-semibold text-sm flex items-center gap-2">
                 <SlidersHorizontal className="h-4 w-4 text-primary" />
@@ -334,55 +341,14 @@ export function SearchPage() {
               </Select>
             </div>
 
-            <div className="mt-5 flex items-center gap-3">
-              <Button onClick={() => setShowFilters(false)} className="rounded-xl">
-                {t.search.applyFilters}
-              </Button>
-              {activeFilterCount > 0 && (
+            {activeFilterCount > 0 && (
+              <div className="mt-5 flex items-center gap-3">
                 <Button variant="ghost" onClick={clearAll} className="rounded-xl text-muted-foreground">
                   {t.search.resetFilters}
                 </Button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ─── Active filter badges ─── */}
-        {activeFilterCount > 0 && !showFilters && (
-          <div className="flex flex-wrap items-center gap-2 mt-4 mb-2">
-            <span className="text-xs text-muted-foreground">{t.search.filters}:</span>
-            {filters.countryId && (
-              <FilterBadge
-                label={countries.find((c) => c.id === filters.countryId)?.name || ''}
-                onRemove={() => setFilters({ countryId: undefined, page: 1 })}
-              />
-            )}
-            {filters.propertyType && (
-              <FilterBadge
-                label={t.propertyTypes[filters.propertyType.toLowerCase() as keyof typeof t.propertyTypes] || filters.propertyType}
-                onRemove={() => setFilters({ propertyType: undefined, page: 1 })}
-              />
-            )}
-            {filters.listingType && (
-              <FilterBadge
-                label={t.listingTypes[filters.listingType.toLowerCase() as keyof typeof t.listingTypes] || filters.listingType}
-                onRemove={() => setFilters({ listingType: undefined, page: 1 })}
-              />
-            )}
-            {filters.bedrooms && (
-              <FilterBadge label={`${filters.bedrooms}+ ${t.property.beds}`} onRemove={() => setFilters({ bedrooms: undefined, page: 1 })} />
-            )}
-            {filters.bathrooms && (
-              <FilterBadge label={`${filters.bathrooms}+ ${t.property.baths}`} onRemove={() => setFilters({ bathrooms: undefined, page: 1 })} />
-            )}
-            {filters.sort && filters.sort !== 'newest' && (
-              <FilterBadge
-                label={t.search[`sort${filters.sort === 'price_asc' ? 'PriceAsc' : 'PriceDesc'}` as keyof typeof t.search] || filters.sort}
-                onRemove={() => setFilters({ sort: 'newest', page: 1 })}
-              />
+              </div>
             )}
           </div>
-        )}
 
         {/* ─── Results Info ─── */}
         <div className="flex items-center justify-between py-4">

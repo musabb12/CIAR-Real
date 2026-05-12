@@ -10,20 +10,39 @@ type ServiceAccountJson = {
 
 let app: App | null = null;
 
+export function getFirebaseAdminConfigError(): string | null {
+  const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim();
+  if (!raw) {
+    return 'FIREBASE_SERVICE_ACCOUNT_JSON is not set';
+  }
+
+  let cred: ServiceAccountJson;
+  try {
+    cred = JSON.parse(raw) as ServiceAccountJson;
+  } catch {
+    return 'FIREBASE_SERVICE_ACCOUNT_JSON is not valid JSON';
+  }
+
+  if (!cred.project_id || !cred.client_email || !cred.private_key) {
+    return 'FIREBASE_SERVICE_ACCOUNT_JSON must be a full service account JSON object';
+  }
+
+  return null;
+}
+
 /** True when server-side Firebase Admin can be used. */
 export function isFirebaseAdminConfigured(): boolean {
-  return Boolean(process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim());
+  return getFirebaseAdminConfigError() === null;
 }
 
 function readServiceAccount(): ServiceAccountJson {
+  const configError = getFirebaseAdminConfigError();
+  if (configError) {
+    throw new Error(configError);
+  }
+
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim();
-  if (!raw) {
-    throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON is not set');
-  }
   const cred = JSON.parse(raw) as ServiceAccountJson;
-  if (!cred.project_id || !cred.client_email || !cred.private_key) {
-    throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON must be a full service account JSON object');
-  }
   return cred;
 }
 

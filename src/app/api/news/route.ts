@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
+  getFirebaseAdminConfigError,
+  isFirebaseAdminConfigured,
+} from '@/lib/firebase-admin';
+import {
   createNewsInFirestore,
   deleteNewsInFirestore,
   listNewsFromFirestore,
@@ -8,6 +12,10 @@ import {
 
 // GET /api/news — Active items by default. Use ?all=1 for admin (includes inactive).
 export async function GET(request: NextRequest) {
+  if (!isFirebaseAdminConfigured()) {
+    return NextResponse.json([]);
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const all = searchParams.get('all') === '1';
@@ -22,6 +30,13 @@ export async function GET(request: NextRequest) {
 
 // POST /api/news - Create a new news item
 export async function POST(request: NextRequest) {
+  if (!isFirebaseAdminConfigured()) {
+    return NextResponse.json(
+      { error: getFirebaseAdminConfigError() ?? 'Firebase Admin is not configured' },
+      { status: 503 }
+    );
+  }
+
   try {
     const body = await request.json();
     const { content, link, type, order, isActive } = body;
@@ -47,6 +62,13 @@ export async function POST(request: NextRequest) {
 
 // PUT /api/news - Update a news item
 export async function PUT(request: NextRequest) {
+  if (!isFirebaseAdminConfigured()) {
+    return NextResponse.json(
+      { error: getFirebaseAdminConfigError() ?? 'Firebase Admin is not configured' },
+      { status: 503 }
+    );
+  }
+
   try {
     const body = await request.json();
     const { id, ...data } = body;
@@ -70,6 +92,13 @@ export async function PUT(request: NextRequest) {
 
 // DELETE /api/news?id=xxx - Delete a news item
 export async function DELETE(request: NextRequest) {
+  if (!isFirebaseAdminConfigured()) {
+    return NextResponse.json(
+      { error: getFirebaseAdminConfigError() ?? 'Firebase Admin is not configured' },
+      { status: 503 }
+    );
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');

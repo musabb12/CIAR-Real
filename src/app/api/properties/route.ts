@@ -1,14 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
+  getFirebaseAdminConfigError,
+  isFirebaseAdminConfigured,
+} from '@/lib/firebase-admin';
+import {
   createPropertyInFirestore,
   listPropertiesFromFirestore,
 } from '@/lib/firestore-properties';
 
 // GET /api/properties - List properties with filtering, sorting, pagination
 export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
 
+  // Pagination
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const limit = Math.min(parseInt(searchParams.get('limit') || '12', 10), 30);
+
+  if (!isFirebaseAdminConfigured()) {
+    return NextResponse.json({
+      data: [],
+      pagination: {
+        page,
+        limit,
+        total: 0,
+        totalPages: 1,
+      },
+    });
+  }
+
+  try {
     // Filters
     const countryId = searchParams.get('countryId');
     const cityId = searchParams.get('cityId');
@@ -27,9 +47,6 @@ export async function GET(request: NextRequest) {
     // Sorting
     const sort = searchParams.get('sort') || 'newest';
 
-    // Pagination
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = Math.min(parseInt(searchParams.get('limit') || '12', 10), 30);
     const out = await listPropertiesFromFirestore({
       countryId,
       cityId,
@@ -64,6 +81,13 @@ export async function GET(request: NextRequest) {
 
 // POST /api/properties - Create a new property
 export async function POST(request: NextRequest) {
+  if (!isFirebaseAdminConfigured()) {
+    return NextResponse.json(
+      { error: getFirebaseAdminConfigError() ?? 'Firebase Admin is not configured' },
+      { status: 503 }
+    );
+  }
+
   try {
     const body = await request.json();
     const property = await createPropertyInFirestore({

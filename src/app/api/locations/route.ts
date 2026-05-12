@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
+  getFirebaseAdminConfigError,
+  isFirebaseAdminConfigured,
+} from '@/lib/firebase-admin';
+import {
   createCountryInFirestore,
   listLocationsFromFirestore,
 } from '@/lib/firestore-platform';
 
 // GET /api/locations - Return nested countries → regions → cities
 export async function GET(request: NextRequest) {
+  if (!isFirebaseAdminConfigured()) {
+    return NextResponse.json([]);
+  }
+
   try {
     const { searchParams } = new URL(request.url);
     const includeProperties = searchParams.get('includeProperties') === 'true';
@@ -28,6 +36,13 @@ export async function GET(request: NextRequest) {
 
 // POST /api/locations - create country (admin)
 export async function POST(request: NextRequest) {
+  if (!isFirebaseAdminConfigured()) {
+    return NextResponse.json(
+      { error: getFirebaseAdminConfigError() ?? 'Firebase Admin is not configured' },
+      { status: 503 }
+    );
+  }
+
   try {
     const body = await request.json();
     const name = String(body?.name ?? '').trim();

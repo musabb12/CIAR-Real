@@ -1,11 +1,19 @@
 import { NextResponse } from 'next/server';
 import {
+  getFirebaseAdminConfigError,
+  isFirebaseAdminConfigured,
+} from '@/lib/firebase-admin';
+import {
   createFeatureInFirestore,
   listFeaturesFromFirestore,
   updateFeatureInFirestore,
 } from '@/lib/firestore-platform';
 
 export async function GET() {
+  if (!isFirebaseAdminConfigured()) {
+    return NextResponse.json([]);
+  }
+
   try {
     const features = await listFeaturesFromFirestore();
     return NextResponse.json(features);
@@ -15,6 +23,13 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+  if (!isFirebaseAdminConfigured()) {
+    return NextResponse.json(
+      { error: getFirebaseAdminConfigError() ?? 'Firebase Admin is not configured' },
+      { status: 503 }
+    );
+  }
+
   try {
     const body = await request.json();
     const { id, isEnabled } = body;
@@ -29,6 +44,13 @@ export async function PUT(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (!isFirebaseAdminConfigured()) {
+    return NextResponse.json(
+      { error: getFirebaseAdminConfigError() ?? 'Firebase Admin is not configured' },
+      { status: 503 }
+    );
+  }
+
   try {
     const body = await request.json();
     const { key, name, description, category, icon, isEnabled, order } = body;

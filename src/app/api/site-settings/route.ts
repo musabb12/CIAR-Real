@@ -1,5 +1,9 @@
 import { NextResponse } from 'next/server';
 import {
+  getFirebaseAdminConfigError,
+  isFirebaseAdminConfigured,
+} from '@/lib/firebase-admin';
+import {
   defaultContentSettings,
   defaultDesignSettings,
   defaultSocialSettings,
@@ -28,6 +32,14 @@ function normalizePayload(input: unknown): SiteSettingsPayload {
 }
 
 export async function GET() {
+  if (!isFirebaseAdminConfigured()) {
+    return NextResponse.json({
+      designSettings: defaultDesignSettings,
+      contentSettings: defaultContentSettings,
+      socialSettings: defaultSocialSettings,
+    });
+  }
+
   try {
     const payload = await readOrCreateSiteSettingsFromFirestore();
     return NextResponse.json(payload);
@@ -37,6 +49,13 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+  if (!isFirebaseAdminConfigured()) {
+    return NextResponse.json(
+      { error: getFirebaseAdminConfigError() ?? 'Firebase Admin is not configured' },
+      { status: 503 }
+    );
+  }
+
   try {
     const body = await request.json();
     const normalized = normalizePayload(body);

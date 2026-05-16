@@ -63,6 +63,16 @@ export interface Translations {
     photos: string;
     photo: string;
     agent: string;
+    details: string;
+    buyNow: string;
+    bookViewing: string;
+    bookStay: string;
+    propertyTypeLabel: string;
+    listingTypeLabel: string;
+    addressLabel: string;
+    inquiryBuy: string;
+    inquiryBookViewing: string;
+    inquiryBookStay: string;
   };
   // Common labels
   labels: {
@@ -143,6 +153,9 @@ export interface Translations {
     results: string;
     noResults: string;
     tryAdjusting: string;
+    /** Shown when the server cannot load listings (e.g. Firebase Admin not configured). */
+    backendUnavailableTitle: string;
+    backendUnavailableBody: string;
     prev: string;
     next: string;
     any: string;
@@ -424,6 +437,16 @@ export const translations: Record<Locale, Translations> = {
       photos: 'photos',
       photo: 'photo',
       agent: 'Agent',
+      details: 'Property Details',
+      buyNow: 'Buy Now',
+      bookViewing: 'Book a Viewing',
+      bookStay: 'Book Stay',
+      propertyTypeLabel: 'Property Type',
+      listingTypeLabel: 'Listing Type',
+      addressLabel: 'Address',
+      inquiryBuy: 'I am interested in purchasing this property: {title}',
+      inquiryBookViewing: 'I would like to schedule a viewing for: {title}',
+      inquiryBookStay: 'I would like to book a stay at: {title}',
     },
     labels: {
       realEstateAgent: 'Real Estate Agent',
@@ -497,6 +520,9 @@ export const translations: Record<Locale, Translations> = {
       results: 'results',
       noResults: 'No results found',
       tryAdjusting: 'Try adjusting your search criteria',
+      backendUnavailableTitle: 'Listings are unavailable',
+      backendUnavailableBody:
+        'The server is not connected to the property database. For local development, add FIREBASE_SERVICE_ACCOUNT_JSON to your .env file (Firebase service account JSON), then restart npm run dev.',
       prev: 'Previous',
       next: 'Next',
       any: 'Any',
@@ -767,6 +793,16 @@ export const translations: Record<Locale, Translations> = {
       photos: 'صور',
       photo: 'صورة',
       agent: 'وكيل',
+      details: 'تفاصيل العقار',
+      buyNow: 'شراء الآن',
+      bookViewing: 'حجز معاينة',
+      bookStay: 'حجز إقامة',
+      propertyTypeLabel: 'نوع العقار',
+      listingTypeLabel: 'نوع الإعلان',
+      addressLabel: 'العنوان',
+      inquiryBuy: 'أرغب في شراء هذا العقار: {title}',
+      inquiryBookViewing: 'أرغب في حجز معاينة لهذا العقار: {title}',
+      inquiryBookStay: 'أرغب في حجز إقامة في: {title}',
     },
     labels: {
       realEstateAgent: 'وكيل عقارات',
@@ -840,6 +876,9 @@ export const translations: Record<Locale, Translations> = {
       results: 'نتيجة',
       noResults: 'لا توجد نتائج',
       tryAdjusting: 'حاول تعديل معايير البحث',
+      backendUnavailableTitle: 'تعذّر تحميل العقارات من الخادم',
+      backendUnavailableBody:
+        'لم يتصل الخادم بقاعدة بيانات العقارات. للتطوير المحلي أضف FIREBASE_SERVICE_ACCOUNT_JSON إلى ملف .env ثم أعد تشغيل npm run dev.',
       prev: 'السابق',
       next: 'التالي',
       any: 'أي',
@@ -1110,6 +1149,16 @@ export const translations: Record<Locale, Translations> = {
       photos: 'photos',
       photo: 'photo',
       agent: 'Agent',
+      details: 'Détails du bien',
+      buyNow: 'Acheter',
+      bookViewing: 'Réserver une visite',
+      bookStay: 'Réserver un séjour',
+      propertyTypeLabel: 'Type de bien',
+      listingTypeLabel: 'Type d\'annonce',
+      addressLabel: 'Adresse',
+      inquiryBuy: 'Je souhaite acheter ce bien : {title}',
+      inquiryBookViewing: 'Je souhaite une visite pour : {title}',
+      inquiryBookStay: 'Je souhaite réserver un séjour : {title}',
     },
     labels: {
       realEstateAgent: 'Agent immobilier',
@@ -1183,6 +1232,9 @@ export const translations: Record<Locale, Translations> = {
       results: 'résultats',
       noResults: 'Aucun résultat',
       tryAdjusting: 'Essayez de modifier vos critères',
+      backendUnavailableTitle: 'Annonces indisponibles',
+      backendUnavailableBody:
+        'Le serveur n’est pas connecté à la base des annonces. En local, ajoutez FIREBASE_SERVICE_ACCOUNT_JSON dans .env puis redémarrez npm run dev.',
       prev: 'Précédent',
       next: 'Suivant',
       any: 'Tous',
@@ -1453,6 +1505,16 @@ export const translations: Record<Locale, Translations> = {
       photos: 'fotos',
       photo: 'foto',
       agent: 'Agente',
+      details: 'Detalles de la propiedad',
+      buyNow: 'Comprar ahora',
+      bookViewing: 'Reservar visita',
+      bookStay: 'Reservar estancia',
+      propertyTypeLabel: 'Tipo de propiedad',
+      listingTypeLabel: 'Tipo de anuncio',
+      addressLabel: 'Dirección',
+      inquiryBuy: 'Me interesa comprar esta propiedad: {title}',
+      inquiryBookViewing: 'Quiero agendar una visita para: {title}',
+      inquiryBookStay: 'Quiero reservar una estancia en: {title}',
     },
     labels: {
       realEstateAgent: 'Agente inmobiliario',
@@ -1526,6 +1588,9 @@ export const translations: Record<Locale, Translations> = {
       results: 'resultados',
       noResults: 'Sin resultados',
       tryAdjusting: 'Intenta ajustar los filtros',
+      backendUnavailableTitle: 'Los anuncios no están disponibles',
+      backendUnavailableBody:
+        'El servidor no está conectado a la base de anuncios. En local, añade FIREBASE_SERVICE_ACCOUNT_JSON en .env y reinicia npm run dev.',
       prev: 'Anterior',
       next: 'Siguiente',
       any: 'Cualquiera',
@@ -1796,6 +1861,16 @@ export const translations: Record<Locale, Translations> = {
       photos: 'fotoğraf',
       photo: 'fotoğraf',
       agent: 'Danışman',
+      details: 'İlan Detayları',
+      buyNow: 'Satın Al',
+      bookViewing: 'Görüntüleme Ayırt',
+      bookStay: 'Konaklama Ayırt',
+      propertyTypeLabel: 'Mülk Türü',
+      listingTypeLabel: 'İlan Türü',
+      addressLabel: 'Adres',
+      inquiryBuy: 'Bu mülkü satın almak istiyorum: {title}',
+      inquiryBookViewing: 'Bu mülk için görüntüleme ayırtmak istiyorum: {title}',
+      inquiryBookStay: 'Bu mülkte konaklama ayırtmak istiyorum: {title}',
     },
     labels: {
       realEstateAgent: 'Emlak Danışmanı',
@@ -1869,6 +1944,9 @@ export const translations: Record<Locale, Translations> = {
       results: 'sonuç',
       noResults: 'Sonuç bulunamadı',
       tryAdjusting: 'Arama kriterlerinizi değiştirmeyi deneyin',
+      backendUnavailableTitle: 'İlanlar yüklenemiyor',
+      backendUnavailableBody:
+        'Sunucu ilan veritabanına bağlı değil. Yerel geliştirmede .env dosyasına FIREBASE_SERVICE_ACCOUNT_JSON ekleyip npm run dev ile yeniden başlatın.',
       prev: 'Önceki',
       next: 'Sonraki',
       any: 'Herhangi',

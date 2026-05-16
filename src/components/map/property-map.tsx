@@ -27,19 +27,25 @@ export function PropertyMap({ lat, lng, address }: PropertyMapProps) {
   // This component is always dynamically imported with ssr: false,
   // so it only renders on the client side — no isClient check needed.
 
+  const mapProps = {
+    center: [lat, lng] as [number, number],
+    zoom: 15,
+    scrollWheelZoom: false,
+    style: { height: '100%', width: '100%' } as const,
+    className: 'rounded-xl',
+  };
+
+  const tileProps = {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  };
+
   return (
     <div className="glass-card rounded-xl overflow-hidden" style={{ height: '300px' }}>
-      <MapContainer
-        center={[lat, lng]}
-        zoom={15}
-        scrollWheelZoom={false}
-        style={{ height: '100%', width: '100%' }}
-        className="rounded-xl"
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+      {/* react-leaflet v5 + Leaflet typings: cast for spread when @types/leaflet is absent */}
+      <MapContainer {...(mapProps as object)}>
+        {/* @ts-expect-error TileLayerProps omits Leaflet options without @types/leaflet; attribution is valid at runtime */}
+        <TileLayer attribution={tileProps.attribution} url={tileProps.url} />
         <Marker position={[lat, lng]}>
           <Popup>
             <span className="text-sm font-medium">{address || 'Property Location'}</span>

@@ -5,6 +5,7 @@ import {
   Search, SlidersHorizontal, X, ChevronLeft, ChevronRight,
   Building2, MapPin, Bed, Bath, Maximize, ArrowUpDown,
   Home, Castle, Landmark, Briefcase, Warehouse, Layers, Grid3X3,
+  AlertCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -22,7 +23,8 @@ import { PropertyCard } from '@/components/property/property-card';
 import { PageHero } from '@/components/layout/page-hero';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
-import type { Property, Country, PaginatedResponse } from '@/types';
+import type { Property, Country, PaginatedResponse, PropertyFilters } from '@/types';
+import { normalizeLocationsResponse } from '@/lib/normalize-locations';
 
 // ─── Property type icons ────────────────────────────────────────
 const propertyTypeIcons: Record<string, React.ElementType> = {
@@ -41,7 +43,7 @@ const propertyTypeIcons: Record<string, React.ElementType> = {
 // ─── Component ──────────────────────────────────────────────────
 export function SearchPage() {
   const { t } = useTranslation();
-  const { filters, setFilters, resetFilters } = useAppStore();
+  const { filters, setFilters, resetFilters, setCurrentPage } = useAppStore();
 
   const [properties, setProperties] = useState<Property[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
@@ -49,7 +51,8 @@ export function SearchPage() {
   const [totalResults, setTotalResults] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
   const [mobileFilters, setMobileFilters] = useState(false);
-  const [autoCountryApplied, setAutoCountryApplied] = useState(false);
+  const [listingsBackend, setListingsBackend] = useState<'unknown' | 'live' | 'stub'>('unknown');
+  const visitorGeoResolved = useAppStore((s) => s.visitorGeoResolved);
 
   // Fetch properties
   const fetchProperties = useCallback(async () => {
@@ -74,7 +77,9 @@ export function SearchPage() {
       if (res.ok) {
         const data = (await res.json()) as PaginatedResponse<Property> & {
           pagination?: { total: number; totalPages: number; page: number; limit: number };
+          backendConfigured?: boolean;
         };
+        setListingsBackend(data.backendConfigured === false ? 'stub' : 'live');
         setProperties(data.data ?? []);
         const total = data.pagination?.total ?? data.total ?? 0;
         const totalPages = data.pagination?.totalPages ?? data.totalPages ?? 1;
@@ -91,31 +96,16 @@ export function SearchPage() {
   // Fetch countries for filter dropdown
   useEffect(() => {
     fetch('/api/locations?includeProperties=true')
-      .then((res) => res.json())
-      .then((data) => setCountries(data.countries ?? data ?? []))
-      .catch(() => {});
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setCountries(normalizeLocationsResponse(data)))
+      .catch(() => setCountries([]));
   }, []);
 
+  // Fetch properties after visitor country is resolved (IP-based default filter).
   useEffect(() => {
-    if (autoCountryApplied || countries.length === 0 || filters.countryId) return;
-    fetch('/api/geo-country')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        const code = String(data?.countryCode ?? '').toUpperCase();
-        if (!code) return;
-        const matched = countries.find((c) => c.code?.toUpperCase() === code);
-        if (matched) {
-          setFilters({ countryId: matched.id, page: 1 });
-        }
-      })
-      .catch(() => {})
-      .finally(() => setAutoCountryApplied(true));
-  }, [autoCountryApplied, countries, filters.countryId, setFilters]);
-
-  // Fetch properties when filters change
-  useEffect(() => {
+    if (!visitorGeoResolved) return;
     fetchProperties();
-  }, [fetchProperties]);
+  }, [fetchProperties, visitorGeoResolved]);
 
   // Force search page to display up to 30 per page.
   useEffect(() => {
@@ -331,7 +321,9 @@ export function SearchPage() {
               {/* Sort */}
               <Select
                 value={filters.sort || 'newest'}
-                onValueChange={(v) => setFilters({ sort: v as Property['listingType'], page: 1 })}
+                onValueChange={(v) =>
+                  setFilters({ sort: v as NonNullable<PropertyFilters['sort']>, page: 1 })
+                }
               >
                 <SelectTrigger className="rounded-xl">
                   <ArrowUpDown className="h-4 w-4 mr-2 text-primary/60" />
@@ -379,6 +371,18 @@ export function SearchPage() {
             ))}
           </div>
         ) : properties.length === 0 ? (
+          listingsBackend === 'stub' ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center px-4" role="status">
+              <div className="h-20 w-20 rounded-2xl bg-amber-500/15 flex items-center justify-center mb-5 border border-amber-500/30">
+                <AlertCircle className="h-10 w-10 text-amber-600 dark:text-amber-300" />
+              </div>
+              <h3 className="font-heading text-xl font-bold mb-2">{t.search.backendUnavailableTitle}</h3>
+              <p className="text-muted-foreground text-sm max-w-lg mb-6 leading-relaxed">{t.search.backendUnavailableBody}</p>
+              <Button variant="outline" onClick={() => setCurrentPage('home')} className="rounded-xl">
+                {t.nav.home}
+              </Button>
+            </div>
+          ) : (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="h-20 w-20 rounded-2xl bg-muted/60 flex items-center justify-center mb-5">
               <Building2 className="h-10 w-10 text-muted-foreground/40" />
@@ -389,6 +393,7 @@ export function SearchPage() {
               {t.search.resetFilters}
             </Button>
           </div>
+          )
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pb-8">
             {properties.map((property) => (

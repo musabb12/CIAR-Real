@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
+import { useVisitorCountry } from '@/hooks/use-visitor-country';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { NewsTicker } from '@/components/layout/news-ticker';
@@ -14,6 +15,9 @@ import { AdminLoginPage } from '@/components/pages/admin-login-page';
 import { ContactPage } from '@/components/pages/contact-page';
 import { RegisterPage } from '@/components/pages/register-page';
 import { LoginPage } from '@/components/pages/login-page';
+import { CheckoutPage } from '@/components/pages/checkout-page';
+import { CheckoutCompletePage } from '@/components/pages/checkout-complete-page';
+import { PartnerDashboardPage } from '@/components/pages/partner-dashboard-page';
 import { ScrollProgress } from '@/components/ui/scroll-progress';
 import { AIChatbot } from '@/components/feature/ai-chatbot';
 import { PropertyComparison } from '@/components/feature/property-comparison';
@@ -23,8 +27,8 @@ import { Toaster } from 'sonner';
 import { onInvalidate } from '@/lib/admin-events';
 
 export default function Home() {
-  const { currentPage, currentUser, isAuthenticated, setFavorites, setFeatures, locale, filters, setFilters } = useAppStore();
-  const appliedGeoRef = useRef(false);
+  const { currentPage, currentUser, isAuthenticated, setFavorites, setFeatures, locale } = useAppStore();
+  useVisitorCountry();
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
@@ -87,35 +91,6 @@ export default function Home() {
     document.documentElement.lang = locale;
   }, [locale, mounted]);
 
-  // Auto-apply visitor country by IP once (without overriding manual choice).
-  useEffect(() => {
-    if (!mounted || appliedGeoRef.current) return;
-    if (filters.countryId) {
-      appliedGeoRef.current = true;
-      return;
-    }
-
-    fetch('/api/geo-country')
-      .then((res) => (res.ok ? res.json() : null))
-      .then((geo) => {
-        const code = String(geo?.countryCode ?? '').toUpperCase();
-        if (!code) return null;
-        return fetch('/api/locations')
-          .then((res) => (res.ok ? res.json() : []))
-          .then((countries) => {
-            const list = Array.isArray(countries) ? countries : countries?.countries ?? [];
-            const matched = list.find((c: { id: string; code?: string }) => String(c.code ?? '').toUpperCase() === code);
-            if (matched) {
-              setFilters({ countryId: matched.id, page: 1, limit: 30 });
-            }
-          });
-      })
-      .catch(() => {})
-      .finally(() => {
-        appliedGeoRef.current = true;
-      });
-  }, [mounted, filters.countryId, setFilters]);
-
   // Support legacy hash-style admin URLs by forwarding to real Next.js routes.
   useEffect(() => {
     if (!mounted || typeof window === 'undefined') return;
@@ -157,6 +132,14 @@ export default function Home() {
         return <RegisterPage />;
       case 'login':
         return <LoginPage />;
+      case 'checkout-purchase':
+        return <CheckoutPage mode="purchase" />;
+      case 'checkout-rent':
+        return <CheckoutPage mode="rent" />;
+      case 'checkout-complete':
+        return <CheckoutCompletePage />;
+      case 'partner-dashboard':
+        return <PartnerDashboardPage />;
       default:
         return <HomePage />;
     }
@@ -166,8 +149,12 @@ export default function Home() {
   const isStandalonePage =
     currentPage === 'admin' ||
     currentPage === 'admin-login' ||
+    currentPage === 'partner-dashboard' ||
     currentPage === 'register' ||
-    currentPage === 'login';
+    currentPage === 'login' ||
+    currentPage === 'checkout-purchase' ||
+    currentPage === 'checkout-rent' ||
+    currentPage === 'checkout-complete';
 
   if (!mounted) {
     return (

@@ -35,6 +35,7 @@ import {
   refreshPropertiesForCountry,
 } from '@/lib/firestore-properties';
 import type {
+  AccountType,
   Agent,
   Banner,
   Company,
@@ -58,6 +59,13 @@ export const defaultDesignSettings: SiteDesignSettings = {
   accentColor: '#F59E0B',
   heroImageUrl:
     'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=2000&q=80&auto=format&fit=crop',
+  newsTickerBackground: '',
+  newsTickerTextColor: '',
+  newsTickerFontSizePx: 12,
+  newsTickerHeightPx: 40,
+  newsTickerLabelTextColor: '',
+  newsTickerLabelBackground: '',
+  newsTickerSeparatorColor: '',
 };
 
 export const defaultContentSettings: SiteContentSettings = {
@@ -163,7 +171,7 @@ async function countByField(collectionName: keyof typeof FIRESTORE_COLLECTIONS, 
   return snap.size;
 }
 
-async function getAgentForUser(userId: string): Promise<Agent | undefined> {
+export async function getAgentForUser(userId: string): Promise<Agent | undefined> {
   const snap = await agentCollection().where('userId', '==', userId).limit(1).get();
   if (snap.empty) return undefined;
   const agentId = snap.docs[0].id;
@@ -1087,4 +1095,81 @@ export async function getAdminStatsFromFirestore() {
     })),
     recentInquiries: sortByCreatedDesc(inquiries).slice(0, 10),
   };
+}
+
+export function accountTypeToRole(accountType: AccountType): UserRole {
+  if (accountType === 'OWNER') return 'OWNER';
+  if (accountType === 'COMPANY') return 'COMPANY';
+  return 'USER';
+}
+
+export async function createPartnerProfileForUser(input: {
+  userId: string;
+  role: UserRole;
+  name: string;
+  phone?: string | null;
+  companyName?: string | null;
+}): Promise<Agent | null> {
+  if (input.role !== 'OWNER' && input.role !== 'COMPANY' && input.role !== 'AGENT') {
+    return null;
+  }
+
+  const existing = await getAgentForUser(input.userId);
+  if (existing) return existing;
+
+  let companyId: string | null = null;
+  if (input.role === 'COMPANY') {
+    const companyIdNew = makeId('company');
+    const companyName = (input.companyName || input.name).trim();
+    const companyPayload = {
+      id: companyIdNew,
+      name: companyName,
+      logo: null,
+      description: null,
+      phone: input.phone?.trim() || null,
+      email: null,
+      website: null,
+      address: null,
+      founded: null,
+      agentCount: 1,
+      listingCount: 0,
+      createdAt: nowIso(),
+      updatedAt: nowIso(),
+    };
+    await companyCollection().doc(companyIdNew).set(companyPayload);
+    companyId = companyIdNew;
+  }
+
+  const agentId = makeId('agent');
+  const title =
+    input.role === 'COMPANY'
+      ? 'Real Estate Company'
+      : input.role === 'OWNER'
+        ? 'Property Owner'
+        : 'Real Estate Agent';
+
+  const agentPayload = {
+    id: agentId,
+    userId: input.userId,
+    bio: null,
+    title,
+    license: null,
+    phone: input.phone?.trim() || null,
+    whatsapp: null,
+    experience: null,
+    rating: 0,
+    totalListings: 0,
+    totalSales: 0,
+    verified: false,
+    companyId,
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  };
+  await agentCollection().doc(agentId).set(agentPayload);
+  return getAgentForUser(input.userId) ?? null;
+}
+
+export async function getPartnerAgentIdForUser(userId: string): Promise<string | null> {
+  const agent = await getAgentForUser(userId);
+  return agent?.id ?? null;
 }

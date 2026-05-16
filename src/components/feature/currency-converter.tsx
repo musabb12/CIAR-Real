@@ -462,11 +462,13 @@ export function CurrencyConverter({
             </div>
 
             {/* ── Result Display ── */}
-            <div className="relative overflow-hidden rounded-2xl p-5 text-center">
+            <div
+              className="relative overflow-hidden rounded-2xl p-5 text-center"
               style={{
                 background:
                   'linear-gradient(135deg, #0D9488 0%, #0F766E 50%, #065F46 100%)',
               }}
+            >
               {/* Decorative circles */}
               <div className="pointer-events-none absolute -top-8 -right-8 size-32 rounded-full bg-white/10" />
               <div className="pointer-events-none absolute -bottom-6 -left-6 size-24 rounded-full bg-white/5" />

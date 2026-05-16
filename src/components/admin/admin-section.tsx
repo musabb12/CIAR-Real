@@ -42,6 +42,8 @@ interface Props<T> {
   showTable?: boolean;
   /** Current filtered row set (e.g. sync card layouts with search). */
   onFilteredRows?: (rows: T[]) => void;
+  /** Raw JSON from a successful load (before row parsing). */
+  onApiResponse?: (payload: unknown) => void;
 }
 
 export function AdminSection<T extends { id?: string }>({
@@ -60,6 +62,7 @@ export function AdminSection<T extends { id?: string }>({
   pageSize = 8,
   showTable = true,
   onFilteredRows,
+  onApiResponse,
 }: Props<T>) {
   const [rows, setRows] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,7 +101,7 @@ export function AdminSection<T extends { id?: string }>({
         toast.error(isAr ? 'فشل تحميل البيانات' : 'Failed to load data', { description: msg });
       })
       .finally(() => setLoading(false));
-  }, [endpoint, parseRows, isAr]);
+  }, [endpoint, parseRows, isAr, onApiResponse]);
 
   useEffect(() => {
     load();

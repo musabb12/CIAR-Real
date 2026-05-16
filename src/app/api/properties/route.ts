@@ -25,6 +25,8 @@ export async function GET(request: NextRequest) {
         total: 0,
         totalPages: 1,
       },
+      backendConfigured: false,
+      backendMessage: getFirebaseAdminConfigError() ?? 'Firebase Admin is not configured',
     });
   }
 
@@ -69,6 +71,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       data: out.data,
       pagination: out.pagination,
+      backendConfigured: true,
     });
   } catch (error) {
     console.error('Error fetching properties:', error);

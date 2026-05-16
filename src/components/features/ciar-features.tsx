@@ -14,7 +14,7 @@ import {
   ShieldCheck, Scale, Gauge, Radio, Monitor, DoorOpen, Lock, Camera,
   Speaker, Package, MapPinned, Navigation, Timer, Truck, Coffee,
   UtensilsCrossed, Music, Theater, PartyPopper, Pill, Siren, Baby,
-  BabyCarriage, SmilePlus, ThumbsUp, ThumbsDown, MessageSquare, Tag,
+  SmilePlus, ThumbsUp, ThumbsDown, MessageSquare, Tag,
   Send, ChevronDown, AlertCircle, Info, FlameKindling, SnowflakeIcon,
   SunDim, Leaf as LeafIcon, CircleDot, CircleCheck, CircleX, Plane, Train,
 } from 'lucide-react';

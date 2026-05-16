@@ -2964,3 +2964,210 @@ html[dir="rtl"] .admin-nav-item.is-active::after {
     transform: translateX(-100%);
   }
 }
+
+/* ============================================================
+   CHECKOUT — Luxury payment experience
+   ============================================================ */
+
+.checkout-step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
+  transition: color 0.25s ease;
+}
+
+.checkout-step.is-active {
+  color: rgba(251, 191, 36, 0.95);
+}
+
+.checkout-step-dot {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.04);
+  transition: all 0.25s ease;
+}
+
+.checkout-step.is-active .checkout-step-dot {
+  border-color: rgba(245, 158, 11, 0.6);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(16, 185, 129, 0.25));
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
+}
+
+.checkout-pay-method {
+  cursor: pointer;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1rem;
+  transition: all 0.25s ease;
+}
+
+.checkout-pay-method:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.checkout-pay-method.is-selected {
+  border-color: rgba(245, 158, 11, 0.55);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(16, 185, 129, 0.08));
+  box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.2), 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.checkout-summary-card {
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+}
+
+.checkout-pay-btn {
+  background: linear-gradient(135deg, #d97706 0%, #b45309 35%, #059669 100%);
+  box-shadow:
+    0 4px 24px rgba(245, 158, 11, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.checkout-pay-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    0 8px 32px rgba(245, 158, 11, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.checkout-success-ring {
+  animation: checkout-success-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes checkout-success-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 16px rgba(16, 185, 129, 0);
+  }
+}
+
+.checkout-receipt {
+  backdrop-filter: blur(28px) saturate(1.5);
+  -webkit-backdrop-filter: blur(28px) saturate(1.5);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .checkout-success-ring {
+    animation: none;
+  }
+  .checkout-pay-btn:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ============================================================
+   PARTNER DASHBOARD — Luxury seller / company workspace
+   ============================================================ */
+
+.partner-dashboard-bg {
+  isolation: isolate;
+  background:
+    linear-gradient(160deg, #0a1014 0%, #111a1f 45%, #0d1418 100%),
+    radial-gradient(ellipse 70% 50% at 100% 0%, rgba(245, 158, 11, 0.12), transparent 55%),
+    radial-gradient(ellipse 60% 45% at 0% 100%, rgba(16, 185, 129, 0.1), transparent 50%);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.partner-stat-card {
+  backdrop-filter: blur(20px) saturate(1.35);
+  -webkit-backdrop-filter: blur(20px) saturate(1.35);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.25s ease, transform 0.2s ease;
+}
+
+.partner-stat-card:hover {
+  border-color: rgba(245, 158, 11, 0.25);
+  transform: translateY(-2px);
+}
+
+.partner-property-card {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+}
+
+.partner-property-card:hover {
+  border-color: rgba(245, 158, 11, 0.3);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+  transform: translateY(-3px);
+}
+
+.partner-sidebar {
+  backdrop-filter: blur(24px) saturate(1.4);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  background: rgba(0, 0, 0, 0.35);
+  border-inline-end: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.partner-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.65rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.55);
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.partner-nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.partner-nav-item.is-active {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(16, 185, 129, 0.12));
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.partner-toolbar-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.partner-toolbar-input::placeholder {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.partner-toolbar-input:focus {
+  outline: none;
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
+}
+
+.partner-form-section-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(251, 191, 36, 0.85);
+}

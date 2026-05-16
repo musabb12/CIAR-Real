@@ -9,6 +9,7 @@ import {
   asString,
   buildAgentSnapshot,
   cleanUndefined,
+  deepCleanUndefined,
   col,
   getAmenitiesByIds,
   getLocationSnapshot,
@@ -443,11 +444,27 @@ async function buildStoredProperty(
   });
 }
 
+function sanitizeAgentForStorage(agent: Agent | undefined): Agent | undefined {
+  if (!agent) return undefined;
+  const safeUser = agent.user
+    ? { ...agent.user, password: undefined }
+    : undefined;
+  return deepCleanUndefined({
+    ...agent,
+    user: safeUser,
+    company: agent.company ?? null,
+  }) as Agent;
+}
+
 export async function createPropertyInFirestore(input: PropertyWriteInput): Promise<Property> {
   const id = makeId('prop');
-  const payload = await buildStoredProperty(id, input);
+  const raw = await buildStoredProperty(id, input);
+  const payload = deepCleanUndefined({
+    ...raw,
+    agent: sanitizeAgentForStorage(raw.agent as Agent | undefined),
+  });
   await propertyCol().doc(id).set(payload);
-  return firestoreDocToProperty(id, payload);
+  return firestoreDocToProperty(id, payload as Record<string, unknown>);
 }
 
 export async function updatePropertyInFirestore(
@@ -480,9 +497,13 @@ export async function updatePropertyInFirestore(
     amenityIds: input.amenityIds,
     slug: input.slug ?? existing.slug,
   };
-  const payload = await buildStoredProperty(id, merged, existing);
+  const raw = await buildStoredProperty(id, merged, existing);
+  const payload = deepCleanUndefined({
+    ...raw,
+    agent: sanitizeAgentForStorage(raw.agent as Agent | undefined),
+  });
   await propertyCol().doc(id).set(payload);
-  return firestoreDocToProperty(id, payload);
+  return firestoreDocToProperty(id, payload as Record<string, unknown>);
 }
 
 async function deleteByForeignKey(collectionName: string, field: string, value: string) {

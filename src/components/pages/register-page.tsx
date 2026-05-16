@@ -21,6 +21,8 @@ import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import { getPrimaryPageBackground } from '@/lib/page-backgrounds';
 import { toast } from 'sonner';
+import type { AccountType } from '@/types';
+import { resolvePageAfterLogin } from '@/lib/auth-roles';
 
 export function RegisterPage() {
   const { t, rtl } = useTranslation();
@@ -33,6 +35,8 @@ export function RegisterPage() {
     confirmPassword: '',
     phone: '',
     agree: false,
+    accountType: 'CLIENT' as AccountType,
+    companyName: '',
   });
   const [showPwd, setShowPwd] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -83,6 +87,8 @@ export function RegisterPage() {
           email: form.email.trim().toLowerCase(),
           password: form.password,
           phone: form.phone.trim() || undefined,
+          accountType: form.accountType,
+          companyName: form.accountType === 'COMPANY' ? form.companyName.trim() : undefined,
         }),
       });
       const data = await res.json();
@@ -91,7 +97,7 @@ export function RegisterPage() {
         toast.success(tx('تم إنشاء الحساب بنجاح', 'Account created'));
         setTimeout(() => {
           login(data.user);
-          setCurrentPage('home');
+          setCurrentPage(resolvePageAfterLogin(data.user.role));
         }, 900);
       } else {
         setError(data.error || tx('فشل التسجيل', 'Registration failed'));
@@ -105,7 +111,7 @@ export function RegisterPage() {
 
   return (
     <div
-      className="auth-page-image-bg min-h-dvh py-8 px-1 sm:py-10 sm:px-2 lg:px-0 relative overflow-hidden flex items-center"
+      className="auth-page-image-bg min-h-dvh py-8 px-1 sm:py-10 sm:px-2 lg:px-0 relative overflow-x-hidden"
       style={{
         ['--auth-image' as string]:
           `url('${registerBackground}')`,
@@ -115,9 +121,9 @@ export function RegisterPage() {
       <div className="absolute top-20 -right-32 w-96 h-96 rounded-full bg-amber-500/20 blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 -left-32 w-96 h-96 rounded-full bg-emerald-500/20 blur-3xl pointer-events-none" />
 
-      <div className="relative w-full grid lg:grid-cols-2 ml-78 mt-2 gap-8 items-center">
-        {/* ── Left: Marketing panel ── */}
-        <div className="hidden lg:block text-white space-y-8 px-4">
+      <div className="relative z-[1] w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+        {/* ── Left: Marketing panel (visible on all breakpoints; stacks above form on small screens) ── */}
+        <div className="text-white space-y-6 sm:space-y-8 px-0 sm:px-2 max-lg:pb-2">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-emerald-600 shadow-lg shadow-amber-500/30">
               <Building2 className="h-6 w-6 text-white" />
@@ -206,6 +212,34 @@ export function RegisterPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-[13px] font-semibold text-white/80 mb-1.5">
+                {tx('نوع الحساب', 'Account type')}
+              </label>
+              <select
+                className="auth-input h-11 w-full rounded-xl px-3 text-sm"
+                value={form.accountType}
+                onChange={(e) => setForm({ ...form, accountType: e.target.value as AccountType })}
+              >
+                <option value="CLIENT">{tx('عميل (شراء / إيجار)', 'Client (buy / rent)')}</option>
+                <option value="OWNER">{tx('صاحب عقار', 'Property owner')}</option>
+                <option value="COMPANY">{tx('شركة عقارات', 'Real estate company')}</option>
+              </select>
+            </div>
+            {form.accountType === 'COMPANY' && (
+              <div>
+                <label className="block text-[13px] font-semibold text-white/80 mb-1.5">
+                  {tx('اسم الشركة', 'Company name')}
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={form.companyName}
+                  onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+                  className="auth-input h-11 w-full rounded-xl px-4 text-sm"
+                />
+              </div>
+            )}
             <div>
               <label className="block text-[13px] font-semibold text-white/80 mb-1.5">
                 {tx('الاسم الكامل', 'Full name')}

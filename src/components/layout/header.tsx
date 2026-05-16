@@ -506,6 +506,15 @@ export function Header() {
                         {t.admin.dashboard}
                       </button>
                     )}
+                    {(currentUser?.role === 'OWNER' || currentUser?.role === 'COMPANY' || currentUser?.role === 'AGENT') && (
+                      <button
+                        onClick={() => handleNavClick('partner-dashboard')}
+                        className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm transition-colors hover:bg-gray-100/80 dark:hover:bg-white/5"
+                      >
+                        <LayoutDashboard className="h-4 w-4 text-muted-foreground" />
+                        {rtl ? 'لوحة العقارات' : 'My properties'}
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         void handleLogout({ closeMenus: true });

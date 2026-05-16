@@ -16,6 +16,7 @@ import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import { getPrimaryPageBackground } from '@/lib/page-backgrounds';
 import { toast } from 'sonner';
+import { resolvePageAfterLogin } from '@/lib/auth-roles';
 
 export function LoginPage() {
   const { rtl } = useTranslation();
@@ -55,7 +56,7 @@ export function LoginPage() {
       if (res.ok) {
         login(data.user);
         toast.success(tx('تم تسجيل الدخول بنجاح', 'Signed in successfully'));
-        setCurrentPage(data.user.role === 'ADMIN' ? 'admin' : 'home');
+        setCurrentPage(resolvePageAfterLogin(data.user.role));
       } else {
         setError(data.error || tx('فشل تسجيل الدخول', 'Login failed'));
       }

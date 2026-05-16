@@ -22,6 +22,7 @@ import { PropertyCard } from '@/components/property/property-card';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import type { Property, Country } from '@/types';
+import { normalizeLocationsResponse } from '@/lib/normalize-locations';
 
 function propertiesFromApiPayload(data: unknown): Property[] {
   if (Array.isArray(data)) return data as Property[];
@@ -94,13 +95,6 @@ const heroImages = [
 
 const HERO_SLIDE_DURATION_MS = 5500;
 
-const stats = [
-  { value: 60, label: 'hero.countries', suffix: '+', icon: Globe },
-  { value: 30, label: 'hero.propertiesCount', suffix: '+', icon: Building2 },
-  { value: 6, label: 'hero.agentsCount', suffix: '+', icon: Users },
-  { value: 5, label: 'hero.companiesCount', suffix: '+', icon: Briefcase },
-];
-
 const propertyTypes = [
   { key: 'apartment', icon: Building },
   { key: 'villa', icon: Castle },
@@ -141,7 +135,24 @@ const paymentMethods = [
 // ─── Component ─────────────────────────────────────────────────
 export function HomePage() {
   const { t } = useTranslation();
-  const { setCurrentPage, setFilters, resetFilters, designSettings, contentSettings, filters } = useAppStore();
+  const {
+    setCurrentPage,
+    setFilters,
+    resetFilters,
+    designSettings,
+    contentSettings,
+    filters,
+    visitorGeoResolved,
+  } = useAppStore();
+  const statsRows = useMemo(
+    () => [
+      { value: 60, suffix: '+', icon: Globe, label: t.hero.countries },
+      { value: 30, suffix: '+', icon: Building2, label: t.hero.propertiesCount },
+      { value: 6, suffix: '+', icon: Users, label: t.hero.agentsCount },
+      { value: 5, suffix: '+', icon: Briefcase, label: t.hero.companiesCount },
+    ],
+    [t],
+  );
   const [featured, setFeatured] = useState<Property[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
   const [loading, setLoading] = useState(true);
@@ -159,8 +170,17 @@ export function HomePage() {
     return [customHero, ...heroImages.filter((img) => img !== customHero)];
   }, [designSettings.heroImageUrl]);
 
+  // Sync hero country dropdown when IP-based filter is applied.
+  useEffect(() => {
+    if (filters.countryId) {
+      setSearchCountry(filters.countryId);
+    }
+  }, [filters.countryId]);
+
   // Fetch data (featured: prefer visitor country, then global featured, then latest listings)
   useEffect(() => {
+    if (!visitorGeoResolved) return;
+
     const fetchAll = async () => {
       try {
         const baseFeatured = new URLSearchParams({ isFeatured: 'true', limit: '6' });
@@ -182,13 +202,13 @@ export function HomePage() {
         setFeatured(featuredList);
         if (locRes.ok) {
           const data = await locRes.json();
-          setCountries(data.countries ?? data ?? []);
+          setCountries(normalizeLocationsResponse(data));
         }
       } catch { /* silent */ }
       finally { setLoading(false); }
     };
     fetchAll();
-  }, [filters.countryId]);
+  }, [filters.countryId, visitorGeoResolved]);
 
   // Auto-rotate testimonials
   useEffect(() => {
@@ -337,13 +357,13 @@ export function HomePage() {
 
           {/* Stats */}
           <div className="animate-fade-in-up mt-10 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 w-full max-w-3xl" style={delay(450)}>
-            {stats.map((stat, i) => (
+            {statsRows.map((stat, i) => (
               <div key={i} className="glass-stat rounded-xl p-4 text-center">
                 <stat.icon className="h-5 w-5 text-gold-light mx-auto mb-2" />
                 <div className="text-2xl font-bold text-white">
                   <AnimatedCounter target={stat.value} suffix={stat.suffix} />
                 </div>
-                <div className="text-xs text-white/60 mt-1">{t[stat.label as keyof typeof t] ?? stat.label}</div>
+                <div className="text-xs text-white/60 mt-1">{stat.label}</div>
               </div>
             ))}
           </div>

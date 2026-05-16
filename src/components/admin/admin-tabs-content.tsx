@@ -33,6 +33,7 @@ import {
   Upload,
   Plus,
   Link2,
+  Palette,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
@@ -261,6 +262,8 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
   const [imageUrlDraft, setImageUrlDraft] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
   const [geocodeLoading, setGeocodeLoading] = useState(false);
+  const [propertiesListMode, setPropertiesListMode] = useState<'unknown' | 'live' | 'stub'>('unknown');
+  const [propertiesListStubReason, setPropertiesListStubReason] = useState<string | null>(null);
   const bump = () => setRefreshKey((k) => k + 1);
 
   const regionOptions = useMemo(() => {
@@ -282,6 +285,17 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
   const parseRows = useCallback((d: unknown): PropertiesTabRow[] => {
     const data = d as { data?: PropertiesTabRow[]; properties?: PropertiesTabRow[] };
     return data.data ?? data.properties ?? [];
+  }, []);
+
+  const onPropertiesApiResponse = useCallback((raw: unknown) => {
+    const o = raw as { backendConfigured?: boolean; backendMessage?: string };
+    if (o.backendConfigured === false) {
+      setPropertiesListMode('stub');
+      setPropertiesListStubReason(typeof o.backendMessage === 'string' ? o.backendMessage : null);
+    } else {
+      setPropertiesListMode('live');
+      setPropertiesListStubReason(null);
+    }
   }, []);
   const columns: ColumnDef<PropertiesTabRow>[] = [
     {
@@ -689,6 +703,22 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
 
   return (
     <>
+      {propertiesListMode === 'stub' && (
+        <div className="admin-card p-4 mb-4 border border-amber-500/40 bg-amber-500/[0.12] text-sm text-amber-50/95 leading-relaxed">
+          <p className="font-semibold">{tx(isAr, 'قاعدة البيانات غير متصلة', 'Database backend is not connected')}</p>
+          <p className="mt-2 text-[var(--admin-text-mute)]">
+            {tx(
+              isAr,
+              'لوحة التحكم تحتاج مفتاح خدمة Firebase على الخادم. أضف المتغير FIREBASE_SERVICE_ACCOUNT_JSON إلى ملف .env (JSON حساب الخدمة كاملاً) ثم أعد تشغيل npm run dev.',
+              'The admin API needs Firebase Admin credentials. Add FIREBASE_SERVICE_ACCOUNT_JSON to your .env (full service-account JSON), then restart npm run dev.',
+            )}
+          </p>
+          {propertiesListStubReason ? (
+            <p className="mt-2 font-mono text-[11px] text-amber-200/80 break-all">{propertiesListStubReason}</p>
+          ) : null}
+        </div>
+      )}
+
     <AdminSection<PropertiesTabRow>
       key={refreshKey}
       isAr={isAr}
@@ -701,6 +731,17 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
       rowActions={rowActions}
       showTable={!cardsView}
       onFilteredRows={setCardRows}
+      onApiResponse={onPropertiesApiResponse}
+      emptyAr={
+        propertiesListMode === 'stub'
+          ? 'لا تُعرض العقارات حتى يتصل الخادم بـ Firebase — راجع التنبيه أعلاه.'
+          : 'لا توجد عقارات تطابق البحث'
+      }
+      emptyEn={
+        propertiesListMode === 'stub'
+          ? 'Listings stay hidden until the server can reach Firebase — see the notice above.'
+          : 'No properties match your search'
+      }
       toolbarActions={(
         <button
           type="button"
@@ -722,7 +763,13 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {cardRows.length === 0 ? (
             <div className="col-span-full admin-card py-14 text-center text-sm text-[var(--admin-text-mute)]">
-              {tx(isAr, 'لا توجد عقارات تطابق البحث', 'No properties match your search')}
+              {propertiesListMode === 'stub'
+                ? tx(
+                    isAr,
+                    'لا تُحمَّل العقارات — راجع تنبيه الاتصال بقاعدة البيانات أعلاه.',
+                    'Properties are not loaded — see the database connection notice above.',
+                  )
+                : tx(isAr, 'لا توجد عقارات تطابق البحث', 'No properties match your search')}
             </div>
           ) : null}
           {cardRows.map((r) => (
@@ -2165,11 +2212,18 @@ export function BannersTab({ isAr }: { isAr: boolean }) {
 
 // ─── News Tab ───────────────────────────
 export function NewsTab({ isAr }: { isAr: boolean }) {
+  const designSettings = useAppStore((s) => s.designSettings);
+  const updateDesignSettings = useAppStore((s) => s.updateDesignSettings);
   const [refreshKey, setRefreshKey] = useState(0);
   const bump = () => setRefreshKey((k) => k + 1);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ content: '', type: 'info', link: '', order: 0, isActive: true });
   const [submitting, setSubmitting] = useState(false);
+
+  const clampTickerDim = (value: number, min: number, max: number, fallback: number) => {
+    if (!Number.isFinite(value)) return fallback;
+    return Math.min(max, Math.max(min, Math.round(value)));
+  };
 
   type Row = { id: string; content: string; type: string; isActive: boolean; order: number; createdAt: string; link?: string | null };
   const parseRows = useCallback((d: unknown): Row[] => (Array.isArray(d) ? (d as Row[]) : []), []);
@@ -2267,6 +2321,174 @@ export function NewsTab({ isAr }: { isAr: boolean }) {
 
   return (
     <>
+      <div className="admin-card p-5 mb-4">
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+          <div className="flex items-center gap-2">
+            <Palette className="h-4 w-4 text-[#f5c97b]" />
+            <div>
+              <h3 className="font-heading font-bold">{tx(isAr, 'مظهر الشريط الإخباري', 'Ticker appearance')}</h3>
+              <p className="text-[12px] text-[var(--admin-text-mute)] mt-1 max-w-xl">
+                {tx(
+                  isAr,
+                  'يُحفظ تلقائياً مع إعدادات الموقع (بعد ثوانٍ قليلة). اترك الحقول الفارغة لاستخدام المظهر الافتراضي للوضع الفاتح/الداكن.',
+                  'Saves automatically with site settings (short debounce). Leave color fields empty to keep the default light/dark theme look.',
+                )}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="admin-icon-btn !w-auto px-4"
+            onClick={() => {
+              updateDesignSettings({
+                newsTickerBackground: '',
+                newsTickerTextColor: '',
+                newsTickerFontSizePx: 12,
+                newsTickerHeightPx: 40,
+                newsTickerLabelTextColor: '',
+                newsTickerLabelBackground: '',
+                newsTickerSeparatorColor: '',
+              });
+              toast.success(tx(isAr, 'تمت إعادة مظهر الشريط للافتراضي', 'Ticker appearance reset to defaults'));
+            }}
+          >
+            {tx(isAr, 'إعادة مظهر الشريط', 'Reset ticker look')}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <Field label={tx(isAr, 'ارتفاع الشريط (بكسل)', 'Bar height (px)')}>
+            <input
+              type="number"
+              min={28}
+              max={80}
+              className="admin-input"
+              value={designSettings.newsTickerHeightPx ?? 40}
+              onChange={(e) =>
+                updateDesignSettings({
+                  newsTickerHeightPx: clampTickerDim(Number(e.target.value), 28, 80, 40),
+                })
+              }
+            />
+          </Field>
+          <Field label={tx(isAr, 'حجم خط النص المتحرك (بكسل)', 'Scrolling text size (px)')}>
+            <input
+              type="number"
+              min={10}
+              max={24}
+              className="admin-input"
+              value={designSettings.newsTickerFontSizePx ?? 12}
+              onChange={(e) =>
+                updateDesignSettings({
+                  newsTickerFontSizePx: clampTickerDim(Number(e.target.value), 10, 24, 12),
+                })
+              }
+            />
+          </Field>
+          <Field label={tx(isAr, 'خلفية الشريط (CSS)', 'Bar background (CSS)')}>
+            <input
+              className="admin-input font-mono text-[13px]"
+              placeholder="linear-gradient(...) · rgba(...) · #hex"
+              value={designSettings.newsTickerBackground}
+              onChange={(e) => updateDesignSettings({ newsTickerBackground: e.target.value })}
+            />
+          </Field>
+          <Field label={tx(isAr, 'لون نص الأخبار (CSS)', 'News text color (CSS)')}>
+            <input
+              className="admin-input font-mono text-[13px]"
+              placeholder="#334155 · rgb(...)"
+              value={designSettings.newsTickerTextColor}
+              onChange={(e) => updateDesignSettings({ newsTickerTextColor: e.target.value })}
+            />
+          </Field>
+          <Field label={tx(isAr, 'خلفية عمود «عاجل» (CSS)', 'Label column background (CSS)')}>
+            <input
+              className="admin-input font-mono text-[13px]"
+              placeholder={tx(isAr, 'فارغ = تدرج خفيف بلون الهوية', 'Empty = subtle brand tint')}
+              value={designSettings.newsTickerLabelBackground}
+              onChange={(e) => updateDesignSettings({ newsTickerLabelBackground: e.target.value })}
+            />
+          </Field>
+          <Field label={tx(isAr, 'لون نص «عاجل» والجرس (CSS)', 'Label & bell color (CSS)')}>
+            <input
+              className="admin-input font-mono text-[13px]"
+              placeholder={tx(isAr, 'فارغ = اللون الأساسي للموقع', 'Empty = site primary color')}
+              value={designSettings.newsTickerLabelTextColor}
+              onChange={(e) => updateDesignSettings({ newsTickerLabelTextColor: e.target.value })}
+            />
+          </Field>
+          <Field label={tx(isAr, 'لون الفواصل | (CSS)', 'Separator color (CSS)')}>
+            <input
+              className="admin-input font-mono text-[13px]"
+              placeholder={tx(isAr, 'فارغ = لون خافت من السمة', 'Empty = muted theme color')}
+              value={designSettings.newsTickerSeparatorColor}
+              onChange={(e) => updateDesignSettings({ newsTickerSeparatorColor: e.target.value })}
+            />
+          </Field>
+        </div>
+
+        <p className="text-[11px] text-[var(--admin-text-faint)] mb-2">{tx(isAr, 'معاينة', 'Preview')}</p>
+        <div
+          className="rounded-lg border border-white/10 overflow-hidden glass-nav"
+          style={{
+            height: designSettings.newsTickerHeightPx ?? 40,
+            ...(designSettings.newsTickerBackground?.trim()
+              ? { background: designSettings.newsTickerBackground }
+              : {}),
+          }}
+        >
+          <div className="flex h-full items-center">
+            <div
+              className={
+                designSettings.newsTickerLabelBackground?.trim()
+                  ? 'flex h-full items-center gap-2 border-r border-border/40 px-3'
+                  : 'flex h-full items-center gap-2 border-r border-border/40 bg-gradient-to-r from-primary/10 to-transparent px-3 dark:from-primary/5'
+              }
+              style={
+                designSettings.newsTickerLabelBackground?.trim()
+                  ? { background: designSettings.newsTickerLabelBackground }
+                  : undefined
+              }
+            >
+              <span
+                className={designSettings.newsTickerLabelTextColor?.trim() ? '' : 'text-primary'}
+                style={{
+                  fontSize: designSettings.newsTickerFontSizePx ?? 12,
+                  ...(designSettings.newsTickerLabelTextColor?.trim()
+                    ? { color: designSettings.newsTickerLabelTextColor }
+                    : {}),
+                }}
+              >
+                {tx(isAr, 'عاجل', 'Breaking')}
+              </span>
+            </div>
+            <div className="flex-1 px-3 truncate">
+              <span
+                className={designSettings.newsTickerTextColor?.trim() ? '' : 'text-foreground/80'}
+                style={{
+                  fontSize: designSettings.newsTickerFontSizePx ?? 12,
+                  ...(designSettings.newsTickerTextColor?.trim()
+                    ? { color: designSettings.newsTickerTextColor }
+                    : {}),
+                }}
+              >
+                {tx(isAr, 'نص تجريبي للشريط الإخباري…', 'Sample ticker headline text…')}
+              </span>
+              <span
+                className={`mx-1 ${designSettings.newsTickerSeparatorColor?.trim() ? '' : 'text-foreground/20'}`}
+                style={
+                  designSettings.newsTickerSeparatorColor?.trim()
+                    ? { color: designSettings.newsTickerSeparatorColor }
+                    : undefined
+                }
+              >
+                |
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <AdminSection<Row>
         key={refreshKey}
         isAr={isAr}

@@ -28,6 +28,13 @@ const defaultDesignSettings: SiteDesignSettings = {
   accentColor: '#F59E0B',
   heroImageUrl:
     'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=2000&q=80&auto=format&fit=crop',
+  newsTickerBackground: '',
+  newsTickerTextColor: '',
+  newsTickerFontSizePx: 12,
+  newsTickerHeightPx: 40,
+  newsTickerLabelTextColor: '',
+  newsTickerLabelBackground: '',
+  newsTickerSeparatorColor: '',
 };
 
 const defaultContentSettings: SiteContentSettings = {
@@ -63,9 +70,11 @@ interface AppState {
   // Navigation
   currentPage: AppPage;
   selectedPropertyId: string | null;
+  checkoutTransactionId: string | null;
   adminTab: string;
   setCurrentPage: (page: AppPage) => void;
   setSelectedPropertyId: (id: string | null) => void;
+  setCheckoutTransactionId: (id: string | null) => void;
   setAdminTab: (tab: string) => void;
 
   // Auth
@@ -78,6 +87,8 @@ interface AppState {
   filters: PropertyFilters;
   setFilters: (filters: Partial<PropertyFilters>) => void;
   resetFilters: () => void;
+  visitorGeoResolved: boolean;
+  setVisitorGeoResolved: (resolved: boolean) => void;
 
   // Favorites
   favorites: Favorite[];
@@ -134,10 +145,12 @@ export const useAppStore = create<AppState>()(
   // ---- Navigation ----
   currentPage: 'home',
   selectedPropertyId: null,
+  checkoutTransactionId: null,
   adminTab: 'properties',
 
   setCurrentPage: (page) => set({ currentPage: page }),
   setSelectedPropertyId: (id) => set({ selectedPropertyId: id }),
+  setCheckoutTransactionId: (id) => set({ checkoutTransactionId: id }),
   setAdminTab: (tab) => set({ adminTab: tab }),
 
   // ---- Auth ----
@@ -156,6 +169,9 @@ export const useAppStore = create<AppState>()(
     })),
 
   resetFilters: () => set({ filters: { ...defaultFilters } }),
+
+  visitorGeoResolved: false,
+  setVisitorGeoResolved: (resolved) => set({ visitorGeoResolved: resolved }),
 
   // ---- Favorites ----
   favorites: [],
@@ -273,6 +289,7 @@ export const useAppStore = create<AppState>()(
       hydrateSiteSettings: (payload) =>
         set((state) => ({
           designSettings: {
+            ...defaultDesignSettings,
             ...state.designSettings,
             ...(payload.designSettings ?? {}),
           },

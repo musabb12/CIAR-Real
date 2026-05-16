@@ -1,14 +1,13 @@
 import crypto from 'crypto';
 
-type SessionPayload = {
+export const SESSION_COOKIE_NAME = 'ciar_session';
+export type SessionPayload = {
   sub: string;
   email: string;
   role: string;
   iat: number;
   exp: number;
 };
-
-const SESSION_COOKIE_NAME = 'ciar_session';
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
 function base64Url(input: string | Buffer) {
@@ -49,6 +48,43 @@ export function createSessionToken(user: { id: string; email: string; role: stri
     .digest();
 
   return `${data}.${base64Url(signature)}`;
+}
+
+function base64UrlDecode(input: string): string {
+  const pad = input.length % 4 === 0 ? '' : '='.repeat(4 - (input.length % 4));
+  const b64 = input.replace(/-/g, '+').replace(/_/g, '/') + pad;
+  return Buffer.from(b64, 'base64').toString('utf8');
+}
+
+export function verifySessionToken(token: string | null | undefined): SessionPayload | null {
+  if (!token) return null;
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+
+  const [encodedHeader, encodedPayload, encodedSig] = parts;
+  const data = `${encodedHeader}.${encodedPayload}`;
+  const expected = crypto
+    .createHmac('sha256', getSessionSecret())
+    .update(data)
+    .digest();
+  const pad = encodedSig.length % 4 === 0 ? '' : '='.repeat(4 - (encodedSig.length % 4));
+  const actual = Buffer.from(
+    encodedSig.replace(/-/g, '+').replace(/_/g, '/') + pad,
+    'base64',
+  );
+  if (actual.length !== expected.length || !crypto.timingSafeEqual(actual, expected)) {
+    return null;
+  }
+
+  try {
+    const payload = JSON.parse(base64UrlDecode(encodedPayload)) as SessionPayload;
+    if (!payload.sub || !payload.exp || payload.exp < Math.floor(Date.now() / 1000)) {
+      return null;
+    }
+    return payload;
+  } catch {
+    return null;
+  }
 }
 
 export function getSessionCookieOptions() {

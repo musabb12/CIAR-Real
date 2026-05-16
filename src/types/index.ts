@@ -2,7 +2,32 @@
 // Enums matching Prisma
 // ============================================================
 
-export type UserRole = 'GUEST' | 'USER' | 'AGENT' | 'ADMIN';
+export type UserRole = 'GUEST' | 'USER' | 'AGENT' | 'ADMIN' | 'OWNER' | 'COMPANY';
+
+export type AccountType = 'CLIENT' | 'OWNER' | 'COMPANY';
+
+export type TransactionType = 'PURCHASE' | 'RENT' | 'SHORT_TERM_RENT';
+export type TransactionStatus = 'PENDING' | 'PAID' | 'FAILED' | 'CANCELLED';
+
+export interface Transaction {
+  id: string;
+  propertyId: string;
+  userId: string | null;
+  type: TransactionType;
+  status: TransactionStatus;
+  amount: number;
+  currencySymbol: string | null;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string | null;
+  checkIn: string | null;
+  checkOut: string | null;
+  notes: string | null;
+  paymentMethod: string | null;
+  createdAt: string;
+  updatedAt: string;
+  property?: Property;
+}
 export type ListingType = 'SALE' | 'RENT' | 'SHORT_TERM';
 export type PropertyType =
   | 'APARTMENT'
@@ -225,6 +250,10 @@ export type AppPage =
   | 'contact'
   | 'admin'
   | 'admin-login'
+  | 'partner-dashboard'
+  | 'checkout-purchase'
+  | 'checkout-rent'
+  | 'checkout-complete'
   | 'register'
   | 'login';
 
@@ -283,6 +312,18 @@ export interface SiteDesignSettings {
   primaryColor: string;
   accentColor: string;
   heroImageUrl: string;
+  /** CSS background for the ticker bar; empty keeps the default frosted glass look */
+  newsTickerBackground: string;
+  /** CSS color for scrolling text; empty uses theme foreground */
+  newsTickerTextColor: string;
+  newsTickerFontSizePx: number;
+  newsTickerHeightPx: number;
+  /** CSS color for the «breaking» label and bell; empty uses theme primary */
+  newsTickerLabelTextColor: string;
+  /** CSS background for the label column; empty uses a subtle primary-tinted gradient */
+  newsTickerLabelBackground: string;
+  /** CSS color for the «|» separators; empty uses muted foreground */
+  newsTickerSeparatorColor: string;
 }
 
 export interface SiteSocialSettings {

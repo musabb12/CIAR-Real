@@ -1,9 +1,10 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, type CSSProperties } from 'react';
 import { Bell } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import { onInvalidate } from '@/lib/admin-events';
+import { useAppStore } from '@/store/app-store';
 
 interface NewsItem {
   id: string;
@@ -38,9 +39,24 @@ const fallbackNews: NewsItem[] = [
 
 export function NewsTicker() {
   const { locale, rtl } = useTranslation();
+  const designSettings = useAppStore((s) => s.designSettings);
   const [news, setNews] = useState<NewsItem[]>(fallbackNews);
   const [paused, setPaused] = useState(false);
   const tickerRef = useRef<HTMLDivElement>(null);
+
+  const heightPx =
+    typeof designSettings.newsTickerHeightPx === 'number' && designSettings.newsTickerHeightPx > 0
+      ? designSettings.newsTickerHeightPx
+      : 40;
+  const fontSizePx =
+    typeof designSettings.newsTickerFontSizePx === 'number' && designSettings.newsTickerFontSizePx > 0
+      ? designSettings.newsTickerFontSizePx
+      : 12;
+  const barBg = designSettings.newsTickerBackground?.trim() ?? '';
+  const textColor = designSettings.newsTickerTextColor?.trim() ?? '';
+  const labelTextColor = designSettings.newsTickerLabelTextColor?.trim() ?? '';
+  const labelBg = designSettings.newsTickerLabelBackground?.trim() ?? '';
+  const sepColor = designSettings.newsTickerSeparatorColor?.trim() ?? '';
 
   const loadNews = useCallback(() => {
     fetch('/api/news')
@@ -67,18 +83,40 @@ export function NewsTicker() {
   const animDuration = `${Math.max(news.length * 6, 20)}s`;
   const animName = rtl ? 'ticker-scroll-rtl' : 'ticker-scroll-ltr';
 
+  const barStyle: CSSProperties = {
+    height: heightPx,
+    ...(barBg ? { background: barBg } : {}),
+  };
+
+  const labelBlockStyle: CSSProperties = labelBg ? { background: labelBg } : {};
+  const labelBlockClass = labelBg
+    ? 'relative z-10 flex h-full items-center gap-2 border-r border-border/40 px-4'
+    : 'relative z-10 flex h-full items-center gap-2 border-r border-border/40 bg-gradient-to-r from-primary/10 to-transparent px-4 dark:from-primary/5';
+
+  const bellSize = Math.max(12, Math.round(fontSizePx + 2));
+
   return (
     <div
       className="news-ticker-bar relative z-40 w-full glass-nav overflow-hidden"
-      style={{ height: '40px' }}
+      style={barStyle}
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
       <div className="flex h-full items-center">
         {/* Left label area */}
-        <div className="relative z-10 flex h-full items-center gap-2 border-r border-border/40 bg-gradient-to-r from-primary/10 to-transparent px-4 dark:from-primary/5">
-          <Bell size={14} className="text-primary" />
-          <span className="text-xs font-semibold tracking-wide uppercase text-primary">
+        <div className={labelBlockClass} style={labelBlockStyle}>
+          <Bell
+            size={bellSize}
+            className={labelTextColor ? '' : 'text-primary'}
+            style={labelTextColor ? { color: labelTextColor } : undefined}
+          />
+          <span
+            className={`font-semibold tracking-wide uppercase ${labelTextColor ? '' : 'text-primary'}`}
+            style={{
+              fontSize: fontSizePx,
+              ...(labelTextColor ? { color: labelTextColor } : {}),
+            }}
+          >
             {label}
           </span>
         </div>
@@ -98,8 +136,21 @@ export function NewsTicker() {
             {[...news, ...news].map((item, idx) => (
               <span key={`${item.id}-${idx}`} className="inline-flex items-center gap-2 px-6">
                 <span className={`inline-block h-2 w-2 rounded-full ${typeColors[item.type]} flex-shrink-0`} />
-                <span className="text-xs text-foreground/80">{item.content || item.text}</span>
-                <span className="text-foreground/20 mx-1">|</span>
+                <span
+                  className={textColor ? '' : 'text-foreground/80'}
+                  style={{
+                    fontSize: fontSizePx,
+                    ...(textColor ? { color: textColor } : {}),
+                  }}
+                >
+                  {item.content || item.text}
+                </span>
+                <span
+                  className={`mx-1 ${sepColor ? '' : 'text-foreground/20'}`}
+                  style={sepColor ? { color: sepColor } : undefined}
+                >
+                  |
+                </span>
               </span>
             ))}
           </div>

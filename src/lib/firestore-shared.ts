@@ -27,6 +27,7 @@ export const FIRESTORE_COLLECTIONS = {
   propertyReviews: 'propertyReviews',
   siteSettings: 'siteSettings',
   users: 'users',
+  transactions: 'transactions',
 } as const;
 
 export type FirestoreCollectionName =
@@ -108,6 +109,22 @@ export function cleanUndefined<T extends Record<string, unknown>>(input: T): T {
   return Object.fromEntries(
     Object.entries(input).filter(([, value]) => value !== undefined)
   ) as T;
+}
+
+/** Recursively remove undefined values (required for Firestore nested documents). */
+export function deepCleanUndefined<T>(input: T): T {
+  if (input === undefined) return input;
+  if (input === null || typeof input !== 'object') return input;
+  if (input instanceof Date) return input;
+  if (Array.isArray(input)) {
+    return input.map((item) => deepCleanUndefined(item)) as T;
+  }
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(input as Record<string, unknown>)) {
+    if (value === undefined) continue;
+    out[key] = deepCleanUndefined(value);
+  }
+  return out as T;
 }
 
 export function sortByCreatedDesc<T extends { createdAt?: string }>(rows: T[]): T[] {

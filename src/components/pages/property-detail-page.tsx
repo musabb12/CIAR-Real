@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   ArrowLeft, ArrowRight, Heart, Bed, Bath, Maximize, MapPin, Eye,
   Star, Building2, Phone, Mail, MessageSquare, Share2, CheckCircle,
   Calendar, Home, Layers, Shield, User, ChevronLeft, ChevronRight, X,
-  Check, Zap,
+  Check, Zap, ShoppingCart, CalendarCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,7 +15,7 @@ import { Separator } from '@/components/ui/separator';
 import dynamic from 'next/dynamic';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
-import type { Property, PropertyImage } from '@/types';
+import type { Property, PropertyImage, Amenity, PropertyStatus, PropertyType } from '@/types';
 
 const PropertyMap = dynamic(() => import('@/components/map/property-map').then(m => ({ default: m.PropertyMap })), { ssr: false });
 import { toast } from 'sonner';
@@ -42,11 +42,31 @@ const listingTypeKeys: Record<string, string> = {
   SHORT_TERM: 'shortTerm',
 };
 
+const statusKeys: Record<PropertyStatus, 'available' | 'sold' | 'rented' | 'pending'> = {
+  AVAILABLE: 'available',
+  SOLD: 'sold',
+  RENTED: 'rented',
+  PENDING: 'pending',
+};
+
+const propertyTypeKeys: Record<PropertyType, keyof import('@/lib/i18n/translations').Translations['propertyTypes']> = {
+  APARTMENT: 'apartment',
+  VILLA: 'villa',
+  HOUSE: 'house',
+  LAND: 'land',
+  OFFICE: 'office',
+  COMMERCIAL: 'commercial',
+  STUDIO: 'studio',
+  PENTHOUSE: 'penthouse',
+  TOWNHOUSE: 'townhouse',
+  DUPLEX: 'duplex',
+};
+
 // ─── Component ─────────────────────────────────────────────
 
 export function PropertyDetailPage() {
   const { selectedPropertyId, setCurrentPage, setSelectedPropertyId, toggleFavorite, isFavorite, isAuthenticated, currentUser } = useAppStore();
-  const { t } = useTranslation();
+  const { t, rtl } = useTranslation();
 
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
@@ -55,6 +75,9 @@ export function PropertyDetailPage() {
   const [copied, setCopied] = useState(false);
   const [sendingInquiry, setSendingInquiry] = useState(false);
   const [inquiryMsg, setInquiryMsg] = useState('');
+  const [mapCoords, setMapCoords] = useState<{ lat: number; lng: number } | null>(null);
+  const [mapLoading, setMapLoading] = useState(false);
+  const inquiryRef = useRef<HTMLDivElement>(null);
 
   // Fetch property
   useEffect(() => {
@@ -84,7 +107,10 @@ export function PropertyDetailPage() {
   const currency = property?.country?.currencySymbol ?? '$';
   const isRent = property?.listingType === 'RENT' || property?.listingType === 'SHORT_TERM';
   const location = [property?.city?.name, property?.region?.name, property?.country?.name].filter(Boolean).join(', ');
-  const amenities = property?.amenities?.map(a => a.amenity).filter(Boolean) ?? [];
+  const amenities =
+    property?.amenities
+      ?.map((row) => row.amenity)
+      .filter((a): a is Amenity => Boolean(a)) ?? [];
 
   // Handlers
   const goBack = useCallback(() => {
@@ -112,6 +138,28 @@ export function PropertyDetailPage() {
   const handleNextImage = useCallback(() => {
     setActiveImage(prev => prev < images.length - 1 ? prev + 1 : 0);
   }, [images.length]);
+
+  const goToCheckout = useCallback(() => {
+    if (!isAuthenticated) {
+      toast.error(rtl ? 'سجّل الدخول أولاً' : 'Please sign in first');
+      setCurrentPage('login');
+      return;
+    }
+    if (property?.listingType === 'SALE') {
+      setCurrentPage('checkout-purchase');
+    } else {
+      setCurrentPage('checkout-rent');
+    }
+  }, [isAuthenticated, property?.listingType, rtl, setCurrentPage]);
+
+  const scrollToInquiry = useCallback((messageTemplate: string) => {
+    if (!property) return;
+    const msg = messageTemplate.replace('{title}', property.title);
+    setInquiryMsg(msg);
+    requestAnimationFrame(() => {
+      inquiryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, [property]);
 
   const handleSendInquiry = useCallback(async () => {
     if (!property || !inquiryMsg.trim()) return;
@@ -360,6 +408,46 @@ export function PropertyDetailPage() {
 
             <Separator />
 
+            {/* Property details */}
+            <div>
+              <h2 className="font-heading text-xl font-bold mb-4 flex items-center gap-2">
+                <Home className="h-5 w-5 text-primary" />
+                {t.property.details}
+              </h2>
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="rounded-xl bg-muted/40 px-4 py-3">
+                  <dt className="text-xs text-muted-foreground">{t.property.propertyTypeLabel}</dt>
+                  <dd className="text-sm font-semibold mt-1">
+                    {t.propertyTypes[propertyTypeKeys[property.propertyType]] ?? formatPropertyType(property.propertyType)}
+                  </dd>
+                </div>
+                <div className="rounded-xl bg-muted/40 px-4 py-3">
+                  <dt className="text-xs text-muted-foreground">{t.property.listingTypeLabel}</dt>
+                  <dd className="text-sm font-semibold mt-1">
+                    {t.property[listingTypeKeys[property.listingType] as keyof typeof t.property] ?? property.listingType}
+                  </dd>
+                </div>
+                <div className="rounded-xl bg-muted/40 px-4 py-3">
+                  <dt className="text-xs text-muted-foreground">{t.admin.status}</dt>
+                  <dd className="text-sm font-semibold mt-1">{t.status[statusKeys[property.status]]}</dd>
+                </div>
+                {property.floors != null && property.floors > 0 && (
+                  <div className="rounded-xl bg-muted/40 px-4 py-3">
+                    <dt className="text-xs text-muted-foreground">{t.property.floors}</dt>
+                    <dd className="text-sm font-semibold mt-1">{property.floors}</dd>
+                  </div>
+                )}
+                {property.address && (
+                  <div className="rounded-xl bg-muted/40 px-4 py-3 sm:col-span-2">
+                    <dt className="text-xs text-muted-foreground">{t.property.addressLabel}</dt>
+                    <dd className="text-sm font-semibold mt-1">{property.address}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+
+            <Separator />
+
             {/* Description */}
             <div>
               <h2 className="font-heading text-xl font-bold mb-4 flex items-center gap-2">
@@ -394,29 +482,25 @@ export function PropertyDetailPage() {
             <Separator />
 
             {/* Map */}
-            {(property.latitude && property.longitude) ? (
-              <div>
-                <h2 className="font-heading text-xl font-bold mb-4 flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-primary" />
-                  {t.property.location}
-                </h2>
-                <div>
-                  <PropertyMap
-                    lat={property.latitude!}
-                    lng={property.longitude!}
-                    address={location}
-                  />
+            <div>
+              <h2 className="font-heading text-xl font-bold mb-4 flex items-center gap-2">
+                <MapPin className="h-5 w-5 text-primary" />
+                {t.property.location}
+              </h2>
+              {mapLoading ? (
+                <Skeleton className="h-[300px] w-full rounded-xl" />
+              ) : mapCoords ? (
+                <PropertyMap lat={mapCoords.lat} lng={mapCoords.lng} address={location} />
+              ) : (
+                <div className="flex items-center gap-3 rounded-xl border border-dashed p-6">
+                  <MapPin className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="font-medium text-sm">{location}</p>
+                    <p className="text-xs text-muted-foreground">{property.address ?? location}</p>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3 rounded-xl border border-dashed p-6">
-                <MapPin className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="font-medium text-sm">{location}</p>
-                  <p className="text-xs text-muted-foreground">{property.address ?? 'Address not specified'}</p>
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
           {/* Right: Agent Card + Inquiry */}
@@ -482,9 +566,15 @@ export function PropertyDetailPage() {
 
                   {property.agent.rating > 0 && (
                     <div className="flex items-center gap-1">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star key={i} className={`h-4 w-4 ${i < Math.round(property.agent.rating) ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/30'}`} />
-                      ))}
+                      {Array.from({ length: 5 }).map((_, i) => {
+                        const rating = property.agent!.rating;
+                        return (
+                          <Star
+                            key={i}
+                            className={`h-4 w-4 ${i < Math.round(rating) ? 'fill-amber-400 text-amber-400' : 'text-muted-foreground/30'}`}
+                          />
+                        );
+                      })}
                       <span className="text-sm font-semibold ml-1">{property.agent.rating.toFixed(1)}</span>
                     </div>
                   )}
@@ -502,7 +592,47 @@ export function PropertyDetailPage() {
               </Card>
             )}
 
+            {/* Buy / Book */}
+            <Card className="glass-card rounded-2xl border-0 overflow-hidden">
+              <CardContent className="p-6 space-y-3">
+                {property.listingType === 'SALE' ? (
+                  <Button
+                    onClick={goToCheckout}
+                    className="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 py-2.5 font-semibold text-white hover:from-emerald-700 hover:to-emerald-600"
+                  >
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    {t.property.buyNow}
+                  </Button>
+                ) : property.listingType === 'SHORT_TERM' ? (
+                  <Button
+                    onClick={goToCheckout}
+                    className="w-full rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 py-2.5 font-semibold text-white hover:from-amber-700 hover:to-amber-600"
+                  >
+                    <CalendarCheck className="mr-2 h-4 w-4" />
+                    {t.property.bookStay}
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={goToCheckout}
+                    className="w-full rounded-xl bg-gradient-to-r from-teal-600 to-cyan-500 py-2.5 font-semibold text-white hover:from-teal-700 hover:to-cyan-600"
+                  >
+                    <CalendarCheck className="mr-2 h-4 w-4" />
+                    {t.property.bookViewing}
+                  </Button>
+                )}
+                {property.agent?.phone && (
+                  <Button variant="outline" className="w-full rounded-xl" asChild>
+                    <a href={`tel:${property.agent.phone}`}>
+                      <Phone className="mr-2 h-4 w-4" />
+                      {property.agent.phone}
+                    </a>
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+
             {/* Inquiry Form */}
+            <div ref={inquiryRef}>
             <Card className="glass-card rounded-2xl border-0">
               <CardContent className="p-6 space-y-4">
                 <h3 className="font-heading text-lg font-bold flex items-center gap-2">
@@ -529,6 +659,7 @@ export function PropertyDetailPage() {
                 </Button>
               </CardContent>
             </Card>
+            </div>
 
             {/* Back button (mobile) */}
             <Button variant="outline" onClick={goBack} className="w-full rounded-xl">

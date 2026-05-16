@@ -42,6 +42,9 @@ function readServiceAccount(): ServiceAccountJson {
   }
 
   const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON?.trim();
+  if (!raw) {
+    throw new Error('FIREBASE_SERVICE_ACCOUNT_JSON is not set');
+  }
   const cred = JSON.parse(raw) as ServiceAccountJson;
   return cred;
 }

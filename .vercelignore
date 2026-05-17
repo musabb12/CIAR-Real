@@ -1,0 +1,4 @@
+.env
+.env.*
+*-firebase-adminsdk-*.json
+ciar-real-firebase-adminsdk-*.json

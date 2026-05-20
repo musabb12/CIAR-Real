@@ -37,6 +37,8 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 !.env.example
+.env.vercel-vars.local.txt
+firebase-value-for-vercel.txt
 
 # Firebase service account keys (never commit)
 *-firebase-adminsdk-*.json

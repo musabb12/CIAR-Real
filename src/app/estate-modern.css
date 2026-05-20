@@ -1,0 +1,493 @@
+/* ============================================================
+   CIAR — Editorial real-estate surface system
+   Slanted bands, asymmetric cards, mesh depth
+   ============================================================ */
+
+:root {
+  --estate-slope: clamp(2.5rem, 6vw, 5.5rem);
+  --estate-slope-soft: clamp(1.5rem, 3.5vw, 3rem);
+  --estate-radius-lg: 1.35rem;
+  --estate-radius-sm: 0.45rem;
+}
+
+/* Site canvas */
+.estate-site {
+  position: relative;
+  isolation: isolate;
+}
+
+.estate-site::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 50% at 10% -10%, rgba(13, 148, 136, 0.09), transparent 55%),
+    radial-gradient(ellipse 60% 40% at 95% 5%, rgba(245, 158, 11, 0.07), transparent 50%),
+    linear-gradient(180deg, oklch(0.995 0.003 155) 0%, oklch(0.97 0.006 155) 100%);
+}
+
+.dark .estate-site::before {
+  background:
+    radial-gradient(ellipse 70% 45% at 8% 0%, rgba(20, 184, 166, 0.12), transparent 55%),
+    radial-gradient(ellipse 55% 35% at 92% 8%, rgba(245, 158, 11, 0.08), transparent 50%),
+    linear-gradient(180deg, oklch(0.14 0.012 155) 0%, oklch(0.11 0.01 155) 100%);
+}
+
+.estate-site::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.35;
+  background-image:
+    linear-gradient(rgba(13, 148, 136, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(13, 148, 136, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black 20%, transparent 75%);
+}
+
+/* Hero — diagonal base */
+.estate-hero {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--estate-slope)), 0 100%);
+}
+
+.estate-hero-inner {
+  position: relative;
+}
+
+.estate-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1rem 0.45rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.55), rgba(245, 158, 11, 0.35));
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(12px);
+}
+
+.estate-search-dock {
+  position: relative;
+  border-radius: var(--estate-radius-lg);
+  padding: 0.35rem;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.06) 50%,
+    rgba(13, 148, 136, 0.15) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow:
+    0 28px 60px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(20px) saturate(1.4);
+}
+
+.estate-search-dock::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(120deg, rgba(245, 158, 11, 0.5), transparent 40%, rgba(20, 184, 166, 0.45));
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.estate-stat-tile {
+  position: relative;
+  border-radius: var(--estate-radius-lg) var(--estate-radius-sm) var(--estate-radius-lg)
+    var(--estate-radius-sm);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(14px);
+  overflow: hidden;
+}
+
+.estate-stat-tile::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  inset-inline-end: 0;
+  width: 3px;
+  height: 100%;
+  background: linear-gradient(180deg, #f59e0b, #0d9488);
+}
+
+/* Slanted section bands */
+.estate-band {
+  position: relative;
+  padding-block: clamp(4rem, 8vw, 6rem);
+}
+
+.estate-band--slant-top {
+  margin-top: calc(var(--estate-slope-soft) * -0.65);
+  padding-top: calc(clamp(4rem, 8vw, 6rem) + var(--estate-slope-soft) * 0.5);
+  clip-path: polygon(0 var(--estate-slope-soft), 100% 0, 100% 100%, 0 100%);
+}
+
+.estate-band--muted {
+  background:
+    linear-gradient(125deg, rgba(13, 148, 136, 0.07) 0%, transparent 42%),
+    linear-gradient(215deg, rgba(245, 158, 11, 0.06) 0%, transparent 38%),
+    oklch(0.965 0.008 155);
+}
+
+.dark .estate-band--muted {
+  background:
+    linear-gradient(125deg, rgba(20, 184, 166, 0.1) 0%, transparent 45%),
+    linear-gradient(215deg, rgba(245, 158, 11, 0.07) 0%, transparent 40%),
+    oklch(0.16 0.014 155);
+}
+
+.estate-band--dark {
+  background:
+    linear-gradient(160deg, #0c1218 0%, #121c22 45%, #0f171d 100%);
+  color: oklch(0.96 0.005 155);
+}
+
+.estate-band--dark .text-muted-foreground {
+  color: oklch(0.72 0.02 155);
+}
+
+.estate-band--dark .estate-heading-kicker {
+  color: #5eead4;
+}
+
+.estate-band--dark .estate-heading-kicker::before {
+  background: linear-gradient(90deg, #5eead4, #fbbf24);
+}
+
+.estate-band--dark .estate-heading-title {
+  color: #fff;
+}
+
+/* Header — editorial nav bar */
+.estate-nav {
+  border-bottom: 1px solid rgba(13, 148, 136, 0.12);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.88) 0%,
+    rgba(255, 255, 255, 0.72) 100%
+  ) !important;
+}
+
+.dark .estate-nav {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    180deg,
+    rgba(18, 26, 32, 0.92) 0%,
+    rgba(14, 20, 26, 0.85) 100%
+  ) !important;
+}
+
+.estate-nav::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  inset-inline: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #0d9488 30%, #f59e0b 70%, transparent);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* Section headings — editorial */
+.estate-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.estate-heading--center {
+  align-items: center;
+  text-align: center;
+}
+
+.estate-heading-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.estate-heading-kicker::before {
+  content: '';
+  width: 2rem;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary), #f59e0b);
+  transform: skewX(-18deg);
+}
+
+.estate-heading-title {
+  font-family: var(--font-heading);
+  font-size: clamp(1.85rem, 4vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+}
+
+/* Modern surface card */
+.estate-surface {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--estate-radius-lg) var(--estate-radius-sm) var(--estate-radius-lg)
+    var(--estate-radius-sm);
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.78) 100%);
+  border: 1px solid rgba(13, 148, 136, 0.12);
+  box-shadow:
+    0 20px 50px rgba(15, 23, 42, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.estate-surface:hover {
+  transform: translateY(-6px);
+  border-color: rgba(245, 158, 11, 0.28);
+  box-shadow:
+    0 28px 56px rgba(15, 23, 42, 0.12),
+    0 0 0 1px rgba(245, 158, 11, 0.12) inset;
+}
+
+.dark .estate-surface {
+  background: linear-gradient(155deg, rgba(38, 50, 58, 0.9) 0%, rgba(22, 30, 36, 0.88) 100%);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.35);
+}
+
+.estate-surface-accent {
+  position: absolute;
+  top: 0;
+  inset-inline-start: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #0d9488, #14b8a6 45%, #f59e0b);
+  transform: skewY(-0.8deg);
+  transform-origin: top left;
+}
+
+/* Property card — listing tile */
+.estate-property-card {
+  border-radius: 1.5rem 1.5rem 0.65rem 1.5rem !important;
+  border: 1px solid rgba(13, 148, 136, 0.14) !important;
+  overflow: hidden;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.1) !important;
+}
+
+.dark .estate-property-card {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 22px 44px rgba(0, 0, 0, 0.45) !important;
+}
+
+.estate-property-media {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 94%);
+  position: relative;
+}
+
+.estate-property-media::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 45%;
+  background: linear-gradient(to top, rgba(8, 12, 16, 0.55), transparent);
+  pointer-events: none;
+}
+
+.estate-property-price {
+  position: absolute;
+  bottom: 0.85rem;
+  inset-inline-start: 0.85rem;
+  z-index: 2;
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.5rem 0.85rem 0.5rem 0.35rem;
+  background: rgba(8, 12, 16, 0.72);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+}
+
+/* Bento type grid */
+.estate-bento {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+@media (min-width: 640px) {
+  .estate-bento {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+  }
+}
+
+.estate-bento-item {
+  position: relative;
+  min-height: 6.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 1rem;
+  text-align: start;
+  overflow: hidden;
+  cursor: pointer;
+  border: 1px solid rgba(13, 148, 136, 0.12);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.72));
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+
+.estate-bento-item:nth-child(1) {
+  grid-column: span 2;
+  min-height: 8.5rem;
+  border-radius: 1.25rem 1.25rem 0.5rem 1.25rem;
+  background: linear-gradient(135deg, rgba(13, 148, 136, 0.12), rgba(245, 158, 11, 0.08));
+}
+
+.estate-bento-item:nth-child(2),
+.estate-bento-item:nth-child(5),
+.estate-bento-item:nth-child(8) {
+  border-radius: 0.5rem 1.15rem 0.65rem 1.15rem;
+}
+
+.estate-bento-item:nth-child(3),
+.estate-bento-item:nth-child(6),
+.estate-bento-item:nth-child(9) {
+  border-radius: 1.15rem 0.5rem 1.15rem 0.65rem;
+}
+
+.estate-bento-item:nth-child(4),
+.estate-bento-item:nth-child(7),
+.estate-bento-item:nth-child(10) {
+  border-radius: 0.5rem 1.25rem 1.25rem 0.5rem;
+}
+
+.estate-bento-item:hover {
+  transform: translateY(-4px) skewY(-0.4deg);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.dark .estate-bento-item {
+  background: linear-gradient(145deg, rgba(36, 48, 56, 0.95), rgba(24, 32, 38, 0.9));
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.estate-bento-item svg {
+  margin-bottom: auto;
+  color: var(--primary);
+}
+
+/* Process steps — diagonal rail */
+.estate-process {
+  display: grid;
+  gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .estate-process {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+.estate-process-step {
+  position: relative;
+  padding: 1.75rem 1.5rem 1.5rem;
+  padding-top: 2.25rem;
+}
+
+.estate-process-num {
+  position: absolute;
+  top: -0.65rem;
+  inset-inline-start: 1.25rem;
+  font-size: 2.5rem;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  background: linear-gradient(135deg, #0d9488, #f59e0b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  opacity: 0.9;
+}
+
+/* CTA panel */
+.estate-cta-panel {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.75rem 0.85rem 1.75rem 0.85rem;
+  padding: clamp(2rem, 5vw, 3.5rem);
+  background:
+    linear-gradient(125deg, #0d9488 0%, #0f766e 38%, #134e4a 100%);
+  box-shadow: 0 32px 64px rgba(13, 148, 136, 0.28);
+}
+
+.estate-cta-panel::before {
+  content: '';
+  position: absolute;
+  width: 140%;
+  height: 80%;
+  top: -30%;
+  inset-inline-end: -25%;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.35), transparent 60%);
+  transform: rotate(-8deg);
+  pointer-events: none;
+}
+
+.estate-cta-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* Accent button */
+.estate-btn-primary {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.75rem 1.1rem 0.75rem 1.1rem !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em;
+  box-shadow: 0 12px 28px rgba(245, 158, 11, 0.35) !important;
+}
+
+.estate-btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.22) 50%, transparent 60%);
+  transform: translateX(-120%);
+  transition: transform 0.55s ease;
+}
+
+.estate-btn-primary:hover::after {
+  transform: translateX(120%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .estate-surface:hover,
+  .estate-bento-item:hover {
+    transform: none;
+  }
+}

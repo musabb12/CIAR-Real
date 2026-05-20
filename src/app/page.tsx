@@ -165,7 +165,11 @@ export default function Home() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div
+      className={
+        isStandalonePage ? 'flex min-h-screen flex-col' : 'estate-site flex min-h-screen flex-col'
+      }
+    >
       <ScrollProgress />
       {!isStandalonePage && <Header />}
       {!isStandalonePage && <NewsTicker />}

@@ -19,6 +19,7 @@ import { useTranslation } from '@/lib/i18n/use-translation';
 import { getPrimaryPageBackground } from '@/lib/page-backgrounds';
 import type { User as AppUser } from '@/types';
 import { toast } from 'sonner';
+import { mapAuthApiError } from '@/lib/auth-errors';
 
 export function AdminLoginPage() {
   const router = useRouter();
@@ -79,11 +80,12 @@ export function AdminLoginPage() {
 
       if (!res.ok) {
         setError(
-          data.error ||
-            tx(
-              'فشل تسجيل الدخول. تحقق من البريد وكلمة المرور.',
-              'Sign-in failed. Check your email and password.',
-            ),
+          mapAuthApiError(
+            data.error,
+            tx,
+            'فشل تسجيل الدخول. تحقق من البريد وكلمة المرور.',
+            'Sign-in failed. Check your email and password.',
+          ),
         );
         return;
       }

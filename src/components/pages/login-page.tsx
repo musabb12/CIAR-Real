@@ -17,6 +17,7 @@ import { useTranslation } from '@/lib/i18n/use-translation';
 import { getPrimaryPageBackground } from '@/lib/page-backgrounds';
 import { toast } from 'sonner';
 import { resolvePageAfterLogin } from '@/lib/auth-roles';
+import { mapAuthApiError } from '@/lib/auth-errors';
 
 export function LoginPage() {
   const { rtl } = useTranslation();
@@ -58,7 +59,14 @@ export function LoginPage() {
         toast.success(tx('تم تسجيل الدخول بنجاح', 'Signed in successfully'));
         setCurrentPage(resolvePageAfterLogin(data.user.role));
       } else {
-        setError(data.error || tx('فشل تسجيل الدخول', 'Login failed'));
+        setError(
+          mapAuthApiError(
+            data.error,
+            tx,
+            'فشل تسجيل الدخول',
+            'Sign-in failed',
+          ),
+        );
       }
     } catch {
       setError(tx('خطأ في الشبكة، حاول مرة أخرى', 'Network error, try again'));

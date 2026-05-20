@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { createSessionToken, getSessionCookieOptions } from '@/lib/auth-token';
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { checkAuthRateLimit } from '@/lib/rate-limit';
+import {
+  getFirebaseAdminConfigError,
+  isFirebaseAdminConfigured,
+} from '@/lib/firebase-admin';
 import {
   getUserByEmail,
   updateUserInFirestore,
@@ -12,17 +16,14 @@ const BCRYPT_HASH_REGEX = /^\$2[aby]\$\d{2}\$/;
 // POST /api/auth - Validate email + password against database
 export async function POST(request: NextRequest) {
   try {
-    const ip = getClientIp(request.headers);
-    const rate = checkRateLimit(`auth:${ip}`, 10, 60_000);
-    if (!rate.allowed) {
+    if (!isFirebaseAdminConfigured()) {
       return NextResponse.json(
-        { error: 'Too many login attempts. Please try again later.' },
         {
-          status: 429,
-          headers: {
-            'Retry-After': String(rate.retryAfterSec),
-          },
-        }
+          error:
+            getFirebaseAdminConfigError() ??
+            'FIREBASE_SERVICE_ACCOUNT_JSON is not set',
+        },
+        { status: 503 }
       );
     }
 
@@ -40,6 +41,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Password is required' },
         { status: 400 }
+      );
+    }
+
+    const rate = checkAuthRateLimit(request, email);
+    if (!rate.allowed) {
+      return NextResponse.json(
+        { error: 'Too many login attempts. Please try again later.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(rate.retryAfterSec),
+          },
+        }
       );
     }
 
@@ -103,8 +117,18 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     console.error('Error during login:', error);
+    const message =
+      error instanceof Error ? error.message : 'Login failed';
+    const isFirebaseConfig =
+      message.includes('FIREBASE') || message.includes('Firebase');
     return NextResponse.json(
-      { error: 'Login failed' },
+      {
+        error: isFirebaseConfig
+          ? message
+          : process.env.NODE_ENV === 'development'
+            ? message
+            : 'Login failed',
+      },
       { status: 500 }
     );
   }

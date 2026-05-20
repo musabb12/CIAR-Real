@@ -11,6 +11,7 @@ export interface Translations {
     admin: string;
     signIn: string;
     signOut: string;
+    addYourListing: string;
   };
   // Hero
   hero: {
@@ -304,6 +305,7 @@ export interface Translations {
     globalReach: string;
     premiumListings: string;
     securePayments: string;
+    paymentMethodsSubtitle: string;
     support247: string;
   };
   // How it works
@@ -387,6 +389,7 @@ export const translations: Record<Locale, Translations> = {
       admin: 'Admin',
       signIn: 'Sign In',
       signOut: 'Sign Out',
+      addYourListing: 'List your property with us',
     },
     hero: {
       title: 'Find Your Dream Property',
@@ -632,7 +635,7 @@ export const translations: Record<Locale, Translations> = {
       noData: 'No data',
       adminPortal: 'Admin Portal',
       adminPortalSubtitle: 'Access CIAR Administration',
-      emailPlaceholder: 'admin@ciar.com',
+      emailPlaceholder: 'admin@realtyhub.com',
       passwordPlaceholder: 'Enter your password',
       backToHome: 'Back to Home',
     },
@@ -665,6 +668,7 @@ export const translations: Record<Locale, Translations> = {
       globalReach: 'Global Reach',
       premiumListings: 'Premium Listings',
       securePayments: 'Secure Payments',
+      paymentMethodsSubtitle: 'Nine trusted payment options for secure bookings and purchases',
       support247: '24/7 Support',
     },
     howItWorks: {
@@ -743,6 +747,7 @@ export const translations: Record<Locale, Translations> = {
       admin: 'لوحة التحكم',
       signIn: 'تسجيل الدخول',
       signOut: 'تسجيل الخروج',
+      addYourListing: 'أضف إعلانك معنا',
     },
     hero: {
       title: 'اعثر على عقار أحلامك',
@@ -988,7 +993,7 @@ export const translations: Record<Locale, Translations> = {
       noData: 'لا توجد بيانات',
       adminPortal: 'بوابة الإدارة',
       adminPortalSubtitle: 'الوصول إلى إدارة CIAR',
-      emailPlaceholder: 'admin@ciar.com',
+      emailPlaceholder: 'admin@realtyhub.com',
       passwordPlaceholder: 'أدخل كلمة المرور',
       backToHome: 'العودة للرئيسية',
     },
@@ -1020,7 +1025,8 @@ export const translations: Record<Locale, Translations> = {
       trustedBy: 'موثوق من قبل',
       globalReach: 'وصول عالمي',
       premiumListings: 'قوائم متميزة',
-      securePayments: 'دفع آمن',
+      securePayments: 'طرق الدفع المتاحة',
+      paymentMethodsSubtitle: '٩ طرق دفع موثوقة لإتمام الحجوزات والشراء بأمان',
       support247: 'دعم على مدار الساعة',
     },
     howItWorks: {
@@ -1099,6 +1105,7 @@ export const translations: Record<Locale, Translations> = {
       admin: 'Administration',
       signIn: 'Connexion',
       signOut: 'Déconnexion',
+      addYourListing: 'Publiez votre annonce avec nous',
     },
     hero: {
       title: 'Trouvez votre propriété de rêve',
@@ -1344,7 +1351,7 @@ export const translations: Record<Locale, Translations> = {
       noData: 'Aucune donnée',
       adminPortal: 'Portail admin',
       adminPortalSubtitle: 'Accéder à l\'administration CIAR',
-      emailPlaceholder: 'admin@ciar.com',
+      emailPlaceholder: 'admin@realtyhub.com',
       passwordPlaceholder: 'Entrez votre mot de passe',
       backToHome: 'Retour à l\'accueil',
     },
@@ -1376,7 +1383,8 @@ export const translations: Record<Locale, Translations> = {
       trustedBy: 'Approuvé par',
       globalReach: 'Portée mondiale',
       premiumListings: 'Annonces premium',
-      securePayments: 'Paiements sécurisés',
+      securePayments: 'Moyens de paiement',
+      paymentMethodsSubtitle: '9 options de paiement fiables pour vos réservations',
       support247: 'Support 24/7',
     },
     howItWorks: {
@@ -1455,6 +1463,7 @@ export const translations: Record<Locale, Translations> = {
       admin: 'Admin',
       signIn: 'Iniciar sesión',
       signOut: 'Cerrar sesión',
+      addYourListing: 'Publica tu anuncio con nosotros',
     },
     hero: {
       title: 'Encuentra la propiedad de tus sueños',
@@ -1700,7 +1709,7 @@ export const translations: Record<Locale, Translations> = {
       noData: 'Sin datos',
       adminPortal: 'Portal de administración',
       adminPortalSubtitle: 'Acceder a la administración de CIAR',
-      emailPlaceholder: 'admin@ciar.com',
+      emailPlaceholder: 'admin@realtyhub.com',
       passwordPlaceholder: 'Ingresa tu contraseña',
       backToHome: 'Volver al inicio',
     },
@@ -1732,7 +1741,8 @@ export const translations: Record<Locale, Translations> = {
       trustedBy: 'Confianza de',
       globalReach: 'Alcance global',
       premiumListings: 'Anuncios premium',
-      securePayments: 'Pagos seguros',
+      securePayments: 'Métodos de pago',
+      paymentMethodsSubtitle: '9 opciones de pago seguras para reservas y compras',
       support247: 'Soporte 24/7',
     },
     howItWorks: {
@@ -1811,6 +1821,7 @@ export const translations: Record<Locale, Translations> = {
       admin: 'Yönetim',
       signIn: 'Giriş Yap',
       signOut: 'Çıkış',
+      addYourListing: 'İlanınızı bizimle ekleyin',
     },
     hero: {
       title: 'Hayalinizdeki Emlağı Bulun',
@@ -2056,7 +2067,7 @@ export const translations: Record<Locale, Translations> = {
       noData: 'Veri yok',
       adminPortal: 'Yönetim Portalı',
       adminPortalSubtitle: 'CIAR Yönetimine Erişin',
-      emailPlaceholder: 'admin@ciar.com',
+      emailPlaceholder: 'admin@realtyhub.com',
       passwordPlaceholder: 'Şifrenizi girin',
       backToHome: 'Ana Sayfaya Dön',
     },
@@ -2088,7 +2099,8 @@ export const translations: Record<Locale, Translations> = {
       trustedBy: 'Güvenilir',
       globalReach: 'Küresel Erişim',
       premiumListings: 'Premium İlanlar',
-      securePayments: 'Güvenli Ödeme',
+      securePayments: 'Ödeme yöntemleri',
+      paymentMethodsSubtitle: 'Rezervasyon ve satın alma için 9 güvenilir ödeme seçeneği',
       support247: '7/24 Destek',
     },
     howItWorks: {

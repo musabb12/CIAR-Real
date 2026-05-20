@@ -4,6 +4,7 @@ import type {
   User,
   PropertyFilters,
   AppPage,
+  AccountType,
   Favorite,
   SiteDesignSettings,
   SiteSocialSettings,
@@ -82,6 +83,8 @@ interface AppState {
   isAuthenticated: boolean;
   login: (user: User) => void;
   logout: () => void;
+  registerAccountTypePreset: AccountType | null;
+  setRegisterAccountTypePreset: (type: AccountType | null) => void;
 
   // Filters
   filters: PropertyFilters;
@@ -159,6 +162,8 @@ export const useAppStore = create<AppState>()(
 
   login: (user) => set({ currentUser: user, isAuthenticated: true }),
   logout: () => set({ currentUser: null, isAuthenticated: false }),
+  registerAccountTypePreset: null,
+  setRegisterAccountTypePreset: (type) => set({ registerAccountTypePreset: type }),
 
   // ---- Filters ----
   filters: { ...defaultFilters },

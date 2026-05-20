@@ -8,6 +8,8 @@ import {
   Cairo,
 } from "next/font/google";
 import "./globals.css";
+import "./estate-modern.css";
+import "./luxury-ui.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SiteDesignSync } from "@/components/theme/site-design-sync";

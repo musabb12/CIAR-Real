@@ -205,6 +205,19 @@ export function PropertyDetailPage() {
     return () => window.removeEventListener('keydown', handler);
   }, [showGallery, handlePrevImage, handleNextImage]);
 
+  // Auto-recover when detail opens without a valid listing (stale id / failed fetch).
+  useEffect(() => {
+    if (loading || property) return;
+
+    if (!selectedPropertyId) {
+      setCurrentPage('home');
+      return;
+    }
+
+    setSelectedPropertyId(null);
+    setCurrentPage('search');
+  }, [loading, property, selectedPropertyId, setCurrentPage, setSelectedPropertyId]);
+
   // ─── Loading ───
   if (loading) {
     return (

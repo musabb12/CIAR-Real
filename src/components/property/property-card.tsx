@@ -2,6 +2,8 @@
 
 import { useState, useRef, useCallback } from 'react';
 import React from 'react';
+import { motion } from 'framer-motion';
+import { fadeUp, viewportOnce } from '@/lib/motion';
 import {
   Heart,
   Bed,
@@ -160,7 +162,13 @@ export function PropertyCard({ property }: PropertyCardProps) {
 
   // ---- Render ----
   return (
-    <div className="perspective-container">
+    <motion.div
+      className="perspective-container luxury-float"
+      initial="hidden"
+      whileInView="visible"
+      viewport={viewportOnce}
+      variants={fadeUp}
+    >
       <div
         ref={cardRef}
         className="card-3d"
@@ -169,13 +177,13 @@ export function PropertyCard({ property }: PropertyCardProps) {
         onMouseEnter={handleMouseEnter}
       >
         <Card
-          className="group glass-card cursor-pointer overflow-hidden rounded-xl border-0 py-0 shadow-md dark:shadow-gray-900/40"
+          className="estate-property-card group glass-card cursor-pointer overflow-hidden border-0 py-0 shadow-md dark:shadow-gray-900/40"
           onClick={handleCardClick}
         >
           {/* ================================================================
               IMAGE SECTION
           ================================================================ */}
-          <div className="relative h-56 w-full overflow-hidden bg-muted sm:h-60">
+          <div className="estate-property-media relative h-56 w-full overflow-hidden bg-muted sm:h-60">
             {/* Shimmer loading skeleton */}
             {!imgLoaded && !imgError && (
               <div className="absolute inset-0 shimmer" />
@@ -263,31 +271,23 @@ export function PropertyCard({ property }: PropertyCardProps) {
               />
             </button>
 
-            {/* ------ BOTTOM-RIGHT: Price tag with glass + Image counter ------ */}
-            <div className="absolute right-3 bottom-3 flex flex-col items-end gap-1.5">
-              {/* Glass price tag */}
-              <div className="glass-badge rounded-xl px-3 py-1.5">
-                <span className="text-lg font-extrabold tracking-tight text-white drop-shadow-sm">
-                  {currency}
-                  {formatPrice(property.price)}
+            <div className="estate-property-price">
+              {currency}
+              {formatPrice(property.price)}
+              {isRent && (
+                <span className="ms-1 text-[11px] font-medium opacity-75">
+                  {t.property.perMonth}
                 </span>
-                {isRent && (
-                  <span className="ml-1 text-[11px] font-medium text-white/60">
-                    {t.property.perMonth}
-                  </span>
-                )}
-              </div>
-
-              {/* Image counter */}
-              {imageCount > 1 && (
-                <div className="flex items-center gap-1 glass-badge rounded-lg px-2 py-0.5">
-                  <Eye className="h-3 w-3 text-white/70" />
-                  <span className="text-[10px] font-medium text-white/70">
-                    {imageCount} {imageCount === 1 ? t.property.photo : t.property.photos}
-                  </span>
-                </div>
               )}
             </div>
+            {imageCount > 1 && (
+              <div className="absolute right-3 top-14 z-[3] flex items-center gap-1 glass-badge rounded-lg px-2 py-0.5">
+                <Eye className="h-3 w-3 text-white/70" />
+                <span className="text-[10px] font-medium text-white/70">
+                  {imageCount} {imageCount === 1 ? t.property.photo : t.property.photos}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* ================================================================
@@ -370,6 +370,6 @@ export function PropertyCard({ property }: PropertyCardProps) {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </motion.div>
   );
 }

@@ -3,6 +3,8 @@ import {
   getFirebaseAdminConfigError,
   isFirebaseAdminConfigured,
 } from '@/lib/firebase-admin';
+import { getDemoPropertyById } from '@/lib/demo-properties';
+import { isFirebaseQuotaError } from '@/lib/firebase-errors';
 import {
   deletePropertyInFirestore,
   getPropertyFromFirestore,
@@ -37,6 +39,13 @@ export async function GET(
     return NextResponse.json(property);
   } catch (error) {
     console.error('Error fetching property:', error);
+
+    if (isFirebaseQuotaError(error)) {
+      const { id } = await params;
+      const demo = getDemoPropertyById(id);
+      if (demo) return NextResponse.json(demo);
+    }
+
     return NextResponse.json(
       { error: 'Failed to fetch property' },
       { status: 500 }

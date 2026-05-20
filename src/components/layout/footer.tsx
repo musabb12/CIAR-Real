@@ -214,7 +214,7 @@ export function Footer() {
   ].filter((item) => Boolean(item.href));
 
   return (
-    <footer className="mt-auto relative">
+    <footer className="luxury-footer mt-auto relative">
       {/* Gold gradient top border */}
       <div className="h-[3px] w-full bg-gradient-to-r from-amber-700/0 via-amber-500 to-amber-700/0" />
 

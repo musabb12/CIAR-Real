@@ -3,6 +3,8 @@ import {
   getFirebaseAdminConfigError,
   isFirebaseAdminConfigured,
 } from '@/lib/firebase-admin';
+import { getDemoCountries } from '@/lib/demo-properties';
+import { isFirebaseQuotaError } from '@/lib/firebase-errors';
 import {
   createCountryInFirestore,
   listLocationsFromFirestore,
@@ -27,6 +29,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(countries);
   } catch (error) {
     console.error('Error fetching locations:', error);
+
+    if (isFirebaseQuotaError(error)) {
+      return NextResponse.json(getDemoCountries());
+    }
+
     return NextResponse.json(
       { error: 'Failed to fetch locations' },
       { status: 500 }

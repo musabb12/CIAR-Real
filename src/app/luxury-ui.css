@@ -1,0 +1,374 @@
+/* ============================================================
+   CIAR — Enterprise Luxury UI Layer
+   Apple · Stripe · Sotheby's inspired surfaces
+   ============================================================ */
+
+:root {
+  --luxury-black: #0a0a0b;
+  --luxury-charcoal: #141416;
+  --luxury-gray: #1c1c1f;
+  --luxury-gold: #c9a227;
+  --luxury-gold-light: #e8c547;
+  --luxury-gold-muted: rgba(201, 162, 39, 0.15);
+  --luxury-white: #fafafa;
+  --luxury-navy: #0f1729;
+  --luxury-blur: 24px;
+  --luxury-radius: 1.25rem;
+  --luxury-radius-sm: 0.75rem;
+  --luxury-shadow: 0 24px 64px rgba(0, 0, 0, 0.12);
+  --luxury-shadow-lg: 0 32px 80px rgba(0, 0, 0, 0.18);
+  --luxury-glow-gold: 0 0 60px rgba(201, 162, 39, 0.2);
+  --luxury-glow-teal: 0 0 80px rgba(13, 148, 136, 0.15);
+}
+
+/* ─── Site shell enhancements ─── */
+.estate-site {
+  --font-heading: var(--font-playfair), 'Playfair Display', Georgia, serif;
+}
+
+.luxury-page {
+  position: relative;
+  overflow-x: clip;
+}
+
+/* Ambient orbs */
+.luxury-orb {
+  background: radial-gradient(circle, var(--luxury-gold-muted) 0%, transparent 70%);
+}
+
+.luxury-orb--teal {
+  background: radial-gradient(circle, rgba(13, 148, 136, 0.2) 0%, transparent 70%);
+}
+
+/* Premium glass — Stripe-like */
+.luxury-glass {
+  background: linear-gradient(
+    145deg,
+    rgba(255, 255, 255, 0.72) 0%,
+    rgba(255, 255, 255, 0.45) 100%
+  );
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(var(--luxury-blur)) saturate(1.5);
+  box-shadow:
+    var(--luxury-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.dark .luxury-glass {
+  background: linear-gradient(
+    145deg,
+    rgba(28, 28, 31, 0.85) 0%,
+    rgba(20, 20, 22, 0.75) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: var(--luxury-shadow-lg);
+}
+
+/* Floating card */
+.luxury-float {
+  transition:
+    transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.4s ease;
+}
+
+.luxury-float:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--luxury-shadow-lg), var(--luxury-glow-gold);
+}
+
+/* Curved section divider */
+.luxury-divider {
+  position: relative;
+  height: clamp(3rem, 6vw, 5rem);
+  margin-block: -1px;
+  overflow: hidden;
+}
+
+.luxury-divider::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent, var(--background) 85%);
+}
+
+.luxury-divider--slant {
+  clip-path: polygon(0 0, 100% 40%, 100% 100%, 0 100%);
+  background: var(--background);
+}
+
+/* Diagonal band accent */
+.luxury-diagonal {
+  position: relative;
+}
+
+.luxury-diagonal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(201, 162, 39, 0.06) 0%,
+    transparent 40%,
+    rgba(13, 148, 136, 0.05) 100%
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Premium hero typography */
+.luxury-hero-title {
+  font-family: var(--font-heading);
+  font-size: clamp(2.75rem, 7vw, 5.5rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  background: linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, 0.88) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 4px 24px rgba(0, 0, 0, 0.35));
+}
+
+.luxury-hero-subtitle {
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.82);
+  max-width: 36rem;
+}
+
+/* Enhanced search dock */
+.estate-search-dock {
+  box-shadow:
+    0 32px 80px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.12) inset,
+    var(--luxury-glow-teal);
+}
+
+/* Premium buttons */
+.luxury-btn {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--luxury-radius-sm);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.luxury-btn--gold {
+  background: linear-gradient(135deg, var(--luxury-gold-light) 0%, var(--luxury-gold) 100%);
+  color: var(--luxury-black);
+  box-shadow: 0 12px 32px rgba(201, 162, 39, 0.35);
+}
+
+.luxury-btn--gold:hover {
+  box-shadow: 0 16px 40px rgba(201, 162, 39, 0.45);
+  transform: translateY(-2px);
+}
+
+.luxury-btn--ghost {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  backdrop-filter: blur(12px);
+}
+
+.luxury-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Navbar premium */
+.luxury-nav {
+  backdrop-filter: blur(20px) saturate(1.8);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.dark .luxury-nav {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+.luxury-nav-link {
+  position: relative;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--foreground);
+  opacity: 0.75;
+  transition: opacity 0.25s ease, color 0.25s ease;
+}
+
+.luxury-nav-link:hover,
+.luxury-nav-link[data-active='true'] {
+  opacity: 1;
+  color: var(--primary);
+}
+
+.luxury-nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  inset-inline: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary), var(--luxury-gold));
+  transform: scaleX(0);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.luxury-nav-link:hover::after,
+.luxury-nav-link[data-active='true']::after {
+  transform: scaleX(1);
+}
+
+/* Footer enterprise */
+.luxury-footer {
+  position: relative;
+  background: linear-gradient(180deg, var(--luxury-charcoal) 0%, var(--luxury-black) 100%);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.luxury-footer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  inset-inline: 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(201, 162, 39, 0.5) 30%,
+    rgba(13, 148, 136, 0.4) 70%,
+    transparent
+  );
+}
+
+/* Property card luxury */
+.estate-property-card {
+  border-radius: 1.35rem !important;
+  transition:
+    transform 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.45s ease !important;
+}
+
+.estate-property-card:hover {
+  box-shadow:
+    0 28px 56px rgba(0, 0, 0, 0.14),
+    var(--luxury-glow-gold) !important;
+}
+
+/* Stats — enterprise counters */
+.luxury-stat {
+  position: relative;
+  padding: 1.25rem;
+  border-radius: var(--luxury-radius);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(16px);
+}
+
+.luxury-stat-value {
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, #fff, rgba(255, 255, 255, 0.75));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Section spacing — more whitespace */
+.luxury-section {
+  padding-block: clamp(5rem, 10vw, 8rem);
+}
+
+/* CTA — Sotheby's dark luxury */
+.estate-cta-panel {
+  background: linear-gradient(
+    135deg,
+    var(--luxury-charcoal) 0%,
+    var(--luxury-navy) 50%,
+    #0d3d38 100%
+  ) !important;
+  border: 1px solid rgba(201, 162, 39, 0.2);
+  box-shadow:
+    var(--luxury-shadow-lg),
+    var(--luxury-glow-gold) !important;
+}
+
+/* Testimonial dots */
+.luxury-dot-active {
+  background: linear-gradient(90deg, var(--luxury-gold), var(--luxury-gold-light)) !important;
+}
+
+/* Page hero cinematic */
+.page-hero-luxe.estate-hero {
+  min-height: clamp(320px, 45vh, 480px);
+}
+
+/* Search / filter panel */
+.luxury-filter-panel {
+  border-radius: var(--luxury-radius);
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--luxury-shadow);
+}
+
+/* Skeleton shimmer premium */
+.luxury-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--muted) 0%,
+    oklch(0.94 0.005 155) 50%,
+    var(--muted) 100%
+  );
+  background-size: 200% 100%;
+  animation: luxury-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes luxury-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Animated mesh background for bands */
+.estate-band--muted {
+  position: relative;
+  overflow: hidden;
+}
+
+.estate-band--muted::after {
+  content: '';
+  position: absolute;
+  width: 120%;
+  height: 60%;
+  top: -20%;
+  inset-inline-end: -10%;
+  background: radial-gradient(ellipse, rgba(201, 162, 39, 0.08), transparent 65%);
+  pointer-events: none;
+  animation: luxury-mesh-drift 18s ease-in-out infinite alternate;
+}
+
+@keyframes luxury-mesh-drift {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(-3%, 2%) rotate(2deg); }
+}
+
+/* Form inputs premium */
+.luxury-input {
+  border-radius: var(--luxury-radius-sm);
+  border: 1px solid var(--border);
+  background: var(--background);
+  transition: border-color 0.25s, box-shadow 0.25s;
+}
+
+.luxury-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .luxury-float:hover,
+  .estate-band--muted::after {
+    animation: none;
+    transform: none;
+  }
+}

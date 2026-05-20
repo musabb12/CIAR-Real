@@ -3,6 +3,8 @@ import {
   getFirebaseAdminConfigError,
   isFirebaseAdminConfigured,
 } from '@/lib/firebase-admin';
+import { listDemoProperties } from '@/lib/demo-properties';
+import { isFirebaseQuotaError } from '@/lib/firebase-errors';
 import {
   createPropertyInFirestore,
   listPropertiesFromFirestore,
@@ -30,25 +32,22 @@ export async function GET(request: NextRequest) {
     });
   }
 
+  const countryId = searchParams.get('countryId');
+  const cityId = searchParams.get('cityId');
+  const agentId = searchParams.get('agentId');
+  const listingType = searchParams.get('listingType');
+  const propertyType = searchParams.get('propertyType');
+  const priceMin = searchParams.get('priceMin');
+  const priceMax = searchParams.get('priceMax');
+  const bedrooms = searchParams.get('bedrooms');
+  const bathrooms = searchParams.get('bathrooms');
+  const areaMin = searchParams.get('areaMin');
+  const areaMax = searchParams.get('areaMax');
+  const isFeatured = searchParams.get('isFeatured');
+  const search = searchParams.get('search');
+  const sort = searchParams.get('sort') || 'newest';
+
   try {
-    // Filters
-    const countryId = searchParams.get('countryId');
-    const cityId = searchParams.get('cityId');
-    const agentId = searchParams.get('agentId');
-    const listingType = searchParams.get('listingType');
-    const propertyType = searchParams.get('propertyType');
-    const priceMin = searchParams.get('priceMin');
-    const priceMax = searchParams.get('priceMax');
-    const bedrooms = searchParams.get('bedrooms');
-    const bathrooms = searchParams.get('bathrooms');
-    const areaMin = searchParams.get('areaMin');
-    const areaMax = searchParams.get('areaMax');
-    const isFeatured = searchParams.get('isFeatured');
-    const search = searchParams.get('search');
-
-    // Sorting
-    const sort = searchParams.get('sort') || 'newest';
-
     const out = await listPropertiesFromFirestore({
       countryId,
       cityId,
@@ -75,6 +74,31 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching properties:', error);
+
+    if (isFirebaseQuotaError(error)) {
+      const out = listDemoProperties({
+        countryId,
+        cityId,
+        agentId,
+        listingType,
+        propertyType,
+        isFeatured,
+        search,
+        sort,
+        page,
+        limit,
+      });
+      return NextResponse.json({
+        data: out.data,
+        pagination: out.pagination,
+        backendConfigured: true,
+        quotaExceeded: true,
+        dataSource: 'demo',
+        backendMessage:
+          'Firestore quota exceeded — showing demo listings. Upgrade your Firebase plan or wait for the daily reset.',
+      });
+    }
+
     return NextResponse.json(
       { error: 'Failed to fetch properties' },
       { status: 500 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Building2,
   User,
@@ -19,14 +19,20 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
-import { getPrimaryPageBackground } from '@/lib/page-backgrounds';
 import { toast } from 'sonner';
 import type { AccountType } from '@/types';
 import { resolvePageAfterLogin } from '@/lib/auth-roles';
+import { mapAuthApiError } from '@/lib/auth-errors';
 
 export function RegisterPage() {
   const { t, rtl } = useTranslation();
-  const { setCurrentPage, login, contentSettings } = useAppStore();
+  const {
+    setCurrentPage,
+    login,
+    contentSettings,
+    registerAccountTypePreset,
+    setRegisterAccountTypePreset,
+  } = useAppStore();
 
   const [form, setForm] = useState({
     name: '',
@@ -45,12 +51,14 @@ export function RegisterPage() {
 
   const isAr = rtl;
   const registerContent = contentSettings.register;
-  const registerBackground = getPrimaryPageBackground(
-    registerContent,
-    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=2400&q=85&auto=format&fit=crop'
-  );
 
   const tx = (ar: string, en: string) => (isAr ? ar : en);
+
+  useEffect(() => {
+    if (!registerAccountTypePreset) return;
+    setForm((prev) => ({ ...prev, accountType: registerAccountTypePreset }));
+    setRegisterAccountTypePreset(null);
+  }, [registerAccountTypePreset, setRegisterAccountTypePreset]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,7 +108,14 @@ export function RegisterPage() {
           setCurrentPage(resolvePageAfterLogin(data.user.role));
         }, 900);
       } else {
-        setError(data.error || tx('فشل التسجيل', 'Registration failed'));
+        setError(
+          mapAuthApiError(
+            data.error,
+            tx,
+            'فشل التسجيل',
+            'Registration failed',
+          ),
+        );
       }
     } catch {
       setError(tx('خطأ في الشبكة، حاول مرة أخرى', 'Network error, try again'));
@@ -110,13 +125,7 @@ export function RegisterPage() {
   };
 
   return (
-    <div
-      className="auth-page-image-bg min-h-dvh py-8 px-1 sm:py-10 sm:px-2 lg:px-0 relative overflow-x-hidden"
-      style={{
-        ['--auth-image' as string]:
-          `url('${registerBackground}')`,
-      }}
-    >
+    <div className="auth-page-bg min-h-dvh py-8 px-1 sm:py-10 sm:px-2 lg:px-0 relative overflow-x-hidden">
       {/* Decorative blurred orbs */}
       <div className="absolute top-20 -right-32 w-96 h-96 rounded-full bg-amber-500/20 blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 -left-32 w-96 h-96 rounded-full bg-emerald-500/20 blur-3xl pointer-events-none" />

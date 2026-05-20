@@ -1,15 +1,14 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { motion } from 'framer-motion';
 import {
-  Search, PhoneCall, Home, ArrowRight, MapPin, Building2, Globe, Users,
+  Search, PhoneCall, Home, ArrowRight, MapPin, Building2, Globe, Users, Megaphone,
   Briefcase, Star, Quote, CheckCircle, Shield, Building, Layers, Warehouse,
   Castle, Landmark, Brain, Eye, TrendingUp, BarChart3, Flame, Leaf, Wifi,
-  Zap, ShieldAlert, Trophy, CreditCard, Banknote, Wallet,
+  Zap, ShieldAlert, Trophy,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
@@ -23,6 +22,11 @@ import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import type { Property, Country } from '@/types';
 import { normalizeLocationsResponse } from '@/lib/normalize-locations';
+import { navigateToAddListing } from '@/lib/navigate-add-listing';
+import { toast } from 'sonner';
+import { PaymentMethodsShowcase } from '@/components/payment/payment-method-icons';
+import { EstateHeading } from '@/components/estate/estate-heading';
+import { MotionHero, MotionHeroItem, MotionReveal, MotionOrb } from '@/components/luxury/motion';
 
 function propertiesFromApiPayload(data: unknown): Property[] {
   if (Array.isArray(data)) return data as Property[];
@@ -36,9 +40,17 @@ function propertiesFromApiPayload(data: unknown): Property[] {
 
 async function fetchPropertyList(url: string): Promise<Property[]> {
   const res = await fetch(url);
-  if (!res.ok) return [];
   try {
     const json = await res.json();
+    if (json && typeof json === 'object' && (json as { quotaExceeded?: boolean }).quotaExceeded) {
+      toast.warning('عرض تجريبي مؤقت', {
+        description:
+          'تم تجاوز حصة Firebase. العقارات المعروضة نماذج توضيحية حتى يعود الاتصال بقاعدة البيانات.',
+        id: 'firebase-quota-demo',
+        duration: 8000,
+      });
+    }
+    if (!res.ok) return [];
     return propertiesFromApiPayload(json);
   } catch {
     return [];
@@ -123,20 +135,14 @@ const features = [
   { icon: Star, label: 'Featured Agent' },
 ];
 
-const paymentMethods = [
-  { icon: CreditCard, label: 'Credit Card' },
-  { icon: Banknote, label: 'Bank Transfer' },
-  { icon: Wallet, label: 'Digital Wallet' },
-  { icon: Shield, label: 'Escrow' },
-  { icon: CheckCircle, label: 'Crypto' },
-  { icon: Building, label: 'Mortgage' },
-];
-
 // ─── Component ─────────────────────────────────────────────────
 export function HomePage() {
   const { t } = useTranslation();
   const {
     setCurrentPage,
+    setAdminTab,
+    setRegisterAccountTypePreset,
+    currentUser,
     setFilters,
     resetFilters,
     designSettings,
@@ -266,15 +272,25 @@ export function HomePage() {
     setCurrentPage('search');
   }, [resetFilters, setCurrentPage]);
 
-  const delay = (ms: number) => ({ animationDelay: `${ms}ms`, opacity: 0 } as React.CSSProperties);
+  const handleAddListing = useCallback(() => {
+    navigateToAddListing({
+      currentUser,
+      setCurrentPage,
+      setAdminTab,
+      setRegisterAccountTypePreset,
+    });
+  }, [currentUser, setCurrentPage, setAdminTab, setRegisterAccountTypePreset]);
+
   const homeContent = contentSettings.home;
   const heroTitle = homeContent.title?.trim() || 'CIAR';
   const heroSubtitle = homeContent.subtitle?.trim() || t.hero.subtitle;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <motion.div className="luxury-page min-h-screen flex flex-col">
       {/* ─── 1. HERO ─── */}
-      <section className="relative flex min-h-[92vh] items-center justify-center overflow-hidden">
+      <section className="estate-hero relative flex min-h-[92vh] items-center justify-center overflow-hidden">
+        <MotionOrb className="luxury-orb--teal -top-32 end-0 h-96 w-96 opacity-40" />
+        <MotionOrb className="start-0 bottom-20 h-72 w-72 opacity-30" />
         {/* 16-image elegant Ken-Burns carousel */}
         <div className="hero-carousel" aria-hidden="true">
           {effectiveHeroImages.map((src, i) => (
@@ -307,16 +323,23 @@ export function HomePage() {
           ))}
         </div>
 
-        <div className="relative z-10 w-full max-w-6xl mx-auto px-4 py-20 flex flex-col items-center text-center">
-          <h1 className="animate-fade-in-up font-heading text-6xl sm:text-7xl md:text-8xl font-bold tracking-tight text-white mb-4 drop-shadow-[0_4px_30px_rgba(0,0,0,0.45)]" style={delay(0)}>
-            {heroTitle}
-          </h1>
-          <p className="animate-fade-in-up text-lg sm:text-xl text-white/85 max-w-2xl mb-10 drop-shadow-[0_2px_12px_rgba(0,0,0,0.4)]" style={delay(150)}>
-            {heroSubtitle}
-          </p>
+        <MotionHero className="estate-hero-inner relative z-10 w-full max-w-6xl mx-auto px-4 py-20 flex flex-col items-center text-center">
+          <MotionHeroItem>
+            <p className="estate-hero-badge mb-5">
+              <Globe className="h-3.5 w-3.5" />
+              {t.nav.properties}
+            </p>
+          </MotionHeroItem>
+          <MotionHeroItem>
+            <h1 className="luxury-hero-title mb-4">{heroTitle}</h1>
+          </MotionHeroItem>
+          <MotionHeroItem>
+            <p className="luxury-hero-subtitle mx-auto mb-10">{heroSubtitle}</p>
+          </MotionHeroItem>
 
           {/* Search Bar */}
-          <div className="animate-fade-in-up glass-hero rounded-2xl p-3 sm:p-4 w-full max-w-4xl flex flex-col sm:flex-row gap-3" style={delay(300)}>
+          <MotionHeroItem className="w-full max-w-4xl">
+          <div className="estate-search-dock w-full flex flex-col sm:flex-row gap-3 p-3 sm:p-4">
             <Select value={searchCountry} onValueChange={setSearchCountry}>
               <SelectTrigger className="flex-1 bg-white/10 border-white/20 text-white rounded-xl">
                 <Globe className="h-4 w-4 mr-2 text-gold-light" />
@@ -350,34 +373,51 @@ export function HomePage() {
                 ))}
               </SelectContent>
             </Select>
-            <Button onClick={handleSearch} className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold rounded-xl px-6 h-11">
+            <Button onClick={handleSearch} variant="luxury" className="h-11 px-6">
               {t.hero.search}
             </Button>
           </div>
+          </MotionHeroItem>
+
+          <MotionHeroItem className="mt-4 flex justify-center">
+            <Button
+              type="button"
+              onClick={handleAddListing}
+              variant="outline"
+              className="h-11 rounded-xl border-white/35 bg-white/10 px-6 text-white hover:bg-white/20 hover:text-white font-semibold backdrop-blur-sm"
+            >
+              <Megaphone className="me-2 h-4 w-4" />
+              {t.nav.addYourListing}
+            </Button>
+          </MotionHeroItem>
 
           {/* Stats */}
-          <div className="animate-fade-in-up mt-10 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 w-full max-w-3xl" style={delay(450)}>
+          <MotionHeroItem className="mt-10 w-full max-w-3xl">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 w-full max-w-3xl">
             {statsRows.map((stat, i) => (
-              <div key={i} className="glass-stat rounded-xl p-4 text-center">
-                <stat.icon className="h-5 w-5 text-gold-light mx-auto mb-2" />
-                <div className="text-2xl font-bold text-white">
+              <div key={i} className="luxury-stat text-center">
+                <stat.icon className="h-5 w-5 text-amber-300 mx-auto mb-2" />
+                <div className="luxury-stat-value">
                   <AnimatedCounter target={stat.value} suffix={stat.suffix} />
                 </div>
                 <div className="text-xs text-white/60 mt-1">{stat.label}</div>
               </div>
             ))}
           </div>
-        </div>
+          </MotionHeroItem>
+        </MotionHero>
       </section>
 
       {/* ─── 2. FEATURED PROPERTIES ─── */}
-      <section className="py-16 sm:py-20 px-4">
+      <MotionReveal>
+      <section className="estate-band estate-band--slant-top estate-band--muted px-4 luxury-diagonal">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-10">
-            <Badge variant="secondary" className="mb-3">{t.property.featured}</Badge>
-            <h2 className="font-heading text-3xl sm:text-4xl font-bold">{t.hero.featuredProperties}</h2>
-            <p className="text-muted-foreground mt-2">{t.hero.featuredSubtitle}</p>
-          </div>
+          <EstateHeading
+            align="center"
+            kicker={t.property.featured}
+            title={t.hero.featuredProperties}
+            subtitle={t.hero.featuredSubtitle}
+          />
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => (
@@ -402,62 +442,62 @@ export function HomePage() {
           )}
         </div>
       </section>
-
-      <div className="gradient-divider max-w-4xl mx-auto" />
+      </MotionReveal>
 
       {/* ─── 3. HOW IT WORKS ─── */}
-      <section className="py-16 sm:py-20 px-4">
-        <div className="max-w-5xl mx-auto text-center">
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold mb-10">{t.howItWorks.title}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <MotionReveal>
+      <section className="estate-band px-4">
+        <div className="max-w-5xl mx-auto">
+          <EstateHeading align="center" title={t.howItWorks.title} />
+          <div className="estate-process">
             {[
               { step: '01', title: t.howItWorks.step1Title, desc: t.howItWorks.step1Desc, icon: Search },
               { step: '02', title: t.howItWorks.step2Title, desc: t.howItWorks.step2Desc, icon: PhoneCall },
               { step: '03', title: t.howItWorks.step3Title, desc: t.howItWorks.step3Desc, icon: CheckCircle },
             ].map((item, i) => (
-              <Card key={i} className="glass-card rounded-2xl p-6 text-center hover-lift-glow">
-                <CardContent className="p-0 flex flex-col items-center">
-                  <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center mb-4">
-                    <item.icon className="h-7 w-7 text-primary" />
-                  </div>
-                  <Badge variant="outline" className="mb-3 text-xs">Step {item.step}</Badge>
-                  <h3 className="text-lg font-bold mb-2">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground">{item.desc}</p>
-                </CardContent>
-              </Card>
+              <div key={i} className="estate-surface estate-process-step text-center">
+                <span className="estate-surface-accent" aria-hidden />
+                <span className="estate-process-num">{item.step}</span>
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary/10 to-primary/5">
+                  <item.icon className="h-7 w-7 text-primary" />
+                </div>
+                <h3 className="text-lg font-bold mb-2">{item.title}</h3>
+                <p className="text-sm text-muted-foreground">{item.desc}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
-
-      <div className="gradient-divider max-w-4xl mx-auto" />
+      </MotionReveal>
 
       {/* ─── 4. PROPERTY TYPES ─── */}
-      <section className="py-16 sm:py-20 px-4">
-        <div className="max-w-5xl mx-auto text-center">
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold mb-2">{t.hero.explore}</h2>
-          <p className="text-muted-foreground mb-10">{t.hero.exploreSubtitle}</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+      <section className="estate-band estate-band--muted px-4">
+        <div className="max-w-5xl mx-auto">
+          <EstateHeading
+            align="center"
+            title={t.hero.explore}
+            subtitle={t.hero.exploreSubtitle}
+          />
+          <div className="estate-bento">
             {propertyTypes.map((pt, i) => (
               <button
                 key={i}
+                type="button"
                 onClick={() => { setFilters({ propertyType: pt.key.toUpperCase() as Property['propertyType'] }); setCurrentPage('search'); }}
-                className="glass-card rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer hover-lift-glow transition-all"
+                className="estate-bento-item"
               >
-                <pt.icon className="h-7 w-7 text-primary" />
-                <span className="text-sm font-medium">{(t.propertyTypes as Record<string, string>)[pt.key]}</span>
+                <pt.icon className="h-7 w-7" />
+                <span className="text-sm font-semibold">{(t.propertyTypes as Record<string, string>)[pt.key]}</span>
               </button>
             ))}
           </div>
         </div>
       </section>
 
-      <div className="gradient-divider max-w-4xl mx-auto" />
-
       {/* ─── 5. TESTIMONIALS ─── */}
-      <section className="py-16 sm:py-20 px-4">
+      <section className="estate-band estate-band--dark px-4">
         <div className="max-w-3xl mx-auto text-center">
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold mb-10">What Our Clients Say</h2>
+          <EstateHeading align="center" kicker="CIAR" title="What Our Clients Say" />
           <div className="relative min-h-[220px]">
             {testimonials.map((item, i) => (
               <div
@@ -465,15 +505,15 @@ export function HomePage() {
                 className="absolute inset-0 flex flex-col items-center transition-opacity duration-700 ease-in-out"
                 style={{ opacity: activeTestimonial === i ? 1 : 0, pointerEvents: activeTestimonial === i ? 'auto' : 'none' }}
               >
-                <Quote className="h-8 w-8 text-gold-light mb-4" />
-                <p className="text-lg text-foreground/90 italic max-w-xl mb-6">&ldquo;{item.text}&rdquo;</p>
+                <Quote className="h-8 w-8 text-amber-400 mb-4" />
+                <p className="text-lg text-white/90 italic max-w-xl mb-6">&ldquo;{item.text}&rdquo;</p>
                 <div className="flex gap-0.5 mb-2">
                   {Array.from({ length: item.rating }).map((_, si) => (
                     <Star key={si} className="h-4 w-4 fill-amber-400 text-amber-400" />
                   ))}
                 </div>
-                <div className="font-bold">{item.name}</div>
-                <div className="text-sm text-muted-foreground">{item.role}</div>
+                <div className="font-bold text-white">{item.name}</div>
+                <div className="text-sm text-white/65">{item.role}</div>
               </div>
             ))}
           </div>
@@ -482,23 +522,26 @@ export function HomePage() {
               <button
                 key={i}
                 onClick={() => setActiveTestimonial(i)}
-                className={`h-2.5 rounded-full transition-all duration-300 ${activeTestimonial === i ? 'w-8 bg-primary' : 'w-2.5 bg-muted-foreground/30'}`}
+                className={`h-2.5 rounded-full transition-all duration-300 ${activeTestimonial === i ? 'w-8 luxury-dot-active' : 'w-2.5 bg-white/25'}`}
               />
             ))}
           </div>
         </div>
       </section>
 
-      <div className="gradient-divider max-w-4xl mx-auto" />
-
       {/* ─── 6. CIAR FEATURES ─── */}
-      <section className="py-16 sm:py-20 px-4">
-        <div className="max-w-5xl mx-auto text-center">
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold mb-2">{t.property.ciarFeatures}</h2>
-          <p className="text-muted-foreground mb-10">Discover the tools that set CIAR apart</p>
+      <section className="estate-band estate-band--slant-top px-4">
+        <div className="max-w-5xl mx-auto">
+          <EstateHeading
+            align="center"
+            kicker="CIAR"
+            title={t.property.ciarFeatures}
+            subtitle="Discover the tools that set CIAR apart"
+          />
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {features.map((feat, i) => (
-              <div key={i} className="glass-card rounded-xl p-5 flex flex-col items-center gap-3 hover-lift-glow cursor-default">
+              <div key={i} className="estate-surface p-5 flex flex-col items-center gap-3 cursor-default">
+                <span className="estate-surface-accent" aria-hidden />
                 <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
                   <feat.icon className="h-6 w-6 text-primary" />
                 </div>
@@ -509,39 +552,28 @@ export function HomePage() {
         </div>
       </section>
 
-      <div className="gradient-divider max-w-4xl mx-auto" />
-
       {/* ─── 7. PAYMENT METHODS ─── */}
-      <section className="py-16 sm:py-20 px-4">
-        <div className="max-w-3xl mx-auto text-center">
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold mb-2">{t.footer.securePayments}</h2>
-          <p className="text-muted-foreground mb-10">Multiple secure payment options available</p>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-4">
-            {paymentMethods.map((pm, i) => (
-              <div key={i} className="glass-card rounded-xl p-4 flex flex-col items-center gap-2">
-                <pm.icon className="h-8 w-8 text-primary" />
-                <span className="text-xs font-medium text-muted-foreground">{pm.label}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <PaymentMethodsShowcase
+        variant="estate"
+        title={t.footer.securePayments}
+        subtitle={t.footer.paymentMethodsSubtitle}
+      />
 
       {/* ─── CTA ─── */}
-      <section className="py-16 sm:py-20 px-4">
-        <div className="max-w-4xl mx-auto glass-card rounded-2xl p-8 sm:p-12 text-center">
-          <h2 className="font-heading text-3xl sm:text-4xl font-bold mb-3">{t.cta.title}</h2>
-          <p className="text-muted-foreground mb-8">{t.cta.subtitle}</p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" onClick={viewAll} className="bg-gradient-to-r from-primary to-primary/80 text-white rounded-xl px-8">
+      <section className="estate-band px-4 pb-20">
+        <div className="estate-cta-panel relative z-[1] max-w-4xl mx-auto text-center text-white">
+          <h2 className="font-heading text-3xl sm:text-4xl font-bold mb-3 relative">{t.cta.title}</h2>
+          <p className="text-white/80 mb-8 relative max-w-xl mx-auto">{t.cta.subtitle}</p>
+          <div className="relative flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" variant="luxury" onClick={viewAll} className="px-8">
               {t.cta.browseProperties}
             </Button>
-            <Button size="lg" variant="outline" onClick={() => setCurrentPage('contact')} className="rounded-xl px-8">
+            <Button size="lg" variant="outline" onClick={() => setCurrentPage('contact')} className="rounded-xl px-8 border-white/40 text-white hover:bg-white/10 hover:text-white">
               {t.common.contact}
             </Button>
           </div>
         </div>
       </section>
-    </div>
+    </motion.div>
   );
 }

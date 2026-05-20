@@ -181,7 +181,7 @@ export function SearchPage() {
 
       <div className="max-w-7xl mx-auto px-4">
         {/* ─── Filters Panel ─── */}
-        <div className="animate-fade-in-up -mt-4 mb-8 glass-card rounded-2xl p-6">
+        <div className="animate-fade-in-up -mt-4 mb-8 luxury-filter-panel luxury-glass rounded-2xl p-6">
             <div className="flex items-center justify-between mb-5">
               <h3 className="font-semibold text-sm flex items-center gap-2">
                 <SlidersHorizontal className="h-4 w-4 text-primary" />

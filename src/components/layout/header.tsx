@@ -25,6 +25,7 @@ import {
   Loader2,
   MessageSquare,
   Mail,
+  Megaphone,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -32,6 +33,8 @@ import { useAppStore } from '@/store/app-store';
 import type { AppPage } from '@/types';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import { locales, type Locale } from '@/lib/i18n';
+import { mapAuthApiError } from '@/lib/auth-errors';
+import { navigateToAddListing } from '@/lib/navigate-add-listing';
 
 // ============================================================
 // Navigation Configuration
@@ -61,9 +64,24 @@ const NOTIFICATION_COUNT = 3;
 // ============================================================
 
 const demoAccounts = [
-  { email: 'admin@realtyhub.com', role: 'Admin', icon: <Shield className="h-3.5 w-3.5" /> },
-  { email: 'john.doe@example.com', role: 'User', icon: <User className="h-3.5 w-3.5" /> },
-  { email: 'sarah.johnson@globalrealty.com', role: 'Agent', icon: <Building2 className="h-3.5 w-3.5" /> },
+  {
+    email: 'admin@realtyhub.com',
+    password: 'admin123',
+    role: 'Admin',
+    icon: <Shield className="h-3.5 w-3.5" />,
+  },
+  {
+    email: 'john.doe@example.com',
+    password: 'user123',
+    role: 'User',
+    icon: <User className="h-3.5 w-3.5" />,
+  },
+  {
+    email: 'sarah.johnson@globalrealty.com',
+    password: 'agent123',
+    role: 'Agent',
+    icon: <Building2 className="h-3.5 w-3.5" />,
+  },
 ];
 
 // ============================================================
@@ -89,6 +107,8 @@ export function Header() {
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
   const [registerLoading, setRegisterLoading] = useState(false);
   const [registerForm, setRegisterForm] = useState({ name: '', email: '', password: '', phone: '' });
   const [registerError, setRegisterError] = useState('');
@@ -102,6 +122,8 @@ export function Header() {
   const {
     currentPage,
     setCurrentPage,
+    setAdminTab,
+    setRegisterAccountTypePreset,
     currentUser,
     isAuthenticated,
     login,
@@ -204,7 +226,15 @@ export function Header() {
           setRegisterSuccess(false);
         }, 1200);
       } else {
-        setRegisterError(data.error || 'Registration failed');
+        const tx = (ar: string, en: string) => (rtl ? ar : en);
+        setRegisterError(
+          mapAuthApiError(
+            data.error,
+            tx,
+            'فشل التسجيل',
+            'Registration failed',
+          ),
+        );
       }
     } catch {
       setRegisterError('Network error. Please check your connection and try again.');
@@ -215,6 +245,9 @@ export function Header() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoginError('');
+    setLoginLoading(true);
+    const tx = (ar: string, en: string) => (rtl ? ar : en);
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
@@ -224,20 +257,41 @@ export function Header() {
           password: loginPassword,
         }),
       });
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         login(data.user);
         setShowLoginDialog(false);
         setLoginEmail('');
         setLoginPassword('');
+      } else {
+        setLoginError(
+          mapAuthApiError(data.error, tx, 'فشل تسجيل الدخول', 'Sign-in failed'),
+        );
       }
-    } catch (err) {
-      console.error('Login failed:', err);
+    } catch {
+      setLoginError(
+        rtl
+          ? 'خطأ في الشبكة، حاول مرة أخرى'
+          : 'Network error. Please try again.',
+      );
+    } finally {
+      setLoginLoading(false);
     }
   };
 
   const handleNavClick = (page: AppPage) => {
     setCurrentPage(page);
+    setMobileMenuOpen(false);
+    setUserMenuOpen(false);
+  };
+
+  const handleAddListing = () => {
+    navigateToAddListing({
+      currentUser,
+      setCurrentPage,
+      setAdminTab,
+      setRegisterAccountTypePreset,
+    });
     setMobileMenuOpen(false);
     setUserMenuOpen(false);
   };
@@ -299,7 +353,7 @@ export function Header() {
       {/* Header */}
       <header
         dir={rtl ? 'rtl' : 'ltr'}
-        className={`sticky top-0 z-50 w-full transition-all duration-500 ease-out glass-nav ${headerShadow}`}
+        className={`estate-nav luxury-nav relative sticky top-0 z-50 w-full transition-all duration-500 ease-out glass-nav ${headerShadow}`}
       >
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* ---- Logo ---- */}
@@ -325,23 +379,17 @@ export function Header() {
                 <button
                   key={item.page}
                   onClick={() => handleNavClick(item.page)}
-                  className={`relative flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[13px] font-medium tracking-wide transition-all duration-200 ${
-                    isActive
-                      ? 'text-amber-700 dark:text-amber-400'
-                      : `${navTextColor} hover:text-gray-900 dark:hover:text-white`
+                  data-active={isActive}
+                  className={`luxury-nav-link relative flex items-center gap-1.5 rounded-lg px-3.5 py-2 ${
+                    isActive ? 'opacity-100' : scrolled ? '' : isDark ? 'text-white/80' : navTextColor
                   }`}
                 >
-                  <span className={isActive ? 'text-amber-600 dark:text-amber-500' : ''}>
-                    {item.icon}
-                  </span>
+                  {item.icon}
                   <span>{t.nav[item.labelKey]}</span>
                   {item.page === 'favorites' && favoritePropertyIds.size > 0 && (
                     <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-emerald-500 px-1 text-[10px] font-bold leading-none text-white">
                       {favoritePropertyIds.size}
                     </span>
-                  )}
-                  {isActive && (
-                    <span className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600" />
                   )}
                 </button>
               );
@@ -367,6 +415,19 @@ export function Header() {
                 />
               </div>
             </form>
+
+            {/* ---- Add listing CTA ---- */}
+            <Button
+              type="button"
+              onClick={handleAddListing}
+              size="sm"
+              className="hidden md:inline-flex h-8 shrink-0 rounded-lg border border-amber-500/40 bg-gradient-to-r from-amber-500/15 to-emerald-500/15 px-3 text-[12px] font-semibold text-amber-800 shadow-sm hover:from-amber-500/25 hover:to-emerald-500/25 dark:text-amber-200"
+            >
+              <Megaphone className="me-1.5 h-3.5 w-3.5" />
+              <span className="max-w-[9rem] truncate sm:max-w-none">
+                {t.nav.addYourListing}
+              </span>
+            </Button>
 
             {/* ---- Notification Bell ---- */}
             <Button
@@ -652,6 +713,13 @@ export function Header() {
 
           {/* Mobile Menu Footer */}
           <div className="border-t border-gray-100 px-4 py-4 dark:border-white/5 sm:px-6">
+            <Button
+              onClick={handleAddListing}
+              className="mb-3 w-full rounded-xl bg-gradient-to-r from-amber-600 to-emerald-600 text-[13px] font-semibold tracking-wide text-white shadow-lg shadow-amber-500/20"
+            >
+              <Megaphone className="me-2 h-4 w-4" />
+              {t.nav.addYourListing}
+            </Button>
             {!isAuthenticated ? (
               <div className="space-y-2">
                 <Button
@@ -766,7 +834,7 @@ export function Header() {
                           type="email"
                           value={loginEmail}
                           onChange={(e) => setLoginEmail(e.target.value)}
-                          placeholder="admin@ciar.com"
+                          placeholder="admin@realtyhub.com"
                           required
                           className="h-11 w-full rounded-xl border border-gray-200/60 bg-gray-50/50 ps-10 pe-4 text-sm text-gray-900 outline-none transition-all placeholder:text-gray-400 focus:border-amber-500/50 focus:bg-white focus:ring-2 focus:ring-amber-500/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder:text-gray-500 dark:focus:bg-white/10"
                         />
@@ -790,6 +858,12 @@ export function Header() {
                       </div>
                     </div>
 
+                    {loginError ? (
+                      <p className="rounded-lg bg-red-500/10 px-3 py-2 text-center text-sm text-red-600 dark:text-red-400">
+                        {loginError}
+                      </p>
+                    ) : null}
+
                     {/* Demo accounts section */}
                     <div className="rounded-xl border border-gray-200/50 bg-gray-50/50 p-4 dark:border-white/[0.06] dark:bg-white/[0.03]">
                       <p className="mb-3 flex items-center gap-1.5 text-[13px] font-semibold text-gray-700 dark:text-gray-300">
@@ -801,7 +875,11 @@ export function Header() {
                           <button
                             key={account.email}
                             type="button"
-                            onClick={() => setLoginEmail(account.email)}
+                            onClick={() => {
+                              setLoginEmail(account.email);
+                              setLoginPassword(account.password);
+                              setLoginError('');
+                            }}
                             className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left transition-all hover:bg-white hover:shadow-sm dark:hover:bg-white/5"
                           >
                             <span className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-amber-500/10 to-emerald-500/10 text-amber-600 dark:text-amber-400">
@@ -831,9 +909,14 @@ export function Header() {
                       </Button>
                       <Button
                         type="submit"
+                        disabled={loginLoading}
                         className="flex-1 rounded-xl bg-gradient-to-r from-amber-600 to-emerald-600 px-4 text-[13px] font-semibold tracking-wide text-white shadow-lg shadow-amber-500/25 transition-all hover:shadow-xl hover:shadow-amber-500/30 hover:brightness-105"
                       >
-                        <LogIn className="me-1.5 h-3.5 w-3.5" />
+                        {loginLoading ? (
+                          <Loader2 className="me-1.5 h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <LogIn className="me-1.5 h-3.5 w-3.5" />
+                        )}
                         {t.auth.signIn}
                       </Button>
                     </div>

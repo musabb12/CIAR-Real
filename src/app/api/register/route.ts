@@ -1,35 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { createSessionToken, getSessionCookieOptions } from '@/lib/auth-token';
-import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
+import { checkRegisterRateLimit } from '@/lib/rate-limit';
 import type { AccountType } from '@/types';
+import {
+  getFirebaseAdminConfigError,
+  isFirebaseAdminConfigured,
+} from '@/lib/firebase-admin';
 import {
   accountTypeToRole,
   createPartnerProfileForUser,
   createUserInFirestore,
   getUserByEmail,
-  getUserDetailFromFirestore,
 } from '@/lib/firestore-platform';
 
 // POST /api/register - Create a new user account
 export async function POST(request: NextRequest) {
   try {
-    const ip = getClientIp(request.headers);
-    const rate = checkRateLimit(`register:${ip}`, 5, 60_000);
-    if (!rate.allowed) {
+    if (!isFirebaseAdminConfigured()) {
       return NextResponse.json(
-        { error: 'Too many registration attempts. Please try again later.' },
         {
-          status: 429,
-          headers: {
-            'Retry-After': String(rate.retryAfterSec),
-          },
-        }
+          error:
+            getFirebaseAdminConfigError() ??
+            'FIREBASE_SERVICE_ACCOUNT_JSON is not set',
+        },
+        { status: 503 }
       );
     }
 
     const body = await request.json();
     const { name, email, password, phone, accountType, companyName } = body;
+
+    if (email && typeof email === 'string') {
+      const rate = checkRegisterRateLimit(request, email);
+      if (!rate.allowed) {
+        return NextResponse.json(
+          { error: 'Too many registration attempts. Please try again later.' },
+          {
+            status: 429,
+            headers: {
+              'Retry-After': String(rate.retryAfterSec),
+            },
+          }
+        );
+      }
+    }
 
     const normalizedAccountType: AccountType =
       accountType === 'OWNER' || accountType === 'COMPANY' ? accountType : 'CLIENT';
@@ -100,15 +115,18 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const fullUser = (await getUserDetailFromFirestore(user.id)) ?? user;
+    const { password: _password, ...safeUser } = user;
 
     const sessionToken = createSessionToken({
-      id: fullUser.id,
-      email: fullUser.email,
-      role: fullUser.role,
+      id: safeUser.id,
+      email: safeUser.email,
+      role: safeUser.role,
     });
     const response = NextResponse.json({
-      user: fullUser,
+      user: {
+        ...safeUser,
+        _count: { favorites: 0, inquiries: 0 },
+      },
       token: sessionToken,
     });
     const cookieOptions = getSessionCookieOptions();
@@ -116,8 +134,18 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     console.error('Error during registration:', error);
+    const message =
+      error instanceof Error ? error.message : 'Registration failed';
+    const isFirebaseConfig =
+      message.includes('FIREBASE') || message.includes('Firebase');
     return NextResponse.json(
-      { error: 'Registration failed' },
+      {
+        error: isFirebaseConfig
+          ? message
+          : process.env.NODE_ENV === 'development'
+            ? message
+            : 'Registration failed',
+      },
       { status: 500 }
     );
   }

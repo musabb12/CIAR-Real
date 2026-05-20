@@ -121,7 +121,7 @@ export function PageHero({
 
   return (
     <section
-      className={`page-hero-luxe relative overflow-hidden px-4 ${paddingClass}`}
+      className={`page-hero-luxe estate-hero relative overflow-hidden px-4 ${paddingClass}`}
       aria-label={effectiveTitle}
     >
       {/* Image stack — crossfade between variants */}
@@ -148,7 +148,7 @@ export function PageHero({
         {effectiveBadgeText && !hideBadge && (
           <Badge
             variant="secondary"
-            className="mb-4 inline-flex items-center gap-1.5 border-amber-300/30 bg-white/10 px-3 py-1.5 text-amber-100 backdrop-blur-md"
+            className="estate-hero-badge mb-4 inline-flex items-center gap-1.5 border-0"
           >
             {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
             <span className="text-[12px] uppercase tracking-[0.18em]">{effectiveBadgeText}</span>

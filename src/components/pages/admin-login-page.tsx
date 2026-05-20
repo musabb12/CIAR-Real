@@ -102,7 +102,17 @@ export function AdminLoginPage() {
       }
 
       login(data.user as AppUser);
-      toast.success(tx('تم تسجيل الدخول كأدمن', 'Signed in as Admin'));
+      if (data.demoAuth || data.quotaExceeded) {
+        toast.warning(
+          tx(
+            'دخول تجريبي: حصة Firebase منتهية. البيانات في لوحة التحكم قد تكون محدودة حتى إعادة التعيين.',
+            'Demo sign-in: Firebase quota exceeded. Dashboard data may be limited until quota resets.',
+          ),
+          { duration: 8000 },
+        );
+      } else {
+        toast.success(tx('تم تسجيل الدخول كأدمن', 'Signed in as Admin'));
+      }
       setCurrentPage('admin');
       router.replace('/admin/dashboard');
     } catch {

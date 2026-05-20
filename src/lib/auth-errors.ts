@@ -57,6 +57,17 @@ export function mapAuthApiError(
   if (mapped) return tx(mapped[0], mapped[1]);
 
   if (
+    normalized === 'firebase_quota_exceeded' ||
+    normalized.includes('Quota exceeded') ||
+    normalized.includes('RESOURCE_EXHAUSTED')
+  ) {
+    return tx(
+      'تم تجاوز حصة Firebase اليومية. انتظر إعادة التعيين أو رقِّ الخطة في Firebase Console. يمكنك استخدام حساب الأدمن التجريبي أثناء انقطاع قاعدة البيانات.',
+      'Firebase daily quota was exceeded. Wait for reset or upgrade your plan in Firebase Console. Use the demo admin account while the database is unavailable.',
+    );
+  }
+
+  if (
     normalized.includes('FIREBASE') ||
     normalized.includes('Firebase service account')
   ) {

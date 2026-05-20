@@ -7,6 +7,11 @@ import {
   isFirebaseAdminConfigured,
 } from '@/lib/firebase-admin';
 import {
+  getDemoAdminUser,
+  isDemoAdminCredentials,
+} from '@/lib/demo-auth';
+import { isFirebaseQuotaError } from '@/lib/firebase-errors';
+import {
   getUserByEmail,
   updateUserInFirestore,
 } from '@/lib/firestore-platform';
@@ -15,6 +20,11 @@ const BCRYPT_HASH_REGEX = /^\$2[aby]\$\d{2}\$/;
 
 // POST /api/auth - Validate email + password against database
 export async function POST(request: NextRequest) {
+  const body = await request.json();
+  const email =
+    typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
+  const password = typeof body.password === 'string' ? body.password : '';
+
   try {
     if (!isFirebaseAdminConfigured()) {
       return NextResponse.json(
@@ -27,17 +37,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const { email, password } = body;
-
-    if (!email || typeof email !== 'string' || !email.includes('@')) {
+    if (!email || !email.includes('@')) {
       return NextResponse.json(
         { error: 'A valid email is required' },
         { status: 400 }
       );
     }
 
-    if (!password || typeof password !== 'string') {
+    if (!password) {
       return NextResponse.json(
         { error: 'Password is required' },
         { status: 400 }
@@ -57,7 +64,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const user = await getUserByEmail(email.trim().toLowerCase());
+    const user = await getUserByEmail(email);
 
     if (!user) {
       return NextResponse.json(
@@ -117,6 +124,38 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     console.error('Error during login:', error);
+
+    if (
+      isFirebaseQuotaError(error) &&
+      email &&
+      isDemoAdminCredentials(email, password)
+    ) {
+      const safeUser = getDemoAdminUser();
+      const sessionToken = createSessionToken({
+        id: safeUser.id,
+        email: safeUser.email,
+        role: safeUser.role,
+      });
+      const response = NextResponse.json({
+        user: safeUser,
+        token: sessionToken,
+        quotaExceeded: true,
+        demoAuth: true,
+        warning:
+          'Signed in with demo admin because Firestore quota is exceeded. Dashboard data may be limited until quota resets.',
+      });
+      const cookieOptions = getSessionCookieOptions();
+      response.cookies.set(cookieOptions.name, sessionToken, cookieOptions);
+      return response;
+    }
+
+    if (isFirebaseQuotaError(error)) {
+      return NextResponse.json(
+        { error: 'firebase_quota_exceeded' },
+        { status: 503 }
+      );
+    }
+
     const message =
       error instanceof Error ? error.message : 'Login failed';
     const isFirebaseConfig =

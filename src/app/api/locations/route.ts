@@ -5,6 +5,7 @@ import {
 } from '@/lib/firebase-admin';
 import { getDemoCountries } from '@/lib/demo-properties';
 import { isFirebaseQuotaError } from '@/lib/firebase-errors';
+import { normalizeFlagStorage } from '@/lib/country-flags';
 import {
   createCountryInFirestore,
   listLocationsFromFirestore,
@@ -16,11 +17,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json([]);
   }
 
-  try {
-    const { searchParams } = new URL(request.url);
-    const includeProperties = searchParams.get('includeProperties') === 'true';
-    const includeInactive = searchParams.get('includeInactive') === 'true';
+  const { searchParams } = new URL(request.url);
+  const includeProperties = searchParams.get('includeProperties') === 'true';
+  const includeInactive = searchParams.get('includeInactive') === 'true';
 
+  try {
     const countries = await listLocationsFromFirestore({
       includeProperties,
       includeInactive,
@@ -31,7 +32,12 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching locations:', error);
 
     if (isFirebaseQuotaError(error)) {
-      return NextResponse.json(getDemoCountries());
+      return NextResponse.json(
+        getDemoCountries({ includeProperties }),
+        {
+          headers: { 'X-Data-Source': 'demo' },
+        },
+      );
     }
 
     return NextResponse.json(
@@ -54,8 +60,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const name = String(body?.name ?? '').trim();
     const code = String(body?.code ?? '').trim().toUpperCase();
-    const flag = String(body?.flag ?? '').trim() || null;
+    const flag = normalizeFlagStorage(String(body?.flag ?? '').trim() || null, code);
     const currency = String(body?.currency ?? '').trim() || null;
+    const currencySymbol = String(body?.currencySymbol ?? '').trim() || null;
 
     if (!name || !code) {
       return NextResponse.json({ error: 'Name and code are required' }, { status: 400 });
@@ -66,6 +73,7 @@ export async function POST(request: NextRequest) {
       code,
       flag,
       currency,
+      currencySymbol,
     });
 
     return NextResponse.json(created, { status: 201 });

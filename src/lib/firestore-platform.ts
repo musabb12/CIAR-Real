@@ -544,6 +544,159 @@ export async function deleteCountryInFirestore(id: string) {
   await countryCollection().doc(id).delete();
 }
 
+async function persistCountryRegions(
+  countryId: string,
+  regions: NonNullable<Awaited<ReturnType<typeof getCountryById>>>['regions'],
+) {
+  await countryCollection().doc(countryId).update({
+    regions: regions ?? [],
+    updatedAt: nowIso(),
+  });
+}
+
+export async function createRegionInCountry(countryId: string, name: string) {
+  const country = await getCountryById(countryId);
+  if (!country) return null;
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error('Region name is required');
+
+  const region = {
+    id: makeId('region'),
+    name: trimmed,
+    countryId,
+    createdAt: nowIso(),
+    cities: [] as Array<{ id: string; name: string; regionId: string }>,
+  };
+  const regions = [...(country.regions ?? []), region];
+  await persistCountryRegions(countryId, regions);
+  return regionDocToRegion(region as unknown as Record<string, unknown>);
+}
+
+export async function updateRegionInCountry(
+  countryId: string,
+  regionId: string,
+  input: { name: string },
+) {
+  const country = await getCountryById(countryId);
+  if (!country) return null;
+  const trimmed = input.name.trim();
+  if (!trimmed) throw new Error('Region name is required');
+
+  const regions = (country.regions ?? []).map((r) =>
+    r.id === regionId ? { ...r, name: trimmed } : r,
+  );
+  if (!regions.some((r) => r.id === regionId)) return null;
+
+  await persistCountryRegions(countryId, regions);
+  await refreshPropertiesForCountry(countryId);
+  return regions.find((r) => r.id === regionId) ?? null;
+}
+
+export async function deleteRegionFromCountry(countryId: string, regionId: string) {
+  const linked = (await listAllPropertiesFromFirestore()).filter(
+    (p) => p.regionId === regionId,
+  ).length;
+  if (linked > 0) {
+    throw new Error(
+      'This region still has properties assigned to it. Remove or reassign listings first.',
+    );
+  }
+
+  const country = await getCountryById(countryId);
+  if (!country) return false;
+  const regions = (country.regions ?? []).filter((r) => r.id !== regionId);
+  if (regions.length === (country.regions ?? []).length) return false;
+
+  await persistCountryRegions(countryId, regions);
+  return true;
+}
+
+export async function createCityInRegion(
+  countryId: string,
+  regionId: string,
+  name: string,
+) {
+  const country = await getCountryById(countryId);
+  if (!country) return null;
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error('City name is required');
+
+  let created: { id: string; name: string; regionId: string } | null = null;
+  const regions = (country.regions ?? []).map((r) => {
+    if (r.id !== regionId) return r;
+    const city = { id: makeId('city'), name: trimmed, regionId };
+    created = city;
+    return { ...r, cities: [...(r.cities ?? []), city] };
+  });
+
+  if (!created) return null;
+  await persistCountryRegions(countryId, regions);
+  return created;
+}
+
+export async function updateCityInRegion(
+  countryId: string,
+  regionId: string,
+  cityId: string,
+  input: { name: string },
+) {
+  const country = await getCountryById(countryId);
+  if (!country) return null;
+  const trimmed = input.name.trim();
+  if (!trimmed) throw new Error('City name is required');
+
+  let updated: { id: string; name: string; regionId: string } | null = null;
+  const regions = (country.regions ?? []).map((r) => {
+    if (r.id !== regionId) return r;
+    const cities = (r.cities ?? []).map((c) => {
+      if (c.id !== cityId) return c;
+      updated = { ...c, name: trimmed };
+      return updated;
+    });
+    return { ...r, cities };
+  });
+
+  if (!updated) return null;
+  await persistCountryRegions(countryId, regions);
+  await refreshPropertiesForCountry(countryId);
+  return updated;
+}
+
+export async function deleteCityFromRegion(
+  countryId: string,
+  regionId: string,
+  cityId: string,
+) {
+  const linked = (await listAllPropertiesFromFirestore()).filter(
+    (p) => p.cityId === cityId,
+  ).length;
+  if (linked > 0) {
+    throw new Error(
+      'This city still has properties assigned to it. Remove or reassign listings first.',
+    );
+  }
+
+  const country = await getCountryById(countryId);
+  if (!country) return false;
+
+  let removed = false;
+  const regions = (country.regions ?? []).map((r) => {
+    if (r.id !== regionId) return r;
+    const cities = (r.cities ?? []).filter((c) => {
+      if (c.id === cityId) {
+        removed = true;
+        return false;
+      }
+      return true;
+    });
+    return { ...r, cities };
+  });
+
+  if (!removed) return false;
+  await persistCountryRegions(countryId, regions);
+  return true;
+}
+
 export async function listAmenitiesFromFirestore() {
   return getAllAmenities();
 }

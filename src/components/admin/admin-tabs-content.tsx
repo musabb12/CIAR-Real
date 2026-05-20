@@ -34,6 +34,7 @@ import {
   Plus,
   Link2,
   Palette,
+  Settings,
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
@@ -52,6 +53,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { CountrySettingsPanel } from '@/components/admin/country-settings-panel';
+import { CountryFlagBadge, FlagPicker } from '@/components/admin/flag-picker';
+import { normalizeFlagStorage } from '@/lib/country-flags';
 
 const PropertyAdminMapPicker = dynamic(
   () => import('./property-admin-map-picker').then((m) => m.PropertyAdminMapPicker),
@@ -84,6 +88,12 @@ function mapLocationAdminError(isAr: boolean, message: string): string {
   }
   if (/failed to update country/i.test(m)) {
     return tx(isAr, 'تعذر تحديث الدولة.', 'Could not update country.');
+  }
+  if (/region still has properties/i.test(m)) {
+    return tx(isAr, 'المنطقة مرتبطة بعقارات.', 'Region has linked properties.');
+  }
+  if (/city still has properties/i.test(m)) {
+    return tx(isAr, 'المدينة مرتبطة بعقارات.', 'City has linked properties.');
   }
   return m;
 }
@@ -1220,9 +1230,16 @@ export function FeaturedTab({ isAr }: { isAr: boolean }) {
 // ─── Locations Tab ─────────────────────────────
 export function LocationsTab({ isAr }: { isAr: boolean }) {
   const [refreshKey, setRefreshKey] = useState(0);
+  const [settingsCountryId, setSettingsCountryId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ name: '', code: '', flag: '', currency: '' });
+  const [form, setForm] = useState({
+    name: '',
+    code: '',
+    flag: '',
+    currency: '',
+    currencySymbol: '',
+  });
   const bump = () => setRefreshKey((k) => k + 1);
   type Row = {
     id: string;
@@ -1244,10 +1261,14 @@ export function LocationsTab({ isAr }: { isAr: boolean }) {
       key: 'name',
       header: { ar: 'الدولة', en: 'Country' },
       render: (r) => (
-        <div className="flex items-center gap-2">
-          <span className="text-lg">{r.flag ?? '🌍'}</span>
+        <button
+          type="button"
+          className="flex items-center gap-2 text-start hover:opacity-90"
+          onClick={() => setSettingsCountryId(r.id)}
+        >
+          <CountryFlagBadge flag={r.flag} code={r.code} />
           <span className="font-semibold">{r.name}</span>
-        </div>
+        </button>
       ),
     },
     { key: 'code', header: { ar: 'الرمز', en: 'Code' }, render: (r) => <span className="font-mono text-[11px] text-[var(--admin-text-mute)]">{r.code}</span> },
@@ -1273,6 +1294,12 @@ export function LocationsTab({ isAr }: { isAr: boolean }) {
     { key: 'properties', header: { ar: 'العقارات', en: 'Properties' }, render: (r) => <span className="font-bold">{r._count?.properties ?? 0}</span> },
   ];
   const rowActions = (r: Row): RowAction[] => [
+    {
+      id: 'settings',
+      label: tx(isAr, 'إعدادات الدولة', 'Country settings'),
+      icon: Settings,
+      onClick: () => setSettingsCountryId(r.id),
+    },
     {
       id: 'toggle-active',
       label: tx(isAr, r.isActive ? 'تعطيل الدولة' : 'تفعيل الدولة', r.isActive ? 'Disable country' : 'Enable country'),
@@ -1343,10 +1370,14 @@ export function LocationsTab({ isAr }: { isAr: boolean }) {
       await adminFetch('/api/locations', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          code: form.code.trim().toUpperCase(),
+          flag: normalizeFlagStorage(form.flag, form.code),
+        }),
       });
       setOpen(false);
-      setForm({ name: '', code: '', flag: '', currency: '' });
+      setForm({ name: '', code: '', flag: '', currency: '', currencySymbol: '' });
       toast.success(tx(isAr, 'تمت الإضافة', 'Country added'));
       bump();
     } catch (e) {
@@ -1358,13 +1389,27 @@ export function LocationsTab({ isAr }: { isAr: boolean }) {
     }
   };
 
+  if (settingsCountryId) {
+    return (
+      <CountrySettingsPanel
+        countryId={settingsCountryId}
+        isAr={isAr}
+        onBack={() => setSettingsCountryId(null)}
+        onUpdated={bump}
+      />
+    );
+  }
+
   return (
     <>
       <AdminSection<Row>
         key={refreshKey}
         isAr={isAr}
         title={{ ar: 'الدول والمدن', en: 'Countries & Cities' }}
-        subtitle={{ ar: 'إدارة الدول والمناطق والمدن', en: 'Manage countries, regions, and cities' }}
+        subtitle={{
+          ar: 'كل دولة لها صفحة إعدادات: المناطق، المدن، العلم، والعملة',
+          en: 'Each country has a settings page for regions, cities, flag, and currency',
+        }}
         endpoint="/api/locations?includeProperties=true&includeInactive=true"
         parseRows={parseRows}
         columns={columns}
@@ -1374,23 +1419,50 @@ export function LocationsTab({ isAr }: { isAr: boolean }) {
       />
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{tx(isAr, 'إضافة دولة جديدة', 'Add country')}</DialogTitle>
-            <DialogDescription>{tx(isAr, 'يمكنك إدارتها لاحقاً من قائمة الدول', 'You can manage it later from countries list')}</DialogDescription>
+            <DialogDescription>
+              {tx(
+                isAr,
+                'اختر العلم من قائمة صور أعلام الدول، ثم أضف المناطق والمدن من صفحة الإعدادات',
+                'Pick a flag image from the world list, then add regions and cities in settings',
+              )}
+            </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3">
             <Field label={tx(isAr, 'الاسم', 'Name')}>
               <input className="admin-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
             </Field>
             <Field label={tx(isAr, 'الرمز (ISO)', 'Code (ISO)')}>
-              <input className="admin-input" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value.toUpperCase() })} />
-            </Field>
-            <Field label={tx(isAr, 'العلم', 'Flag')}>
-              <input className="admin-input" value={form.flag} onChange={(e) => setForm({ ...form, flag: e.target.value })} placeholder="🇸🇦" />
+              <input
+                className="admin-input font-mono"
+                value={form.code}
+                maxLength={2}
+                onChange={(e) => {
+                  const code = e.target.value.toUpperCase().slice(0, 2);
+                  setForm((f) => ({ ...f, code, flag: f.flag || code }));
+                }}
+              />
             </Field>
             <Field label={tx(isAr, 'العملة', 'Currency')}>
               <input className="admin-input" value={form.currency} onChange={(e) => setForm({ ...form, currency: e.target.value })} placeholder="SAR" />
+            </Field>
+            <Field label={tx(isAr, 'رمز العملة', 'Currency symbol')}>
+              <input
+                className="admin-input"
+                value={form.currencySymbol}
+                onChange={(e) => setForm({ ...form, currencySymbol: e.target.value })}
+                placeholder="ر.س"
+              />
+            </Field>
+            <Field label={tx(isAr, 'علم الدولة', 'Country flag')}>
+              <FlagPicker
+                value={form.flag}
+                countryCode={form.code}
+                isAr={isAr}
+                onChange={(code) => setForm({ ...form, flag: code })}
+              />
             </Field>
           </div>
           <DialogFooter>

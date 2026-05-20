@@ -1,4 +1,5 @@
-import type { Country, Property } from '@/types';
+import { normalizeFlagStorage } from '@/lib/country-flags';
+import type { City, Country, Property, Region } from '@/types';
 
 const ISO = new Date().toISOString();
 
@@ -259,13 +260,87 @@ export function getDemoPropertyById(id: string): Property | null {
   return DEMO_PROPERTIES.find((p) => p.id === id) ?? null;
 }
 
-export function getDemoCountries(): Country[] {
-  const seen = new Set<string>();
-  const countries: Country[] = [];
+type DemoCountryRow = Country & {
+  regions?: Array<
+    Region & {
+      cities?: Array<City & { _count?: { properties: number } }>;
+      _count?: { properties: number };
+    }
+  >;
+  _count?: { properties: number };
+};
+
+function buildDemoLocationTree(includeCounts: boolean): DemoCountryRow[] {
+  const countryMap = new Map<string, DemoCountryRow>();
+  const regionMap = new Map<string, Region & { cities: City[]; _count?: { properties: number } }>();
+  const cityMap = new Map<string, City>();
+
   for (const p of DEMO_PROPERTIES) {
-    if (!p.country || seen.has(p.country.id)) continue;
-    seen.add(p.country.id);
-    countries.push({ ...p.country, regions: [] });
+    if (!p.country) continue;
+
+    const flag = normalizeFlagStorage(p.country.flag, p.country.code);
+    if (!countryMap.has(p.country.id)) {
+      countryMap.set(p.country.id, {
+        ...p.country,
+        flag,
+        currencySymbol: p.country.currencySymbol ?? null,
+        isFeatured: p.country.isFeatured ?? false,
+        regions: [],
+        _count: includeCounts ? { properties: 0 } : undefined,
+      });
+    }
+
+    if (p.region && !regionMap.has(p.region.id)) {
+      const region: Region & { cities: City[]; _count?: { properties: number } } = {
+        ...p.region,
+        cities: [],
+        _count: includeCounts ? { properties: 0 } : undefined,
+      };
+      regionMap.set(p.region.id, region);
+      const country = countryMap.get(p.country.id)!;
+      if (!country.regions!.some((r) => r.id === region.id)) {
+        country.regions!.push(region);
+      }
+    }
+
+    if (p.city && !cityMap.has(p.city.id)) {
+      cityMap.set(p.city.id, p.city);
+      const region = regionMap.get(p.city.regionId);
+      if (region && !region.cities.some((c) => c.id === p.city!.id)) {
+        region.cities.push({
+          ...p.city,
+          ...(includeCounts ? { _count: { properties: 0 } } : {}),
+        });
+      }
+    }
+
+    if (includeCounts) {
+      const country = countryMap.get(p.country.id)!;
+      country._count!.properties += 1;
+      if (p.region) {
+        const region = regionMap.get(p.region.id);
+        if (region?._count) region._count.properties += 1;
+      }
+      if (p.city) {
+        const region = regionMap.get(p.city.regionId);
+        const city = region?.cities.find((c) => c.id === p.city!.id) as
+          | (City & { _count?: { properties: number } })
+          | undefined;
+        if (city?._count) city._count.properties += 1;
+      }
+    }
   }
-  return countries;
+
+  return Array.from(countryMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function getDemoCountries(options?: { includeProperties?: boolean }): DemoCountryRow[] {
+  return buildDemoLocationTree(Boolean(options?.includeProperties));
+}
+
+export function getDemoCountryById(
+  id: string,
+  options?: { includeProperties?: boolean },
+): DemoCountryRow | null {
+  return getDemoCountries(options).find((c) => c.id === id) ?? null;
 }

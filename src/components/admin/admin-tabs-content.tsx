@@ -1231,6 +1231,7 @@ export function FeaturedTab({ isAr }: { isAr: boolean }) {
 export function LocationsTab({ isAr }: { isAr: boolean }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [settingsCountryId, setSettingsCountryId] = useState<string | null>(null);
+  const [demoNotice, setDemoNotice] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
@@ -1251,11 +1252,27 @@ export function LocationsTab({ isAr }: { isAr: boolean }) {
     isFeatured?: boolean;
     _count?: { properties: number };
   };
-  const parseRows = useCallback((d: unknown): Row[] => {
-    if (Array.isArray(d)) return d as Row[];
-    const data = d as { countries?: Row[] };
-    return data.countries ?? [];
-  }, []);
+  const parseRows = useCallback(
+    (d: unknown): Row[] => {
+      if (Array.isArray(d)) {
+        setDemoNotice(null);
+        return d as Row[];
+      }
+      const data = d as {
+        countries?: Row[];
+        dataSource?: string;
+        messageAr?: string;
+        messageEn?: string;
+      };
+      if (data.dataSource === 'demo') {
+        setDemoNotice(isAr ? data.messageAr ?? null : data.messageEn ?? null);
+      } else {
+        setDemoNotice(null);
+      }
+      return data.countries ?? [];
+    },
+    [isAr],
+  );
   const columns: ColumnDef<Row>[] = [
     {
       key: 'name',
@@ -1402,6 +1419,11 @@ export function LocationsTab({ isAr }: { isAr: boolean }) {
 
   return (
     <>
+      {demoNotice && (
+        <div className="mb-4 rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90">
+          {demoNotice}
+        </div>
+      )}
       <AdminSection<Row>
         key={refreshKey}
         isAr={isAr}
@@ -1416,6 +1438,7 @@ export function LocationsTab({ isAr }: { isAr: boolean }) {
         searchKeys={['name', 'code']}
         rowActions={rowActions}
         onAdd={() => setOpen(true)}
+        pageSize={20}
       />
 
       <Dialog open={open} onOpenChange={setOpen}>

@@ -3,7 +3,7 @@ import {
   getFirebaseAdminConfigError,
   isFirebaseAdminConfigured,
 } from '@/lib/firebase-admin';
-import { getDemoCountries } from '@/lib/demo-properties';
+import { getDemoLocationsPayload } from '@/lib/demo-properties';
 import { isFirebaseQuotaError } from '@/lib/firebase-errors';
 import { normalizeFlagStorage } from '@/lib/country-flags';
 import {
@@ -32,12 +32,9 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching locations:', error);
 
     if (isFirebaseQuotaError(error)) {
-      return NextResponse.json(
-        getDemoCountries({ includeProperties }),
-        {
-          headers: { 'X-Data-Source': 'demo' },
-        },
-      );
+      return NextResponse.json(getDemoLocationsPayload({ includeProperties }), {
+        headers: { 'X-Data-Source': 'demo' },
+      });
     }
 
     return NextResponse.json(

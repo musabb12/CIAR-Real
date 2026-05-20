@@ -1,4 +1,5 @@
 import { normalizeFlagStorage } from '@/lib/country-flags';
+import { getSeedCountriesCatalog, getSeedCountryById } from '@/lib/seed-countries-catalog';
 import type { City, Country, Property, Region } from '@/types';
 
 const ISO = new Date().toISOString();
@@ -270,68 +271,39 @@ type DemoCountryRow = Country & {
   _count?: { properties: number };
 };
 
-function buildDemoLocationTree(includeCounts: boolean): DemoCountryRow[] {
-  const countryMap = new Map<string, DemoCountryRow>();
-  const regionMap = new Map<string, Region & { cities: City[]; _count?: { properties: number } }>();
-  const cityMap = new Map<string, City>();
-
+function propertyCountsByCountry(): Map<string, number> {
+  const counts = new Map<string, number>();
   for (const p of DEMO_PROPERTIES) {
-    if (!p.country) continue;
-
-    const flag = normalizeFlagStorage(p.country.flag, p.country.code);
-    if (!countryMap.has(p.country.id)) {
-      countryMap.set(p.country.id, {
-        ...p.country,
-        flag,
-        currencySymbol: p.country.currencySymbol ?? null,
-        isFeatured: p.country.isFeatured ?? false,
-        regions: [],
-        _count: includeCounts ? { properties: 0 } : undefined,
-      });
-    }
-
-    if (p.region && !regionMap.has(p.region.id)) {
-      const region: Region & { cities: City[]; _count?: { properties: number } } = {
-        ...p.region,
-        cities: [],
-        _count: includeCounts ? { properties: 0 } : undefined,
-      };
-      regionMap.set(p.region.id, region);
-      const country = countryMap.get(p.country.id)!;
-      if (!country.regions!.some((r) => r.id === region.id)) {
-        country.regions!.push(region);
-      }
-    }
-
-    if (p.city && !cityMap.has(p.city.id)) {
-      cityMap.set(p.city.id, p.city);
-      const region = regionMap.get(p.city.regionId);
-      if (region && !region.cities.some((c) => c.id === p.city!.id)) {
-        region.cities.push({
-          ...p.city,
-          ...(includeCounts ? { _count: { properties: 0 } } : {}),
-        });
-      }
-    }
-
-    if (includeCounts) {
-      const country = countryMap.get(p.country.id)!;
-      country._count!.properties += 1;
-      if (p.region) {
-        const region = regionMap.get(p.region.id);
-        if (region?._count) region._count.properties += 1;
-      }
-      if (p.city) {
-        const region = regionMap.get(p.city.regionId);
-        const city = region?.cities.find((c) => c.id === p.city!.id) as
-          | (City & { _count?: { properties: number } })
-          | undefined;
-        if (city?._count) city._count.properties += 1;
-      }
-    }
+    const id = p.countryId || p.country?.id;
+    if (!id) continue;
+    counts.set(id, (counts.get(id) || 0) + 1);
   }
+  return counts;
+}
 
-  return Array.from(countryMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+/** Full seed catalog (68 countries) with optional listing counts from demo properties. */
+function buildDemoLocationTree(includeCounts: boolean): DemoCountryRow[] {
+  const counts = propertyCountsByCountry();
+
+  return getSeedCountriesCatalog()
+    .map((c) => ({
+      ...c,
+      flag: normalizeFlagStorage(c.flag, c.code),
+      currencySymbol: c.currencySymbol ?? null,
+      isFeatured: c.isFeatured ?? false,
+      regions: (c.regions ?? []).map((r) => ({
+        ...r,
+        cities: (r.cities ?? []).map((city) => ({
+          ...city,
+          ...(includeCounts ? { _count: { properties: 0 } } : {}),
+        })),
+        ...(includeCounts ? { _count: { properties: 0 } } : {}),
+      })),
+      ...(includeCounts
+        ? { _count: { properties: counts.get(c.id) || 0 } }
+        : {}),
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 export function getDemoCountries(options?: { includeProperties?: boolean }): DemoCountryRow[] {
@@ -342,5 +314,35 @@ export function getDemoCountryById(
   id: string,
   options?: { includeProperties?: boolean },
 ): DemoCountryRow | null {
-  return getDemoCountries(options).find((c) => c.id === id) ?? null;
+  const fromList = getDemoCountries(options).find(
+    (c) => c.id === id || c.code.toLowerCase() === id.toLowerCase(),
+  );
+  if (fromList) return fromList;
+
+  const seed = getSeedCountryById(id);
+  if (!seed) return null;
+
+  const includeCounts = Boolean(options?.includeProperties);
+  const counts = propertyCountsByCountry();
+  return {
+    ...seed,
+    flag: normalizeFlagStorage(seed.flag, seed.code),
+    currencySymbol: seed.currencySymbol ?? null,
+    isFeatured: false,
+    regions: seed.regions ?? [],
+    ...(includeCounts ? { _count: { properties: counts.get(seed.id) || 0 } } : {}),
+  };
+}
+
+export function getDemoLocationsPayload(options?: { includeProperties?: boolean }) {
+  return {
+    countries: getDemoCountries(options),
+    dataSource: 'demo' as const,
+    quotaExceeded: true,
+    total: getSeedCountriesCatalog().length,
+    messageAr:
+      'عرض كتالوج الدول المحلي (68 دولة) لأن حصة Firebase منتهية. البيانات الحقيقية في Firestore ستظهر بعد إعادة التعيين أو ترقية الخطة.',
+    messageEn:
+      'Showing local country catalog (68 countries) because Firebase quota is exceeded. Live Firestore data returns after quota reset or plan upgrade.',
+  };
 }

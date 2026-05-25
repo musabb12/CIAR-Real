@@ -196,8 +196,9 @@ function WelcomeHero({
     >
       <div className="admin-welcome-shine absolute inset-0 pointer-events-none rounded-[18px]" />
       {/* Decorative orbs */}
-      <div className="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-amber-500/15 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-24 -left-24 h-56 w-56 rounded-full bg-emerald-500/12 blur-3xl pointer-events-none" />
+      <div className="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-orange-500/22 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-24 -left-24 h-48 w-48 rounded-full bg-amber-500/18 blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 left-1/3 h-32 w-32 rounded-full bg-orange-400/10 blur-2xl pointer-events-none" />
 
       <div className="relative flex flex-col xl:flex-row xl:items-end xl:justify-between gap-6">
         {/* Left: greeting */}

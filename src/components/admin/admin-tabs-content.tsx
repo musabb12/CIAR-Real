@@ -54,6 +54,9 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { CountrySettingsPanel } from '@/components/admin/country-settings-panel';
+import { AgentSettingsPanel } from '@/components/admin/agent-settings-panel';
+import { CompanySettingsPanel } from '@/components/admin/company-settings-panel';
+import { AdminEntityGrid } from '@/components/admin/admin-entity-grid';
 import { CountryFlagBadge, FlagPicker } from '@/components/admin/flag-picker';
 import { normalizeFlagStorage } from '@/lib/country-flags';
 
@@ -354,68 +357,73 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
     },
   ];
 
+  const openPropertyEdit = useCallback(
+    async (r: PropertiesTabRow) => {
+      setEditingId(r.id);
+      setOpen(true);
+      setEditLoading(true);
+      setImageGallery([]);
+      try {
+        const res = await fetch(`/api/properties/${r.id}?skipView=1`);
+        if (!res.ok) throw new Error('load');
+        const p = (await res.json()) as {
+          title: string;
+          description: string;
+          price: number;
+          listingType: string;
+          propertyType: string;
+          status: string;
+          area: number;
+          bedrooms: number | null;
+          bathrooms: number | null;
+          countryId: string;
+          regionId: string;
+          cityId: string;
+          address?: string | null;
+          latitude?: number | null;
+          longitude?: number | null;
+          images?: Array<{ url: string; isCover?: boolean }>;
+        };
+        setForm({
+          title: p.title ?? '',
+          description: p.description ?? '',
+          price: String(p.price ?? ''),
+          listingType: p.listingType ?? 'SALE',
+          propertyType: p.propertyType ?? 'APARTMENT',
+          status: p.status ?? 'AVAILABLE',
+          area: String(p.area ?? ''),
+          bedrooms: p.bedrooms != null ? String(p.bedrooms) : '',
+          bathrooms: p.bathrooms != null ? String(p.bathrooms) : '',
+          countryId: p.countryId ?? '',
+          regionId: p.regionId ?? '',
+          cityId: p.cityId ?? '',
+          address: p.address ?? '',
+          latitude: p.latitude != null ? String(p.latitude) : '',
+          longitude: p.longitude != null ? String(p.longitude) : '',
+        });
+        setImageGallery(
+          (p.images ?? []).map((img, i) => ({
+            url: img.url,
+            isCover: Boolean(img.isCover) || i === 0,
+          }))
+        );
+      } catch {
+        toast.error(tx(isAr, 'تعذر تحميل العقار', 'Could not load property'));
+        setOpen(false);
+        setEditingId(null);
+      } finally {
+        setEditLoading(false);
+      }
+    },
+    [isAr]
+  );
+
   const rowActions = (r: PropertiesTabRow): RowAction[] => [
     {
       id: 'edit',
       label: tx(isAr, 'تعديل العقار', 'Edit property'),
       icon: Sparkles,
-      onClick: async () => {
-        setEditingId(r.id);
-        setOpen(true);
-        setEditLoading(true);
-        setImageGallery([]);
-        try {
-          const res = await fetch(`/api/properties/${r.id}?skipView=1`);
-          if (!res.ok) throw new Error('load');
-          const p = (await res.json()) as {
-            title: string;
-            description: string;
-            price: number;
-            listingType: string;
-            propertyType: string;
-            status: string;
-            area: number;
-            bedrooms: number | null;
-            bathrooms: number | null;
-            countryId: string;
-            regionId: string;
-            cityId: string;
-            address?: string | null;
-            latitude?: number | null;
-            longitude?: number | null;
-            images?: Array<{ url: string; isCover?: boolean }>;
-          };
-          setForm({
-            title: p.title ?? '',
-            description: p.description ?? '',
-            price: String(p.price ?? ''),
-            listingType: p.listingType ?? 'SALE',
-            propertyType: p.propertyType ?? 'APARTMENT',
-            status: p.status ?? 'AVAILABLE',
-            area: String(p.area ?? ''),
-            bedrooms: p.bedrooms != null ? String(p.bedrooms) : '',
-            bathrooms: p.bathrooms != null ? String(p.bathrooms) : '',
-            countryId: p.countryId ?? '',
-            regionId: p.regionId ?? '',
-            cityId: p.cityId ?? '',
-            address: p.address ?? '',
-            latitude: p.latitude != null ? String(p.latitude) : '',
-            longitude: p.longitude != null ? String(p.longitude) : '',
-          });
-          setImageGallery(
-            (p.images ?? []).map((img, i) => ({
-              url: img.url,
-              isCover: Boolean(img.isCover) || i === 0,
-            }))
-          );
-        } catch {
-          toast.error(tx(isAr, 'تعذر تحميل العقار', 'Could not load property'));
-          setOpen(false);
-          setEditingId(null);
-        } finally {
-          setEditLoading(false);
-        }
-      },
+      onClick: () => void openPropertyEdit(r),
     },
     {
       id: 'feat',
@@ -732,8 +740,7 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
     <AdminSection<PropertiesTabRow>
       key={refreshKey}
       isAr={isAr}
-      title={{ ar: 'إدارة العقارات', en: 'Manage Properties' }}
-      subtitle={{ ar: 'كل العقارات المُدرجة على المنصة — التعديل يظهر فوراً في البحث والقوائم', en: 'All listings — changes apply instantly across the site' }}
+      subtitle={{ ar: 'أضف أو عدّل أو احذف عقاراً', en: 'Add, edit, or remove a listing' }}
       endpoint="/api/properties?limit=100"
       parseRows={parseRows}
       columns={columns}
@@ -783,7 +790,19 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
             </div>
           ) : null}
           {cardRows.map((r) => (
-            <div key={r.id} className="admin-card p-4">
+            <div
+              key={r.id}
+              role="button"
+              tabIndex={0}
+              className="admin-card p-4 cursor-pointer transition-all hover:border-amber-400/35 hover:shadow-lg hover:shadow-amber-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+              onClick={() => void openPropertyEdit(r)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  void openPropertyEdit(r);
+                }
+              }}
+            >
               <div className="relative h-36 rounded-xl overflow-hidden border border-white/10 bg-white/[0.04] mb-3">
                 <img
                   src={r.images?.find((img) => img.isCover)?.url || r.images?.[0]?.url || 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=80&auto=format&fit=crop'}
@@ -791,7 +810,11 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
                   className="h-full w-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/20 to-transparent" />
-                <div className="absolute top-2 end-2 z-10 [&_button]:!bg-black/55 [&_button]:!border-white/15 [&_button]:hover:!bg-black/70">
+                <div
+                  className="absolute top-2 end-2 z-10 [&_button]:!bg-black/55 [&_button]:!border-white/15 [&_button]:hover:!bg-black/70"
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                >
                   <AdminRowMenu
                     actions={rowActions(r)}
                     ariaLabel={tx(isAr, 'إجراءات العقار', 'Property actions')}
@@ -1232,6 +1255,41 @@ export function LocationsTab({ isAr }: { isAr: boolean }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [settingsCountryId, setSettingsCountryId] = useState<string | null>(null);
   const [demoNotice, setDemoNotice] = useState<string | null>(null);
+  const [checkingFirestore, setCheckingFirestore] = useState(false);
+
+  const recheckFirestore = async () => {
+    setCheckingFirestore(true);
+    try {
+      const res = await fetch('/api/firestore-status');
+      const data = await res.json();
+      if (data.ok && !data.quotaExceeded) {
+        setDemoNotice(null);
+        toast.success(
+          tx(isAr, 'Firestore متصل — جارٍ تحديث القائمة', 'Firestore is connected — refreshing list'),
+        );
+        bump();
+        return;
+      }
+      if (data.quotaExceeded) {
+        setDemoNotice(
+          tx(
+            isAr,
+            'ما زالت حصة Firebase منتهية. انتظر قليلاً أو فعّل خطة Blaze في Firebase Console.',
+            'Firebase quota is still exceeded. Wait a bit or enable the Blaze plan in Firebase Console.',
+          ),
+        );
+        toast.error(tx(isAr, 'الحصة ما زالت منتهية', 'Quota still exceeded'));
+        return;
+      }
+      toast.error(tx(isAr, 'Firestore غير متاح', 'Firestore unavailable'), {
+        description: typeof data.error === 'string' ? data.error : '',
+      });
+    } catch {
+      toast.error(tx(isAr, 'فشل التحقق', 'Check failed'));
+    } finally {
+      setCheckingFirestore(false);
+    }
+  };
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({
@@ -1252,7 +1310,7 @@ export function LocationsTab({ isAr }: { isAr: boolean }) {
     isFeatured?: boolean;
     _count?: { properties: number };
   };
-  const parseRows = useCallback(
+  const parseItems = useCallback(
     (d: unknown): Row[] => {
       if (Array.isArray(d)) {
         setDemoNotice(null);
@@ -1266,6 +1324,8 @@ export function LocationsTab({ isAr }: { isAr: boolean }) {
       };
       if (data.dataSource === 'demo') {
         setDemoNotice(isAr ? data.messageAr ?? null : data.messageEn ?? null);
+      } else if (data.dataSource === 'firestore') {
+        setDemoNotice(null);
       } else {
         setDemoNotice(null);
       }
@@ -1273,109 +1333,6 @@ export function LocationsTab({ isAr }: { isAr: boolean }) {
     },
     [isAr],
   );
-  const columns: ColumnDef<Row>[] = [
-    {
-      key: 'name',
-      header: { ar: 'الدولة', en: 'Country' },
-      render: (r) => (
-        <button
-          type="button"
-          className="flex items-center gap-2 text-start hover:opacity-90"
-          onClick={() => setSettingsCountryId(r.id)}
-        >
-          <CountryFlagBadge flag={r.flag} code={r.code} />
-          <span className="font-semibold">{r.name}</span>
-        </button>
-      ),
-    },
-    { key: 'code', header: { ar: 'الرمز', en: 'Code' }, render: (r) => <span className="font-mono text-[11px] text-[var(--admin-text-mute)]">{r.code}</span> },
-    { key: 'currency', header: { ar: 'العملة', en: 'Currency' }, render: (r) => r.currency ?? '—' },
-    {
-      key: 'status',
-      header: { ar: 'الحالة', en: 'Status' },
-      render: (r) => (
-        <span className={`admin-pill ${r.isActive ? 'admin-pill-up' : 'admin-pill-down'}`}>
-          {r.isActive ? tx(isAr, 'نشطة', 'Active') : tx(isAr, 'معطلة', 'Disabled')}
-        </span>
-      ),
-    },
-    {
-      key: 'featured',
-      header: { ar: 'مميزة', en: 'Featured' },
-      render: (r) => (
-        r.isFeatured
-          ? <span className="admin-pill admin-pill-gold">{tx(isAr, 'مميزة', 'Featured')}</span>
-          : <span className="text-[var(--admin-text-faint)]">—</span>
-      ),
-    },
-    { key: 'properties', header: { ar: 'العقارات', en: 'Properties' }, render: (r) => <span className="font-bold">{r._count?.properties ?? 0}</span> },
-  ];
-  const rowActions = (r: Row): RowAction[] => [
-    {
-      id: 'settings',
-      label: tx(isAr, 'إعدادات الدولة', 'Country settings'),
-      icon: Settings,
-      onClick: () => setSettingsCountryId(r.id),
-    },
-    {
-      id: 'toggle-active',
-      label: tx(isAr, r.isActive ? 'تعطيل الدولة' : 'تفعيل الدولة', r.isActive ? 'Disable country' : 'Enable country'),
-      icon: r.isActive ? EyeOff : Eye,
-      onClick: async () => {
-        try {
-          await adminFetch(`/api/locations/${r.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ isActive: !r.isActive }),
-          });
-          toast.success(tx(isAr, 'تم التحديث', 'Updated'));
-          bump();
-        } catch (e) {
-          toast.error(tx(isAr, 'فشل التحديث', 'Update failed'), {
-            description: e instanceof Error ? mapLocationAdminError(isAr, e.message) : '',
-          });
-        }
-      },
-    },
-    {
-      id: 'toggle-featured',
-      label: tx(isAr, r.isFeatured ? 'إزالة من المميزة' : 'تعيين كمميزة', r.isFeatured ? 'Unfeature country' : 'Feature country'),
-      icon: Sparkles,
-      onClick: async () => {
-        try {
-          await adminFetch(`/api/locations/${r.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ isFeatured: !r.isFeatured }),
-          });
-          toast.success(tx(isAr, 'تم التحديث', 'Updated'));
-          bump();
-        } catch (e) {
-          toast.error(tx(isAr, 'فشل التحديث', 'Update failed'), {
-            description: e instanceof Error ? mapLocationAdminError(isAr, e.message) : '',
-          });
-        }
-      },
-    },
-    {
-      id: 'delete',
-      label: tx(isAr, 'حذف الدولة', 'Delete country'),
-      icon: Trash2,
-      variant: 'danger',
-      onClick: async () => {
-        if (!window.confirm(tx(isAr, 'حذف الدولة نهائياً؟', 'Delete country permanently?'))) return;
-        try {
-          await adminFetch(`/api/locations/${r.id}`, { method: 'DELETE' });
-          toast.success(tx(isAr, 'تم الحذف', 'Deleted'));
-          bump();
-        } catch (e) {
-          toast.error(tx(isAr, 'تعذر الحذف', 'Delete failed'), {
-            description: e instanceof Error ? mapLocationAdminError(isAr, e.message) : '',
-          });
-        }
-      },
-    },
-  ];
 
   const submit = async () => {
     if (!form.name.trim() || !form.code.trim()) {
@@ -1420,25 +1377,63 @@ export function LocationsTab({ isAr }: { isAr: boolean }) {
   return (
     <>
       {demoNotice && (
-        <div className="mb-4 rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90">
-          {demoNotice}
+        <div className="mb-4 rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90 flex flex-wrap items-center justify-between gap-3">
+          <p className="flex-1 min-w-[200px]">{demoNotice}</p>
+          <button
+            type="button"
+            className="admin-btn-premium shrink-0 !py-2 !px-4 text-xs"
+            disabled={checkingFirestore}
+            onClick={() => void recheckFirestore()}
+          >
+            {checkingFirestore
+              ? tx(isAr, 'جارٍ التحقق…', 'Checking…')
+              : tx(isAr, 'تحقق من Firestore', 'Check Firestore')}
+          </button>
         </div>
       )}
-      <AdminSection<Row>
-        key={refreshKey}
+      <AdminEntityGrid<Row>
         isAr={isAr}
-        title={{ ar: 'الدول والمدن', en: 'Countries & Cities' }}
+        refreshKey={refreshKey}
         subtitle={{
-          ar: 'كل دولة لها صفحة إعدادات: المناطق، المدن، العلم، والعملة',
-          en: 'Each country has a settings page for regions, cities, flag, and currency',
+          ar: 'اضغط على أي دولة لفتح إعداداتها: المناطق، المدن، العلم',
+          en: 'Click any country for regions, cities, and flag settings',
         }}
-        endpoint="/api/locations?includeProperties=true&includeInactive=true"
-        parseRows={parseRows}
-        columns={columns}
+        endpoint="/api/locations?includeInactive=true"
+        parseItems={parseItems}
         searchKeys={['name', 'code']}
-        rowActions={rowActions}
         onAdd={() => setOpen(true)}
-        pageSize={20}
+        addLabel={{ ar: 'إضافة دولة', en: 'Add country' }}
+        emptyAr="لا توجد دول"
+        emptyEn="No countries"
+        onItemClick={(r) => setSettingsCountryId(r.id)}
+        renderCard={(r) => (
+          <div className="p-4 w-full">
+            <div className="flex items-center gap-3 mb-3">
+              <CountryFlagBadge flag={r.flag} code={r.code} />
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold text-[var(--admin-text)] truncate">{r.name}</div>
+                <div className="text-[11px] font-mono text-[var(--admin-text-faint)]">{r.code}</div>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span className={`admin-pill ${r.isActive ? 'admin-pill-up' : 'admin-pill-down'}`}>
+                {r.isActive ? tx(isAr, 'نشطة', 'Active') : tx(isAr, 'معطلة', 'Disabled')}
+              </span>
+              {r.isFeatured && (
+                <span className="admin-pill admin-pill-gold">{tx(isAr, 'مميزة', 'Featured')}</span>
+              )}
+              <span className="text-[var(--admin-text-mute)]">
+                {r._count?.properties ?? 0} {tx(isAr, 'عقار', 'properties')}
+              </span>
+            </div>
+            {r.currency && (
+              <p className="mt-2 text-[11px] text-[var(--admin-text-faint)]">
+                {tx(isAr, 'العملة', 'Currency')}: {r.currency}
+              </p>
+            )}
+            <p className="mt-3 text-[10px] text-amber-200/70">{tx(isAr, 'اضغط للإعدادات ←', 'Tap for settings →')}</p>
+          </div>
+        )}
       />
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -1628,89 +1623,60 @@ export function UsersTab({ isAr }: { isAr: boolean }) {
 // ─── Agents Tab ──────────────────────────────
 export function AgentsTab({ isAr }: { isAr: boolean }) {
   const [refreshKey, setRefreshKey] = useState(0);
+  const [settingsAgentId, setSettingsAgentId] = useState<string | null>(null);
   const bump = () => setRefreshKey((k) => k + 1);
   type Row = { id: string; rating: number; verified: boolean; totalListings: number; user?: { name?: string; email?: string }; company?: { name?: string }; _count?: { properties: number } };
-  const parseRows = useCallback((d: unknown): Row[] => (Array.isArray(d) ? (d as Row[]) : []), []);
-  const columns: ColumnDef<Row>[] = [
-    {
-      key: 'name',
-      header: { ar: 'الوكيل', en: 'Agent' },
-      render: (r) => (
-        <div className="flex items-center gap-2">
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#a78bfa]/30 to-[#2dd4bf]/30 flex items-center justify-center text-xs font-bold text-[#a78bfa]">
-            {(r.user?.name ?? '?').charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <div className="font-semibold flex items-center gap-1.5">
-              {r.user?.name ?? '—'}
-              {r.verified && <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />}
-            </div>
-            <div className="text-[11px] text-[var(--admin-text-faint)]">{r.user?.email}</div>
-          </div>
-        </div>
-      ),
-    },
-    { key: 'company', header: { ar: 'الشركة', en: 'Company' }, render: (r) => r.company?.name ?? '—' },
-    {
-      key: 'rating',
-      header: { ar: 'التقييم', en: 'Rating' },
-      render: (r) => (
-        <span className="flex items-center gap-1">
-          <Star className="h-3 w-3 text-[#f5c97b] fill-current" />
-          <span className="font-bold">{r.rating?.toFixed(1) ?? '0.0'}</span>
-        </span>
-      ),
-    },
-    { key: 'listings', header: { ar: 'القوائم', en: 'Listings' }, render: (r) => <span className="font-bold">{r._count?.properties ?? r.totalListings ?? 0}</span> },
-  ];
-  const rowActions = (r: Row): RowAction[] => [
-    {
-      id: 'verify',
-      label: tx(isAr, r.verified ? 'إلغاء التوثيق' : 'توثيق الوكيل', r.verified ? 'Unverify agent' : 'Verify agent'),
-      icon: r.verified ? ShieldOff : ShieldCheck,
-      onClick: async () => {
-        try {
-          await adminFetch(`/api/agents/${r.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ verified: !r.verified }),
-          });
-          invalidate('agents');
-          toast.success(tx(isAr, 'تم التحديث', 'Updated'));
-          bump();
-        } catch (e) {
-          toast.error(tx(isAr, 'فشل التحديث', 'Update failed'), { description: e instanceof Error ? e.message : '' });
-        }
-      },
-    },
-    {
-      id: 'del',
-      label: tx(isAr, 'حذف الوكيل', 'Delete agent'),
-      icon: Trash2,
-      variant: 'danger',
-      onClick: async () => {
-        if (!window.confirm(tx(isAr, 'حذف الوكيل نهائياً؟', 'Permanently delete this agent?'))) return;
-        try {
-          await adminFetch(`/api/agents/${r.id}`, { method: 'DELETE' });
-          invalidate('agents');
-          toast.success(tx(isAr, 'تم الحذف', 'Deleted'));
-          bump();
-        } catch (e) {
-          toast.error(tx(isAr, 'فشل الحذف', 'Delete failed'), { description: e instanceof Error ? e.message : '' });
-        }
-      },
-    },
-  ];
+  const parseItems = useCallback((d: unknown): Row[] => (Array.isArray(d) ? (d as Row[]) : []), []);
+
+  if (settingsAgentId) {
+    return (
+      <AgentSettingsPanel
+        agentId={settingsAgentId}
+        isAr={isAr}
+        onBack={() => setSettingsAgentId(null)}
+        onUpdated={bump}
+      />
+    );
+  }
+
   return (
-    <AdminSection<Row>
-      key={refreshKey}
+    <AdminEntityGrid<Row>
       isAr={isAr}
-      title={{ ar: 'إدارة الوكلاء', en: 'Manage Agents' }}
-      subtitle={{ ar: 'الوكلاء المعتمدون والشركات', en: 'Verified agents and companies' }}
+      refreshKey={refreshKey}
+      subtitle={{
+        ar: 'اضغط على أي وكيل لإدارة ملفه وصلاحياته ومهامه',
+        en: 'Click any agent to manage profile, permissions, and tasks',
+      }}
       endpoint="/api/agents"
-      parseRows={parseRows}
-      columns={columns}
-      rowActions={rowActions}
+      parseItems={parseItems}
+      emptyAr="لا يوجد وكلاء"
+      emptyEn="No agents"
+      onItemClick={(r) => setSettingsAgentId(r.id)}
+      renderCard={(r) => (
+        <div className="p-4 w-full">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-11 w-11 rounded-full bg-gradient-to-br from-[#a78bfa]/30 to-[#2dd4bf]/30 flex items-center justify-center text-sm font-bold text-[#a78bfa] shrink-0">
+              {(r.user?.name ?? '?').charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold flex items-center gap-1.5 truncate">
+                {r.user?.name ?? '—'}
+                {r.verified && <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0" />}
+              </div>
+              <div className="text-[11px] text-[var(--admin-text-faint)] truncate">{r.user?.email}</div>
+            </div>
+          </div>
+          <div className="flex flex-wrap justify-between gap-2 text-xs text-[var(--admin-text-mute)]">
+            <span>{r.company?.name ?? tx(isAr, 'مستقل', 'Independent')}</span>
+            <span className="flex items-center gap-1">
+              <Star className="h-3 w-3 text-[#f5c97b] fill-current" />
+              {r.rating?.toFixed(1) ?? '0.0'}
+            </span>
+            <span className="font-bold">{r._count?.properties ?? r.totalListings ?? 0} {tx(isAr, 'عقار', 'listings')}</span>
+          </div>
+          <p className="mt-3 text-[10px] text-amber-200/70">{tx(isAr, 'اضغط للإدارة ←', 'Tap to manage →')}</p>
+        </div>
+      )}
     />
   );
 }
@@ -2050,6 +2016,9 @@ export function FavoritesTab({ isAr }: { isAr: boolean }) {
 
 // ─── Companies Tab ────────────────────────
 export function CompaniesTab({ isAr }: { isAr: boolean }) {
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [settingsCompanyId, setSettingsCompanyId] = useState<string | null>(null);
+  const bump = () => setRefreshKey((k) => k + 1);
   type Row = {
     id: string;
     name: string;
@@ -2060,67 +2029,60 @@ export function CompaniesTab({ isAr }: { isAr: boolean }) {
     agentCount: number;
     _count?: { agents: number };
   };
-  const parseRows = useCallback((d: unknown): Row[] => (Array.isArray(d) ? (d as Row[]) : []), []);
-  const columns: ColumnDef<Row>[] = [
-    {
-      key: 'name',
-      header: { ar: 'الشركة', en: 'Company' },
-      render: (r) => (
-        <div className="flex items-center gap-2">
-          <Building className="h-4 w-4 text-[#f5c97b] shrink-0" />
-          <span className="font-semibold">{r.name}</span>
-        </div>
-      ),
-    },
-    {
-      key: 'contact',
-      header: { ar: 'التواصل', en: 'Contact' },
-      render: (r) => (
-        <div className="text-[12px] text-[var(--admin-text-mute)]">
-          {r.email && (
-            <div className="flex items-center gap-1">
-              <Mail className="h-3 w-3" />
-              {r.email}
-            </div>
-          )}
-          {r.phone && (
-            <div className="flex items-center gap-1 mt-0.5">
-              <Phone className="h-3 w-3" />
-              {r.phone}
-            </div>
-          )}
-          {r.website && (
-            <div className="flex items-center gap-1 mt-0.5">
-              <Globe className="h-3 w-3" />
-              {r.website}
-            </div>
-          )}
-          {!r.email && !r.phone && !r.website && '—'}
-        </div>
-      ),
-    },
-    {
-      key: 'agents',
-      header: { ar: 'الوكلاء', en: 'Agents' },
-      render: (r) => (
-        <span className="font-bold tabular-nums">{r._count?.agents ?? r.agentCount ?? 0}</span>
-      ),
-    },
-    {
-      key: 'listings',
-      header: { ar: 'إعلانات (حقل)', en: 'Listings (field)' },
-      render: (r) => <span className="tabular-nums">{r.listingCount}</span>,
-    },
-  ];
+  const parseItems = useCallback((d: unknown): Row[] => (Array.isArray(d) ? (d as Row[]) : []), []);
+
+  if (settingsCompanyId) {
+    return (
+      <CompanySettingsPanel
+        companyId={settingsCompanyId}
+        isAr={isAr}
+        onBack={() => setSettingsCompanyId(null)}
+        onUpdated={bump}
+      />
+    );
+  }
+
   return (
-    <AdminSection<Row>
+    <AdminEntityGrid<Row>
       isAr={isAr}
-      title={{ ar: 'الشركات', en: 'Companies' }}
-      subtitle={{ ar: 'شركات العقارات المرتبطة بالوكلاء', en: 'Real-estate firms linked to agents' }}
+      refreshKey={refreshKey}
+      subtitle={{
+        ar: 'اضغط على أي شركة لإدارة بياناتها وصلاحياتها وفريقها',
+        en: 'Click any company to manage profile, permissions, and team',
+      }}
       endpoint="/api/companies"
-      parseRows={parseRows}
-      columns={columns}
+      parseItems={parseItems}
       searchKeys={['name', 'email', 'phone']}
+      emptyAr="لا توجد شركات"
+      emptyEn="No companies"
+      onItemClick={(r) => setSettingsCompanyId(r.id)}
+      renderCard={(r) => (
+        <div className="p-4 w-full">
+          <div className="flex items-center gap-2 mb-3">
+            <Building className="h-5 w-5 text-[#f5c97b] shrink-0" />
+            <span className="font-semibold text-[var(--admin-text)] truncate">{r.name}</span>
+          </div>
+          <div className="text-[11px] text-[var(--admin-text-mute)] space-y-1 mb-3">
+            {r.email && (
+              <div className="flex items-center gap-1 truncate">
+                <Mail className="h-3 w-3 shrink-0" />
+                {r.email}
+              </div>
+            )}
+            {r.phone && (
+              <div className="flex items-center gap-1">
+                <Phone className="h-3 w-3 shrink-0" />
+                {r.phone}
+              </div>
+            )}
+          </div>
+          <div className="flex justify-between text-xs font-bold text-[var(--admin-text-mute)]">
+            <span>{r._count?.agents ?? r.agentCount ?? 0} {tx(isAr, 'وكيل', 'agents')}</span>
+            <span>{r.listingCount ?? 0} {tx(isAr, 'إعلان', 'listings')}</span>
+          </div>
+          <p className="mt-3 text-[10px] text-amber-200/70">{tx(isAr, 'اضغط للإدارة ←', 'Tap to manage →')}</p>
+        </div>
+      )}
     />
   );
 }
@@ -2130,82 +2092,28 @@ export function BannersTab({ isAr }: { isAr: boolean }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const bump = () => setRefreshKey((k) => k + 1);
   const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ title: '', subtitle: '', image: '', link: '', position: 'home', order: 0, isActive: true });
   const [submitting, setSubmitting] = useState(false);
 
-  type Row = { id: string; title: string; subtitle?: string | null; image?: string | null; link?: string | null; position: string; isActive: boolean; order?: number };
-  const parseRows = useCallback((d: unknown): Row[] => (Array.isArray(d) ? (d as Row[]) : []), []);
-  const columns: ColumnDef<Row>[] = [
-    {
-      key: 'title',
-      header: { ar: 'الإعلان', en: 'Banner' },
-      render: (r) => (
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-16 rounded-md bg-white/[0.05] overflow-hidden flex items-center justify-center">
-            {r.image ? (
-              <img src={r.image} alt="" className="h-full w-full object-cover" />
-            ) : (
-              <ImageIcon className="h-4 w-4 text-[var(--admin-text-faint)]" />
-            )}
-          </div>
-          <div>
-            <div className="font-semibold">{r.title}</div>
-            {r.subtitle && <div className="text-[11px] text-[var(--admin-text-faint)]">{r.subtitle}</div>}
-          </div>
-        </div>
-      ),
-    },
-    { key: 'position', header: { ar: 'الموقع', en: 'Position' }, render: (r) => <span className="admin-tag bg-white/[0.05] text-[var(--admin-text-mute)]">{r.position}</span> },
-    {
-      key: 'active',
-      header: { ar: 'الحالة', en: 'Status' },
-      render: (r) =>
-        r.isActive ? (
-          <ToggleRight className="h-5 w-5 text-emerald-400" />
-        ) : (
-          <ToggleLeft className="h-5 w-5 text-[var(--admin-text-faint)]" />
-        ),
-    },
-  ];
+  const emptyForm = () => ({ title: '', subtitle: '', image: '', link: '', position: 'home', order: 0, isActive: true });
 
-  const rowActions = (r: Row): RowAction[] => [
-    {
-      id: 'toggle',
-      label: tx(isAr, r.isActive ? 'إيقاف' : 'تفعيل', r.isActive ? 'Deactivate' : 'Activate'),
-      icon: r.isActive ? ToggleLeft : ToggleRight,
-      onClick: async () => {
-        try {
-          await adminFetch(`/api/banners/${r.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ isActive: !r.isActive }),
-          });
-          invalidate('banners');
-          toast.success(tx(isAr, 'تم التحديث', 'Updated'));
-          bump();
-        } catch (e) {
-          toast.error(tx(isAr, 'فشل التحديث', 'Update failed'), { description: e instanceof Error ? e.message : '' });
-        }
-      },
-    },
-    {
-      id: 'del',
-      label: tx(isAr, 'حذف الإعلان', 'Delete banner'),
-      icon: Trash2,
-      variant: 'danger',
-      onClick: async () => {
-        if (!window.confirm(tx(isAr, 'حذف هذا الإعلان؟', 'Delete this banner?'))) return;
-        try {
-          await adminFetch(`/api/banners/${r.id}`, { method: 'DELETE' });
-          invalidate('banners');
-          toast.success(tx(isAr, 'تم الحذف', 'Deleted'));
-          bump();
-        } catch (e) {
-          toast.error(tx(isAr, 'فشل الحذف', 'Delete failed'), { description: e instanceof Error ? e.message : '' });
-        }
-      },
-    },
-  ];
+  type Row = { id: string; title: string; subtitle?: string | null; image?: string | null; link?: string | null; position: string; isActive: boolean; order?: number };
+  const parseItems = useCallback((d: unknown): Row[] => (Array.isArray(d) ? (d as Row[]) : []), []);
+
+  const openEdit = (r: Row) => {
+    setEditingId(r.id);
+    setForm({
+      title: r.title ?? '',
+      subtitle: r.subtitle ?? '',
+      image: r.image ?? '',
+      link: r.link ?? '',
+      position: r.position ?? 'home',
+      order: r.order ?? 0,
+      isActive: r.isActive,
+    });
+    setOpen(true);
+  };
 
   const submit = async () => {
     if (!form.title.trim()) {
@@ -2214,44 +2122,115 @@ export function BannersTab({ isAr }: { isAr: boolean }) {
     }
     setSubmitting(true);
     try {
-      const res = await fetch('/api/banners', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(typeof data?.error === 'string' ? data.error : `HTTP ${res.status}`);
-      toast.success(tx(isAr, 'تمت الإضافة', 'Banner added'));
+      if (editingId) {
+        await adminFetch(`/api/banners/${editingId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        });
+        toast.success(tx(isAr, 'تم التحديث', 'Updated'));
+      } else {
+        const res = await fetch('/api/banners', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(typeof data?.error === 'string' ? data.error : `HTTP ${res.status}`);
+        toast.success(tx(isAr, 'تمت الإضافة', 'Banner added'));
+      }
       setOpen(false);
-      setForm({ title: '', subtitle: '', image: '', link: '', position: 'home', order: 0, isActive: true });
+      setEditingId(null);
+      setForm(emptyForm());
       invalidate('banners');
       bump();
     } catch (e) {
-      toast.error(tx(isAr, 'فشل الإنشاء', 'Create failed'), { description: e instanceof Error ? e.message : '' });
+      toast.error(tx(isAr, editingId ? 'فشل التحديث' : 'فشل الإنشاء', editingId ? 'Update failed' : 'Create failed'), {
+        description: e instanceof Error ? e.message : '',
+      });
     } finally {
       setSubmitting(false);
     }
   };
 
+  const deleteBanner = async (id: string) => {
+    if (!window.confirm(tx(isAr, 'حذف هذا الإعلان؟', 'Delete this banner?'))) return;
+    try {
+      await adminFetch(`/api/banners/${id}`, { method: 'DELETE' });
+      invalidate('banners');
+      toast.success(tx(isAr, 'تم الحذف', 'Deleted'));
+      bump();
+    } catch (e) {
+      toast.error(tx(isAr, 'فشل الحذف', 'Delete failed'), { description: e instanceof Error ? e.message : '' });
+    }
+  };
+
   return (
     <>
-      <AdminSection<Row>
-        key={refreshKey}
+      <AdminEntityGrid<Row>
         isAr={isAr}
-        title={{ ar: 'الإعلانات (البانرات)', en: 'Banners' }}
-        subtitle={{ ar: 'إدارة الإعلانات على الصفحات', en: 'Manage banners across pages' }}
+        refreshKey={refreshKey}
+        subtitle={{
+          ar: 'اضغط على أي بانر لتعديله — أو أضف بانراً جديداً',
+          en: 'Click any banner to edit — or add a new one',
+        }}
         endpoint="/api/banners"
-        parseRows={parseRows}
-        columns={columns}
+        parseItems={parseItems}
         searchKeys={['title', 'subtitle', 'position']}
-        onAdd={() => setOpen(true)}
-        rowActions={rowActions}
+        onAdd={() => {
+          setEditingId(null);
+          setForm(emptyForm());
+          setOpen(true);
+        }}
+        addLabel={{ ar: 'إضافة بانر', en: 'Add banner' }}
+        emptyAr="لا توجد بانرات"
+        emptyEn="No banners"
+        onItemClick={openEdit}
+        columnsClassName="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+        renderCard={(r) => (
+          <div className="w-full">
+            <div className="relative h-28 bg-white/[0.04] overflow-hidden">
+              {r.image ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={r.image} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <div className="h-full flex items-center justify-center">
+                  <ImageIcon className="h-8 w-8 text-[var(--admin-text-faint)]" />
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+              <div className="absolute bottom-2 left-2 right-2">
+                <div className="font-semibold text-white line-clamp-1">{r.title}</div>
+                {r.subtitle && <div className="text-[10px] text-white/75 line-clamp-1">{r.subtitle}</div>}
+              </div>
+              <div className="absolute top-2 end-2">
+                {r.isActive ? (
+                  <ToggleRight className="h-5 w-5 text-emerald-400" />
+                ) : (
+                  <ToggleLeft className="h-5 w-5 text-white/50" />
+                )}
+              </div>
+            </div>
+            <div className="p-3 flex items-center justify-between gap-2">
+              <span className="admin-tag bg-white/[0.05] text-[var(--admin-text-mute)] text-[10px]">{r.position}</span>
+              <span className="text-[10px] text-amber-200/70">{tx(isAr, 'تعديل ←', 'Edit →')}</span>
+            </div>
+          </div>
+        )}
       />
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          setOpen(next);
+          if (!next) setEditingId(null);
+        }}
+      >
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{tx(isAr, 'إضافة بانر جديد', 'Add new banner')}</DialogTitle>
+            <DialogTitle>
+              {tx(isAr, editingId ? 'تعديل البانر' : 'إضافة بانر جديد', editingId ? 'Edit banner' : 'Add new banner')}
+            </DialogTitle>
             <DialogDescription>
               {tx(isAr, 'سيظهر فوراً في الموقع بعد الحفظ', 'Will appear on the site after saving')}
             </DialogDescription>
@@ -2291,11 +2270,21 @@ export function BannersTab({ isAr }: { isAr: boolean }) {
               {tx(isAr, 'فعّال', 'Active')}
             </label>
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex-wrap gap-2">
+            {editingId && (
+              <button
+                type="button"
+                className="admin-icon-btn !w-auto px-4 text-xs text-rose-300 me-auto"
+                onClick={() => void deleteBanner(editingId)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                {tx(isAr, 'حذف', 'Delete')}
+              </button>
+            )}
             <button type="button" className="admin-icon-btn !w-auto px-4" onClick={() => setOpen(false)}>
               {tx(isAr, 'إلغاء', 'Cancel')}
             </button>
-            <button type="button" className="admin-btn-premium" disabled={submitting} onClick={submit}>
+            <button type="button" className="admin-btn-premium" disabled={submitting} onClick={() => void submit()}>
               {submitting ? tx(isAr, 'جارٍ الحفظ…', 'Saving…') : tx(isAr, 'حفظ', 'Save')}
             </button>
           </DialogFooter>

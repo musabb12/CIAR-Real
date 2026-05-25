@@ -668,7 +668,7 @@ export const translations: Record<Locale, Translations> = {
       globalReach: 'Global Reach',
       premiumListings: 'Premium Listings',
       securePayments: 'Secure Payments',
-      paymentMethodsSubtitle: 'Nine trusted payment options for secure bookings and purchases',
+      paymentMethodsSubtitle: 'Eleven trusted payment options for secure bookings and purchases',
       support247: '24/7 Support',
     },
     howItWorks: {
@@ -1026,7 +1026,7 @@ export const translations: Record<Locale, Translations> = {
       globalReach: 'وصول عالمي',
       premiumListings: 'قوائم متميزة',
       securePayments: 'طرق الدفع المتاحة',
-      paymentMethodsSubtitle: '٩ طرق دفع موثوقة لإتمام الحجوزات والشراء بأمان',
+      paymentMethodsSubtitle: '١١ طريقة دفع موثوقة لإتمام الحجوزات والشراء بأمان',
       support247: 'دعم على مدار الساعة',
     },
     howItWorks: {
@@ -1384,7 +1384,7 @@ export const translations: Record<Locale, Translations> = {
       globalReach: 'Portée mondiale',
       premiumListings: 'Annonces premium',
       securePayments: 'Moyens de paiement',
-      paymentMethodsSubtitle: '9 options de paiement fiables pour vos réservations',
+      paymentMethodsSubtitle: '11 options de paiement fiables pour vos réservations',
       support247: 'Support 24/7',
     },
     howItWorks: {
@@ -1742,7 +1742,7 @@ export const translations: Record<Locale, Translations> = {
       globalReach: 'Alcance global',
       premiumListings: 'Anuncios premium',
       securePayments: 'Métodos de pago',
-      paymentMethodsSubtitle: '9 opciones de pago seguras para reservas y compras',
+      paymentMethodsSubtitle: '11 opciones de pago seguras para reservas y compras',
       support247: 'Soporte 24/7',
     },
     howItWorks: {
@@ -2100,7 +2100,7 @@ export const translations: Record<Locale, Translations> = {
       globalReach: 'Küresel Erişim',
       premiumListings: 'Premium İlanlar',
       securePayments: 'Ödeme yöntemleri',
-      paymentMethodsSubtitle: 'Rezervasyon ve satın alma için 9 güvenilir ödeme seçeneği',
+      paymentMethodsSubtitle: 'Rezervasyon ve satın alma için 11 güvenilir ödeme seçeneği',
       support247: '7/24 Destek',
     },
     howItWorks: {

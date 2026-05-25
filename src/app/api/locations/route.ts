@@ -27,7 +27,14 @@ export async function GET(request: NextRequest) {
       includeInactive,
     });
 
-    return NextResponse.json(countries);
+    return NextResponse.json(
+      {
+        countries,
+        dataSource: 'firestore' as const,
+        total: countries.length,
+      },
+      { headers: { 'X-Data-Source': 'firestore' } },
+    );
   } catch (error) {
     console.error('Error fetching locations:', error);
 

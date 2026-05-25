@@ -175,7 +175,7 @@ export function AnimatedItem({
   className?: string;
 }) {
   return (
-    <motion.div className={className} variants={staggerItem}>
+    <motion.div className={`admin-float-card ${className}`.trim()} variants={staggerItem}>
       {children}
     </motion.div>
   );

@@ -189,6 +189,34 @@ function StcPayIcon({ className }: BrandIconProps) {
   );
 }
 
+function WhishIcon({ className }: BrandIconProps) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/payments/whish.png"
+      alt="Whish Money"
+      className={cn(
+        'h-12 w-auto max-w-[5.75rem] sm:h-14 object-contain rounded-md shrink-0 drop-shadow-sm',
+        className,
+      )}
+    />
+  );
+}
+
+function CiarPrepaidIcon({ className }: BrandIconProps) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src="/payments/ciar-prepaid.png"
+      alt="CIAR Prepaid"
+      className={cn(
+        'h-12 w-auto max-w-[5.75rem] sm:h-14 object-contain rounded-md shrink-0 drop-shadow-md',
+        className,
+      )}
+    />
+  );
+}
+
 function BankTransferIcon({ className }: BrandIconProps) {
   return (
     <IconShell className={className}>
@@ -225,7 +253,14 @@ export const PAYMENT_BRANDS: PaymentBrand[] = [
   { id: 'mada', name: 'mada', Icon: MadaIcon },
   { id: 'stc-pay', name: 'STC Pay', Icon: StcPayIcon },
   { id: 'bank-transfer', name: 'Bank Transfer', Icon: BankTransferIcon },
+  { id: 'whish', name: 'Whish Money', Icon: WhishIcon },
+  { id: 'ciar-prepaid', name: 'CIAR Prepaid', Icon: CiarPrepaidIcon },
 ];
+
+/** Lookup brand by id (checkout, admin, etc.) */
+export function getPaymentBrand(id: string): PaymentBrand | undefined {
+  return PAYMENT_BRANDS.find((b) => b.id === id);
+}
 
 type PaymentMethodsShowcaseProps = {
   className?: string;
@@ -259,7 +294,7 @@ export function PaymentMethodsShowcase({
             ) : null}
           </>
         )}
-        <ul className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-6 max-w-lg sm:max-w-3xl mx-auto">
+        <ul className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 max-w-lg sm:max-w-4xl mx-auto">
           {PAYMENT_BRANDS.map((brand) => (
             <li
               key={brand.id}

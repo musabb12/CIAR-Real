@@ -89,6 +89,29 @@ export function AdminPage() {
     [activeTab],
   );
 
+  const tabSubtitle = useMemo(() => {
+    const map: Partial<Record<AdminTabId, { ar: string; en: string }>> = {
+      dashboard: { ar: 'ملخص سريع', en: 'Quick overview' },
+      properties: { ar: 'إدارة العقارات', en: 'Manage listings' },
+      featured: { ar: 'عقارات الصفحة الرئيسية', en: 'Homepage featured' },
+      locations: { ar: 'الدول والمدن', en: 'Countries & cities' },
+      users: { ar: 'حسابات المستخدمين', en: 'User accounts' },
+      agents: { ar: 'الوكلاء', en: 'Agents' },
+      companies: { ar: 'الشركات', en: 'Companies' },
+      inquiries: { ar: 'رسائل العملاء', en: 'Messages' },
+      reviews: { ar: 'التقييمات', en: 'Reviews' },
+      favorites: { ar: 'المفضلة', en: 'Favorites' },
+      banners: { ar: 'بنرات الموقع', en: 'Banners' },
+      news: { ar: 'الأخبار', en: 'News' },
+      features: { ar: 'تشغيل الميزات', en: 'Features' },
+      'content-manager': { ar: 'نصوص الصفحات', en: 'Page content' },
+      'site-config': { ar: 'إعدادات الموقع', en: 'Site settings' },
+      analytics: { ar: 'التقارير', en: 'Reports' },
+      settings: { ar: 'إعدادات اللوحة', en: 'Admin settings' },
+    };
+    return map[activeTab];
+  }, [activeTab]);
+
   // ── Access gate ──
   if (!isAdmin) {
     return (
@@ -197,7 +220,13 @@ export function AdminPage() {
   };
 
   return (
-    <div className="admin-shell flex">
+    <div className="admin-shell flex w-full min-h-screen">
+      <div className="admin-ambient-layer" aria-hidden>
+        <span className="admin-glass-orb admin-glass-orb--1" />
+        <span className="admin-glass-orb admin-glass-orb--2" />
+        <span className="admin-glass-orb admin-glass-orb--3" />
+        <span className="admin-glass-orb admin-glass-orb--4" />
+      </div>
       <AdminSidebar
         active={activeTab}
         onSelect={setActiveTab}
@@ -208,16 +237,16 @@ export function AdminPage() {
           void handleLogout();
         }}
       />
-      <div className="flex-1 min-w-0 relative z-10">
+      <div className="flex flex-1 flex-col min-w-0 w-full relative z-10">
         <AdminTopbar
           isAr={isAr}
           onToggleSidebar={() => setCollapsed((c) => !c)}
           onToggleLocale={() => setLocale(locale === 'ar' ? 'en' : 'ar')}
           userName={userName}
           pageTitle={tx(activeNav.ar, activeNav.en)}
-          pageSubtitle={tx('مرحباً بك في لوحة التحكم', 'Welcome to your dashboard')}
+          pageSubtitle={tabSubtitle ? tx(tabSubtitle.ar, tabSubtitle.en) : undefined}
         />
-        <main className="p-5 lg:p-6 pb-12">{renderTab()}</main>
+        <main className="w-full flex-1 p-4 sm:p-5 lg:p-6 pb-12">{renderTab()}</main>
       </div>
     </div>
   );

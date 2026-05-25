@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Search,
-  Filter,
-  Download,
   Plus,
   ChevronLeft,
   ChevronRight,
@@ -24,7 +22,8 @@ export interface ColumnDef<T> {
 
 interface Props<T> {
   isAr: boolean;
-  title: { ar: string; en: string };
+  /** Optional — page title is shown in the top bar */
+  title?: { ar: string; en: string };
   subtitle?: { ar: string; en: string };
   endpoint: string;
   parseRows: (data: unknown) => T[];
@@ -126,55 +125,32 @@ export function AdminSection<T extends { id?: string }>({
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  const handleExport = () => {
-    try {
-      const blob = new Blob([JSON.stringify(filtered, null, 2)], { type: 'application/json;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `ciar-export-${Date.now()}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      toast.success(tx('تم تصدير البيانات', 'Export complete'));
-    } catch {
-      toast.error(tx('تعذّر التصدير', 'Export failed'));
-    }
-  };
-
   return (
     <div className="space-y-5">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-        <div>
-          <h1 className="font-heading text-2xl sm:text-3xl font-bold">{tx(title.ar, title.en)}</h1>
-          {subtitle && (
-            <p className="text-sm text-[var(--admin-text-mute)] mt-1">
-              {tx(subtitle.ar, subtitle.en)}
-            </p>
-          )}
-          <div className="flex items-center gap-2 mt-2 text-[11px] text-[var(--admin-text-faint)]">
-            <span>{filtered.length}</span>
-            <span>{tx('سجل', 'records')}</span>
-          </div>
-        </div>
+      {/* Toolbar row */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <p className="text-sm text-[var(--admin-text-mute)]">
+          {subtitle ? tx(subtitle.ar, subtitle.en) : null}
+          {subtitle ? ' · ' : ''}
+          <span className="text-[var(--admin-text-faint)]">
+            {filtered.length} {tx('عنصر', 'items')}
+          </span>
+        </p>
         <div className="flex items-center gap-2 flex-wrap">
           {toolbarActions}
-          <button type="button" onClick={load} className="admin-icon-btn !w-auto px-3 gap-1.5 text-xs" title={tx('تحديث', 'Refresh')}>
+          <button
+            type="button"
+            onClick={load}
+            className="admin-icon-btn !w-auto px-3 gap-1.5 text-xs"
+            title={tx('تحديث', 'Refresh')}
+          >
             <Loader2 className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
             {tx('تحديث', 'Refresh')}
           </button>
-          <button type="button" onClick={handleExport} className="admin-icon-btn !w-auto px-3 gap-1.5 text-xs">
-            <Download className="h-3.5 w-3.5" />
-            {tx('تصدير JSON', 'Export JSON')}
-          </button>
           {onAdd && (
-            <button
-              type="button"
-              onClick={onAdd}
-              className="!w-auto px-3.5 py-2 rounded-xl bg-gradient-to-r from-[#f5c97b] to-[#2dd4bf] text-[#0a1018] font-bold text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 hover:brightness-110 transition-all"
-            >
+            <button type="button" onClick={onAdd} className="admin-btn-premium !text-xs !py-2">
               <Plus className="h-3.5 w-3.5" />
-              {tx('إضافة', 'Add new')}
+              {tx('إضافة', 'Add')}
             </button>
           )}
         </div>
@@ -187,9 +163,8 @@ export function AdminSection<T extends { id?: string }>({
         </div>
       )}
 
-      {/* Toolbar */}
-      <div className="admin-card p-3 flex items-center gap-3">
-        <div className="relative flex-1 max-w-md">
+      <div className="admin-card p-3">
+        <div className="relative max-w-md">
           <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--admin-text-faint)]" />
           <input
             type="text"
@@ -198,14 +173,10 @@ export function AdminSection<T extends { id?: string }>({
               setSearch(e.target.value);
               setPage(1);
             }}
-            placeholder={tx('ابحث...', 'Search...')}
-            className="admin-search w-full h-9 ps-9 pe-3 text-sm"
+            placeholder={tx('بحث في القائمة…', 'Search this list…')}
+            className="admin-search w-full h-10 ps-9 pe-3 text-sm"
           />
         </div>
-        <button type="button" className="admin-icon-btn !w-auto px-3 gap-1.5 text-xs">
-          <Filter className="h-3.5 w-3.5" />
-          {tx('تصفية', 'Filter')}
-        </button>
       </div>
 
       {/* Table */}
@@ -233,7 +204,7 @@ export function AdminSection<T extends { id?: string }>({
                           {tx(c.header.ar, c.header.en)}
                         </th>
                       ))}
-                      <th className="!w-10 text-end">{tx('إجراءات', 'Actions')}</th>
+                      <th className="!w-10 text-end">{tx('المزيد', 'More')}</th>
                     </tr>
                   </thead>
                   <tbody>

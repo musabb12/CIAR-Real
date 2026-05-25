@@ -19,6 +19,7 @@ import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import type { Property, TransactionType } from '@/types';
 import { toast } from 'sonner';
+import { getPaymentBrand } from '@/components/payment/payment-method-icons';
 
 type CheckoutMode = 'purchase' | 'rent';
 
@@ -28,6 +29,8 @@ const FALLBACK_IMAGE =
 const PAYMENT_METHODS = [
   { id: 'card', icon: CreditCard, ar: 'بطاقة بنكية', en: 'Credit / debit card' },
   { id: 'bank', icon: Landmark, ar: 'تحويل بنكي', en: 'Bank transfer' },
+  { id: 'whish', ar: 'Whish Money — ويش موني', en: 'Whish Money' },
+  { id: 'ciar-prepaid', ar: 'بطاقة CIAR المسبقة الدفع', en: 'CIAR Prepaid Card' },
 ] as const;
 
 function propertyCoverUrl(property: Property): string {
@@ -193,27 +196,36 @@ function PaymentGrid({
 }) {
   return (
     <div className="grid sm:grid-cols-2 gap-3">
-      {PAYMENT_METHODS.map((pm) => (
-        <label
-          key={pm.id}
-          className={`checkout-pay-method flex items-center gap-3 ${
-            selected === pm.id ? 'is-selected' : ''
-          }`}
-        >
-          <input
-            type="radio"
-            name="paymentMethod"
-            value={pm.id}
-            className="sr-only"
-            checked={selected === pm.id}
-            onChange={() => onSelect(pm.id)}
-          />
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/8 border border-white/10">
-            <pm.icon className="h-5 w-5 text-amber-300" />
-          </div>
-          <span className="text-sm font-medium text-white">{tx(pm.ar, pm.en)}</span>
-        </label>
-      ))}
+      {PAYMENT_METHODS.map((pm) => {
+        const brand = getPaymentBrand(pm.id);
+        const BrandIcon = brand?.Icon;
+        const LucideIcon = 'icon' in pm ? pm.icon : undefined;
+        return (
+          <label
+            key={pm.id}
+            className={`checkout-pay-method flex items-center gap-3 ${
+              selected === pm.id ? 'is-selected' : ''
+            }`}
+          >
+            <input
+              type="radio"
+              name="paymentMethod"
+              value={pm.id}
+              className="sr-only"
+              checked={selected === pm.id}
+              onChange={() => onSelect(pm.id)}
+            />
+            <div className="flex h-10 min-w-10 items-center justify-center rounded-xl bg-white/8 border border-white/10 px-1.5 overflow-hidden">
+              {BrandIcon ? (
+                <BrandIcon className="!h-7 !w-auto max-w-[3.5rem]" />
+              ) : LucideIcon ? (
+                <LucideIcon className="h-5 w-5 text-amber-300 shrink-0" />
+              ) : null}
+            </div>
+            <span className="text-sm font-medium text-white">{tx(pm.ar, pm.en)}</span>
+          </label>
+        );
+      })}
     </div>
   );
 }

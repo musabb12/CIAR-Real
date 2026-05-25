@@ -76,6 +76,8 @@ export interface Agent {
   verified: boolean;
   companyId: string | null;
   company?: Company;
+  adminPermissions?: Record<string, boolean>;
+  adminTasks?: string[];
   createdAt: string;
   updatedAt: string;
   properties?: Property[];
@@ -93,6 +95,8 @@ export interface Company {
   founded: number | null;
   agentCount: number;
   listingCount: number;
+  adminPermissions?: Record<string, boolean>;
+  adminTasks?: string[];
   createdAt: string;
   updatedAt: string;
 }

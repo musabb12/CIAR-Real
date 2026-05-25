@@ -1,4 +1,10 @@
 import {
+  normalizeAdminPermissions,
+  normalizeAdminTasks,
+  AGENT_ADMIN_PERMISSIONS,
+  COMPANY_ADMIN_PERMISSIONS,
+} from '@/lib/admin-entity-permissions';
+import {
   FIRESTORE_COLLECTIONS,
   asBoolean,
   asNullableNumber,
@@ -400,6 +406,8 @@ export async function updateAgentInFirestore(
     totalSales: number;
     verified: boolean;
     companyId: string | null;
+    adminPermissions: Record<string, boolean>;
+    adminTasks: string[];
   }>
 ) {
   const existing = await getRawAgentById(id);
@@ -443,6 +451,57 @@ export async function listCompaniesFromFirestore() {
       },
     };
   });
+}
+
+async function getRawCompanyById(id: string) {
+  const snap = await companyCollection().doc(id).get();
+  if (!snap.exists) return null;
+  return snap.data() as Record<string, unknown>;
+}
+
+export async function getCompanyDetailFromFirestore(id: string) {
+  const raw = await getRawCompanyById(id);
+  if (!raw) return null;
+  const company = await getCompanyById(id);
+  if (!company) return null;
+  const agents = (await getAllAgents()).filter((agent) => agent.companyId === id);
+  const properties = (await listAllPropertiesFromFirestore()).filter((property) =>
+    property.agentId ? agents.some((a) => a.id === property.agentId) : false
+  );
+  return {
+    ...company,
+    adminPermissions: normalizeAdminPermissions(raw.adminPermissions, COMPANY_ADMIN_PERMISSIONS),
+    adminTasks: normalizeAdminTasks(raw.adminTasks),
+    agents: agents.slice(0, 24),
+    listingCount: properties.length,
+    agentCount: agents.length,
+    _count: { agents: agents.length },
+  };
+}
+
+export async function updateCompanyInFirestore(
+  id: string,
+  input: Partial<{
+    name: string;
+    logo: string | null;
+    description: string | null;
+    phone: string | null;
+    email: string | null;
+    website: string | null;
+    address: string | null;
+    founded: number | null;
+    adminPermissions: Record<string, boolean>;
+    adminTasks: string[];
+  }>
+) {
+  const existing = await getRawCompanyById(id);
+  if (!existing) return null;
+  const payload = cleanUndefined({
+    ...input,
+    updatedAt: nowIso(),
+  });
+  await companyCollection().doc(id).update(payload);
+  return getCompanyDetailFromFirestore(id);
 }
 
 export async function listLocationsFromFirestore(options?: {

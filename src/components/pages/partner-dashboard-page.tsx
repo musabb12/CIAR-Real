@@ -30,6 +30,7 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
+import { ImageUrlInput } from '@/components/admin/image-url-input';
 import { cn } from '@/lib/utils';
 import { normalizeLocationsResponse } from '@/lib/normalize-locations';
 import type { Country, ListingType, Property, PropertyStatus, PropertyType } from '@/types';
@@ -496,6 +497,7 @@ export function PartnerDashboardPage() {
 
           {showForm ? (
             <PropertyFormPanel
+              isAr={isAr}
               tx={tx}
               form={form}
               setForm={setForm}
@@ -810,6 +812,7 @@ function CardSpecs({ p, tx }: { p: Property; tx: (ar: string, en: string) => str
 
 
 function PropertyFormPanel({
+  isAr,
   tx,
   form,
   setForm,
@@ -824,6 +827,7 @@ function PropertyFormPanel({
   listingLabel,
   statusLabel,
 }: {
+  isAr: boolean;
   tx: (ar: string, en: string) => string;
   form: PropertyForm;
   setForm: React.Dispatch<React.SetStateAction<PropertyForm>>;
@@ -1038,16 +1042,15 @@ function PropertyFormPanel({
         <FormSection title={tx('الوسائط والخيارات', 'Media & options')}>
           <div className="space-y-4">
             <Field label={tx('رابط صورة الغلاف', 'Cover image URL')}>
-              <div className="flex gap-2">
-                <ImageIcon className="h-5 w-5 text-amber-400/60 shrink-0 mt-2.5" />
-                <input
-                  type="url"
-                  className="auth-input flex-1 rounded-xl px-4 py-2.5 text-sm"
-                  value={form.imageUrl}
-                  onChange={(e) => setForm((f) => ({ ...f, imageUrl: e.target.value }))}
-                  placeholder="https://..."
-                />
-              </div>
+              <ImageUrlInput
+                isAr={isAr}
+                value={form.imageUrl}
+                onChange={(url) => setForm((f) => ({ ...f, imageUrl: url }))}
+                folder="properties"
+                inputClassName="auth-input flex-1 min-w-0 rounded-xl px-4 py-2.5 text-sm"
+                uploadClassName="inline-flex items-center gap-1.5 shrink-0 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm hover:bg-white/10 cursor-pointer"
+                placeholder="https://..."
+              />
             </Field>
             {form.imageUrl.trim() && (
               <div className="relative aspect-video max-w-md rounded-xl overflow-hidden border border-white/10">

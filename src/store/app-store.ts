@@ -73,10 +73,12 @@ interface AppState {
   selectedPropertyId: string | null;
   checkoutTransactionId: string | null;
   adminTab: string;
+  contentManagerTargetPage: ManagedPageKey | null;
   setCurrentPage: (page: AppPage) => void;
   setSelectedPropertyId: (id: string | null) => void;
   setCheckoutTransactionId: (id: string | null) => void;
   setAdminTab: (tab: string) => void;
+  setContentManagerTargetPage: (page: ManagedPageKey | null) => void;
 
   // Auth
   currentUser: User | null;
@@ -150,11 +152,13 @@ export const useAppStore = create<AppState>()(
   selectedPropertyId: null,
   checkoutTransactionId: null,
   adminTab: 'properties',
+  contentManagerTargetPage: null,
 
   setCurrentPage: (page) => set({ currentPage: page }),
   setSelectedPropertyId: (id) => set({ selectedPropertyId: id }),
   setCheckoutTransactionId: (id) => set({ checkoutTransactionId: id }),
   setAdminTab: (tab) => set({ adminTab: tab }),
+  setContentManagerTargetPage: (page) => set({ contentManagerTargetPage: page }),
 
   // ---- Auth ----
   currentUser: null,

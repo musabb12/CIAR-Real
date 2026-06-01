@@ -22,6 +22,7 @@ export const FIRESTORE_COLLECTIONS = {
   favorites: 'favorites',
   featureToggles: 'featureToggles',
   inquiries: 'inquiries',
+  inquiryAutoReplies: 'inquiryAutoReplies',
   newsItems: 'newsItems',
   properties: process.env.FIRESTORE_PROPERTIES_COLLECTION?.trim() || 'properties',
   propertyReviews: 'propertyReviews',

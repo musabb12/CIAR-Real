@@ -199,10 +199,26 @@ export interface Inquiry {
   phone: string | null;
   message: string;
   status: string;
+  adminReply?: string | null;
+  repliedAt?: string | null;
+  replySource?: 'manual' | 'auto' | null;
+  autoReplyTemplateId?: string | null;
   createdAt: string;
   updatedAt: string;
   property?: Property;
   user?: User;
+}
+
+export interface InquiryAutoReply {
+  id: string;
+  title: string;
+  body: string;
+  isActive: boolean;
+  /** When true, sent automatically to every new inquiry (only one should be active). */
+  sendOnNewInquiry: boolean;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Banner {

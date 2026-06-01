@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import {
-  Building2,
   Mail,
   Lock,
   LogIn,
@@ -18,6 +17,7 @@ import { getPrimaryPageBackground } from '@/lib/page-backgrounds';
 import { toast } from 'sonner';
 import { resolvePageAfterLogin } from '@/lib/auth-roles';
 import { mapAuthApiError } from '@/lib/auth-errors';
+import { CiarWordmark } from '@/components/brand/ciar-wordmark';
 
 export function LoginPage() {
   const { rtl } = useTranslation();
@@ -97,8 +97,8 @@ export function LoginPage() {
           </button>
 
           <div className="text-center mb-6">
-            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-emerald-600 shadow-lg shadow-amber-500/25">
-              <Building2 className="h-7 w-7 text-white" />
+            <div className="mx-auto mb-4 flex justify-center">
+              <CiarWordmark size="lg" variant="light" />
             </div>
             <h1 className="font-heading text-2xl sm:text-3xl font-bold text-white">
               {loginContent.title?.trim() || tx('مرحباً بعودتك', 'Welcome back')}

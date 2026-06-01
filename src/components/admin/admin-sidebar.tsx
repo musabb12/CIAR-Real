@@ -2,8 +2,9 @@
 
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Building2, LogOut } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { ADMIN_NAV, ADMIN_GROUPS, type AdminTabId } from './admin-nav';
+import { CiarWordmark } from '@/components/brand/ciar-wordmark';
 
 interface Props {
   active: AdminTabId;
@@ -42,16 +43,15 @@ export function AdminSidebar({
       style={{ width: collapsed ? 72 : 252 }}
     >
       <div className="px-3 py-4 flex items-center gap-2.5">
-        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-[#f5c97b] to-[#2dd4bf] flex items-center justify-center shrink-0">
-          <Building2 className="h-4 w-4 text-[#0a1018]" />
-        </div>
-        {!collapsed && (
+        {!collapsed ? (
           <div className="min-w-0">
-            <div className="font-heading font-bold text-lg leading-none admin-text-gradient">CIAR</div>
-            <div className="text-[10px] text-[var(--admin-text-faint)] mt-1">
+            <CiarWordmark size="md" variant="admin" />
+            <div className="text-[10px] text-[var(--admin-text-faint)] mt-1.5">
               {tx('لوحة الإدارة', 'Admin')}
             </div>
           </div>
+        ) : (
+          <CiarWordmark size="sm" variant="admin" className="mx-auto" />
         )}
       </div>
 

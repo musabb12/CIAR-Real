@@ -5,41 +5,9 @@ import type { LucideIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { useAppStore } from '@/store/app-store';
 import { getPageBackgroundImages } from '@/lib/page-backgrounds';
+import { HERO_IMAGES_BY_VARIANT } from '@/lib/page-hero-defaults';
 
-/**
- * Curated luxurious header backdrops per page variant.
- * Each entry references high-resolution Unsplash photographs of
- * elite architecture/interiors — they pair well with a dark
- * cinematic overlay and gold/emerald accents.
- */
-const HERO_IMAGES: Record<string, string[]> = {
-  search: [
-    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=2400&q=85&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=2400&q=85&auto=format&fit=crop',
-  ],
-  agents: [
-    'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=2400&q=85&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=2400&q=85&auto=format&fit=crop',
-  ],
-  contact: [
-    'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=2400&q=85&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?w=2400&q=80&auto=format&fit=crop',
-  ],
-  favorites: [
-    'https://images.unsplash.com/photo-1600210492493-0946911123ea?w=2400&q=85&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=2400&q=85&auto=format&fit=crop',
-  ],
-  property: [
-    'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=2400&q=85&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=2400&q=85&auto=format&fit=crop',
-  ],
-  default: [
-    'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=2400&q=85&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=2400&q=85&auto=format&fit=crop',
-  ],
-};
-
-export type HeroVariant = keyof typeof HERO_IMAGES;
+export type HeroVariant = keyof typeof HERO_IMAGES_BY_VARIANT;
 
 interface PageHeroProps {
   variant?: HeroVariant;
@@ -107,7 +75,7 @@ export function PageHero({
 
   const images = getPageBackgroundImages(
     pageOverride,
-    imageUrl ? [imageUrl] : (HERO_IMAGES[variant] ?? HERO_IMAGES.default)
+    imageUrl ? [imageUrl] : (HERO_IMAGES_BY_VARIANT[variant] ?? HERO_IMAGES_BY_VARIANT.default)
   );
   const [activeIdx, setActiveIdx] = useState(0);
 

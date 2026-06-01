@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppStore } from '@/store/app-store';
+import { CiarWordmark } from '@/components/brand/ciar-wordmark';
 import { useTranslation } from '@/lib/i18n/use-translation';
 
 /* ------------------------------------------------------------------ */
@@ -243,13 +244,10 @@ export function Footer() {
               {/* Logo */}
               <button
                 onClick={() => setCurrentPage('home')}
-                className="flex items-center gap-3 transition-opacity hover:opacity-80"
+                className="flex items-center transition-opacity hover:opacity-90"
+                aria-label="CIAR"
               >
-                <img
-                  src="/logo-transparent.png"
-                  alt="CIAR"
-                  className="h-20 w-auto object-contain"
-                />
+                <CiarWordmark size="xl" variant="luxury" />
               </button>
 
               {/* Tagline */}

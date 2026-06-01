@@ -2,23 +2,57 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { createSessionToken, getSessionCookieOptions } from '@/lib/auth-token';
 import { checkAuthRateLimit } from '@/lib/rate-limit';
-import {
-  getFirebaseAdminConfigError,
-  isFirebaseAdminConfigured,
-} from '@/lib/firebase-admin';
+import { isFirebaseAdminConfigured } from '@/lib/firebase-admin';
 import {
   getDemoAdminUser,
   isDemoAdminCredentials,
 } from '@/lib/demo-auth';
 import { isFirebaseQuotaError } from '@/lib/firebase-errors';
 import {
+  getLocalUserByEmail,
+  toSafeLocalUser,
+} from '@/lib/local-auth-store';
+import {
   getUserByEmail,
   updateUserInFirestore,
 } from '@/lib/firestore-platform';
+import type { User } from '@/types';
 
 const BCRYPT_HASH_REGEX = /^\$2[aby]\$\d{2}\$/;
 
-// POST /api/auth - Validate email + password against database
+async function passwordMatches(storedPassword: string, password: string): Promise<boolean> {
+  if (BCRYPT_HASH_REGEX.test(storedPassword)) {
+    return bcrypt.compare(password, storedPassword);
+  }
+  return password === storedPassword;
+}
+
+async function loginViaLocalStore(email: string, password: string) {
+  const stored = await getLocalUserByEmail(email);
+  if (!stored) return null;
+  if (!stored.isActive) return { deactivated: true as const };
+  const valid = await passwordMatches(stored.password, password);
+  if (!valid) return null;
+  return { user: toSafeLocalUser(stored) };
+}
+
+function sessionResponse(safeUser: User, extra?: Record<string, unknown>) {
+  const sessionToken = createSessionToken({
+    id: safeUser.id,
+    email: safeUser.email,
+    role: safeUser.role,
+  });
+  const response = NextResponse.json({
+    user: safeUser,
+    token: sessionToken,
+    ...extra,
+  });
+  const cookieOptions = getSessionCookieOptions();
+  response.cookies.set(cookieOptions.name, sessionToken, cookieOptions);
+  return response;
+}
+
+// POST /api/auth - Validate email + password (Firestore or local fallback)
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const email =
@@ -26,17 +60,6 @@ export async function POST(request: NextRequest) {
   const password = typeof body.password === 'string' ? body.password : '';
 
   try {
-    if (!isFirebaseAdminConfigured()) {
-      return NextResponse.json(
-        {
-          error:
-            getFirebaseAdminConfigError() ??
-            'FIREBASE_SERVICE_ACCOUNT_JSON is not set',
-        },
-        { status: 503 }
-      );
-    }
-
     if (!email || !email.includes('@')) {
       return NextResponse.json(
         { error: 'A valid email is required' },
@@ -64,20 +87,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!isFirebaseAdminConfigured()) {
+      const local = await loginViaLocalStore(email, password);
+      if (local && 'deactivated' in local) {
+        return NextResponse.json({ error: 'Account is deactivated' }, { status: 403 });
+      }
+      if (!local?.user) {
+        return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+      }
+      return sessionResponse(local.user, {
+        localAuth: true,
+        warning:
+          'Signed in with local account storage (Firebase not configured on server).',
+      });
+    }
+
     const user = await getUserByEmail(email);
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
     if (!user.isActive) {
-      return NextResponse.json(
-        { error: 'Account is deactivated' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Account is deactivated' }, { status: 403 });
     }
 
     if (!user.password) {
@@ -87,77 +119,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const storedPassword = user.password;
-    let isValidPassword = false;
-
-    if (BCRYPT_HASH_REGEX.test(storedPassword)) {
-      isValidPassword = await bcrypt.compare(password, storedPassword);
-    } else {
-      // Backward compatibility for old seeded plaintext passwords.
-      isValidPassword = password === storedPassword;
-      if (isValidPassword) {
-        const upgradedHash = await bcrypt.hash(password, 12);
-        await updateUserInFirestore(user.id, { password: upgradedHash });
-      }
+    let isValidPassword = await passwordMatches(user.password, password);
+    if (!isValidPassword && !BCRYPT_HASH_REGEX.test(user.password) && password === user.password) {
+      const upgradedHash = await bcrypt.hash(password, 12);
+      await updateUserInFirestore(user.id, { password: upgradedHash });
+      isValidPassword = true;
     }
 
     if (!isValidPassword) {
-      return NextResponse.json(
-        { error: 'Invalid credentials' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
     const { password: _password, ...safeUser } = user;
-
-    const sessionToken = createSessionToken({
-      id: safeUser.id,
-      email: safeUser.email,
-      role: safeUser.role,
-    });
-    const response = NextResponse.json({
-      user: safeUser,
-      token: sessionToken,
-    });
-    const cookieOptions = getSessionCookieOptions();
-    response.cookies.set(cookieOptions.name, sessionToken, cookieOptions);
-    return response;
+    return sessionResponse(safeUser);
   } catch (error) {
     console.error('Error during login:', error);
 
-    if (
-      isFirebaseQuotaError(error) &&
-      email &&
-      isDemoAdminCredentials(email, password)
-    ) {
-      const safeUser = getDemoAdminUser();
-      const sessionToken = createSessionToken({
-        id: safeUser.id,
-        email: safeUser.email,
-        role: safeUser.role,
-      });
-      const response = NextResponse.json({
-        user: safeUser,
-        token: sessionToken,
-        quotaExceeded: true,
-        demoAuth: true,
-        warning:
-          'Signed in with demo admin because Firestore quota is exceeded. Dashboard data may be limited until quota resets.',
-      });
-      const cookieOptions = getSessionCookieOptions();
-      response.cookies.set(cookieOptions.name, sessionToken, cookieOptions);
-      return response;
+    if (isFirebaseQuotaError(error) && email) {
+      const local = await loginViaLocalStore(email, password);
+      if (local && 'deactivated' in local) {
+        return NextResponse.json({ error: 'Account is deactivated' }, { status: 403 });
+      }
+      if (local?.user) {
+        return sessionResponse(local.user, {
+          quotaExceeded: true,
+          localAuth: true,
+          warning:
+            'Signed in via local account storage because Firestore quota is exceeded.',
+        });
+      }
+      if (isDemoAdminCredentials(email, password)) {
+        return sessionResponse(getDemoAdminUser(), {
+          quotaExceeded: true,
+          demoAuth: true,
+          warning:
+            'Signed in with demo admin because Firestore quota is exceeded. Dashboard data may be limited until quota resets.',
+        });
+      }
     }
 
     if (isFirebaseQuotaError(error)) {
-      return NextResponse.json(
-        { error: 'firebase_quota_exceeded' },
-        { status: 503 }
-      );
+      return NextResponse.json({ error: 'firebase_quota_exceeded' }, { status: 503 });
     }
 
-    const message =
-      error instanceof Error ? error.message : 'Login failed';
+    const message = error instanceof Error ? error.message : 'Login failed';
     const isFirebaseConfig =
       message.includes('FIREBASE') || message.includes('Firebase');
     return NextResponse.json(

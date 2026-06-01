@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { PropertyCard } from '@/components/property/property-card';
+import { getPageBackgroundImages } from '@/lib/page-backgrounds';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import type { Property, Country } from '@/types';
@@ -171,10 +172,13 @@ export function HomePage() {
   const [heroProgress, setHeroProgress] = useState(0);
 
   const effectiveHeroImages = useMemo(() => {
+    const fromContent = getPageBackgroundImages(contentSettings.home, heroImages);
     const customHero = designSettings.heroImageUrl?.trim();
-    if (!customHero) return heroImages;
-    return [customHero, ...heroImages.filter((img) => img !== customHero)];
-  }, [designSettings.heroImageUrl]);
+    if (customHero) {
+      return [customHero, ...fromContent.filter((img) => img !== customHero)];
+    }
+    return fromContent.length > 0 ? fromContent : heroImages;
+  }, [contentSettings.home, designSettings.heroImageUrl]);
 
   // Sync hero country dropdown when IP-based filter is applied.
   useEffect(() => {

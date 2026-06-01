@@ -42,9 +42,10 @@ import { useAppStore } from '@/store/app-store';
 import { AdminSection, type ColumnDef } from './admin-section';
 import { AdminAnalyticsTab } from './admin-analytics-tab';
 import { AdminFeaturesTab } from './admin-features-tab';
+import { ImageUrlInput } from './image-url-input';
 import { invalidate } from '@/lib/admin-events';
 import { AdminRowMenu, type RowAction } from '@/components/admin/admin-row-menu';
-import type { ManagedPageKey } from '@/types';
+import type { InquiryAutoReply } from '@/types';
 import {
   Dialog,
   DialogContent,
@@ -59,6 +60,16 @@ import { CompanySettingsPanel } from '@/components/admin/company-settings-panel'
 import { AdminEntityGrid } from '@/components/admin/admin-entity-grid';
 import { CountryFlagBadge, FlagPicker } from '@/components/admin/flag-picker';
 import { normalizeFlagStorage } from '@/lib/country-flags';
+import {
+  expandInquiryReplyTemplate,
+  buildInquiryMailtoLink,
+} from '@/lib/inquiry-replies';
+import {
+  inquiryStatusLabel,
+  newsTypeLabel,
+  NEWS_TYPE_OPTIONS,
+  userRoleLabel,
+} from '@/lib/admin-labels';
 
 const PropertyAdminMapPicker = dynamic(
   () => import('./property-admin-map-picker').then((m) => m.PropertyAdminMapPicker),
@@ -982,7 +993,7 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
                       'Multiple URLs (one per line or separated by comma/semicolon) or multi-file upload — up to 60 images.'
                     )}
                   </p>
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <textarea
                       className="admin-input min-h-[64px] max-h-32 resize-y flex-1 text-xs leading-relaxed"
                       rows={2}
@@ -990,12 +1001,12 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
                       onChange={(e) => setImageUrlDraft(e.target.value)}
                       placeholder={tx(isAr, 'https://…\nhttps://…', 'https://…\nhttps://…')}
                     />
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      <button type="button" className="admin-icon-btn !w-auto px-3 gap-1.5 text-xs shrink-0" onClick={addImagesFromUrlDraft}>
+                    <div className="flex sm:flex-col gap-2 shrink-0">
+                      <button type="button" className="admin-icon-btn !w-auto px-3 gap-1.5 text-xs" onClick={addImagesFromUrlDraft}>
                         <Link2 className="h-3.5 w-3.5" />
                         {tx(isAr, 'إضافة الروابط', 'Add URLs')}
                       </button>
-                      <label className="admin-icon-btn !w-auto px-3 gap-1.5 text-xs shrink-0 cursor-pointer">
+                      <label className="admin-icon-btn !w-auto px-3 gap-1.5 text-xs cursor-pointer">
                         <Upload className="h-3.5 w-3.5" />
                         {uploadingImage ? tx(isAr, 'جارٍ الرفع…', 'Uploading…') : tx(isAr, 'رفع ملفات', 'Upload files')}
                         <input
@@ -1502,120 +1513,126 @@ export function UsersTab({ isAr }: { isAr: boolean }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const bump = () => setRefreshKey((k) => k + 1);
   type Row = { id: string; name: string | null; email: string; phone: string | null; role: string; isActive: boolean; createdAt: string };
-  const parseRows = useCallback((d: unknown): Row[] => (Array.isArray(d) ? (d as Row[]) : []), []);
-  const columns: ColumnDef<Row>[] = [
-    {
-      key: 'name',
-      header: { ar: 'المستخدم', en: 'User' },
-      render: (r) => (
-        <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-[#f5c97b]/30 to-[#2dd4bf]/30 flex items-center justify-center text-xs font-bold text-[#f5c97b]">
-            {(r.name ?? r.email).charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <div className="font-semibold">{r.name ?? '—'}</div>
-            <div className="text-[11px] text-[var(--admin-text-faint)]">{r.email}</div>
-          </div>
-        </div>
-      ),
-    },
-    {
-      key: 'phone',
-      header: { ar: 'الهاتف', en: 'Phone' },
-      render: (r) => r.phone ?? '—',
-    },
-    {
-      key: 'role',
-      header: { ar: 'الصلاحية', en: 'Role' },
-      render: (r) => {
-        const c = r.role === 'ADMIN' ? '#f5c97b' : r.role === 'AGENT' ? '#a78bfa' : '#2dd4bf';
-        return <span className="admin-tag" style={{ background: `${c}1f`, color: c }}>{r.role}</span>;
-      },
-    },
-    {
-      key: 'status',
-      header: { ar: 'الحالة', en: 'Status' },
-      render: (r) =>
-        r.isActive ? (
-          <span className="admin-pill admin-pill-up">{tx(isAr, 'نشط', 'Active')}</span>
-        ) : (
-          <span className="admin-pill admin-pill-down">{tx(isAr, 'موقوف', 'Disabled')}</span>
-        ),
-    },
-    {
-      key: 'created',
-      header: { ar: 'تاريخ الإنشاء', en: 'Joined' },
-      render: (r) => <span className="text-[var(--admin-text-mute)] text-[12px]">{new Date(r.createdAt).toLocaleDateString(isAr ? 'ar' : 'en')}</span>,
-    },
-  ];
-  const rowActions = (r: Row): RowAction[] => [
-    {
-      id: 'toggle',
-      label: tx(isAr, r.isActive ? 'إيقاف الحساب' : 'تفعيل الحساب', r.isActive ? 'Disable account' : 'Activate account'),
-      icon: r.isActive ? Ban : CheckCircle2,
-      onClick: async () => {
-        try {
-          await adminFetch(`/api/users/${r.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ isActive: !r.isActive }),
-          });
-          invalidate('users');
-          toast.success(tx(isAr, 'تم التحديث', 'Updated'));
-          bump();
-        } catch (e) {
-          toast.error(tx(isAr, 'فشل التحديث', 'Update failed'), { description: e instanceof Error ? e.message : '' });
-        }
-      },
-    },
-    {
-      id: 'role',
-      label: tx(isAr, r.role === 'ADMIN' ? 'إزالة صلاحية الإدارة' : 'تعيين كأدمن', r.role === 'ADMIN' ? 'Demote from admin' : 'Promote to admin'),
-      icon: UserCheck,
-      onClick: async () => {
-        try {
-          await adminFetch(`/api/users/${r.id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ role: r.role === 'ADMIN' ? 'USER' : 'ADMIN' }),
-          });
-          invalidate('users');
-          toast.success(tx(isAr, 'تم تحديث الصلاحية', 'Role updated'));
-          bump();
-        } catch (e) {
-          toast.error(tx(isAr, 'فشل التحديث', 'Update failed'), { description: e instanceof Error ? e.message : '' });
-        }
-      },
-    },
-    {
-      id: 'del',
-      label: tx(isAr, 'حذف المستخدم', 'Delete user'),
-      icon: Trash2,
-      variant: 'danger',
-      onClick: async () => {
-        if (!window.confirm(tx(isAr, 'حذف هذا المستخدم نهائياً؟', 'Permanently delete this user?'))) return;
-        try {
-          await adminFetch(`/api/users/${r.id}`, { method: 'DELETE' });
-          invalidate('users');
-          toast.success(tx(isAr, 'تم الحذف', 'Deleted'));
-          bump();
-        } catch (e) {
-          toast.error(tx(isAr, 'فشل الحذف', 'Delete failed'), { description: e instanceof Error ? e.message : '' });
-        }
-      },
-    },
-  ];
+  const parseItems = useCallback((d: unknown): Row[] => (Array.isArray(d) ? (d as Row[]) : []), []);
+
+  const roleColor = (role: string) => {
+    if (role === 'ADMIN') return '#f5c97b';
+    if (role === 'AGENT') return '#a78bfa';
+    if (role === 'COMPANY') return '#fb923c';
+    return '#2dd4bf';
+  };
+
   return (
-    <AdminSection<Row>
-      key={refreshKey}
+    <AdminEntityGrid<Row>
       isAr={isAr}
-      title={{ ar: 'إدارة المستخدمين', en: 'Manage Users' }}
-      subtitle={{ ar: 'كل المستخدمين المسجلين على المنصة', en: 'All registered users on the platform' }}
+      refreshKey={refreshKey}
+      subtitle={{
+        ar: 'كل الحسابات المسجّلة — استخدم الأزرار أسفل كل بطاقة للإدارة',
+        en: 'All registered accounts — use the buttons under each card to manage',
+      }}
       endpoint="/api/users"
-      parseRows={parseRows}
-      columns={columns}
-      searchKeys={['name', 'email']}
-      rowActions={rowActions}
+      parseItems={parseItems}
+      searchKeys={['name', 'email', 'phone']}
+      searchPlaceholder={{ ar: 'بحث بالاسم أو البريد…', en: 'Search by name or email…' }}
+      emptyAr="لا يوجد مستخدمون"
+      emptyEn="No users"
+      cardClickable={false}
+      onItemClick={() => {}}
+      renderCard={(r) => (
+        <div className="p-4 w-full">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="h-11 w-11 rounded-full bg-gradient-to-br from-[#f5c97b]/30 to-[#2dd4bf]/30 flex items-center justify-center text-sm font-bold text-[#f5c97b] shrink-0">
+              {(r.name ?? r.email).charAt(0).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="font-semibold truncate">{r.name ?? tx(isAr, 'بدون اسم', 'No name')}</div>
+              <div className="text-[11px] text-[var(--admin-text-faint)] truncate">{r.email}</div>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2 mb-2">
+            <span className="admin-tag" style={{ background: `${roleColor(r.role)}1f`, color: roleColor(r.role) }}>
+              {userRoleLabel(isAr, r.role)}
+            </span>
+            {r.isActive ? (
+              <span className="admin-pill admin-pill-up">{tx(isAr, 'نشط', 'Active')}</span>
+            ) : (
+              <span className="admin-pill admin-pill-down">{tx(isAr, 'موقوف', 'Disabled')}</span>
+            )}
+          </div>
+          {r.phone && (
+            <div className="text-xs text-[var(--admin-text-mute)] flex items-center gap-1 mb-1">
+              <Phone className="h-3 w-3" />
+              {r.phone}
+            </div>
+          )}
+          <p className="text-[11px] text-[var(--admin-text-faint)]">
+            {tx(isAr, 'انضم', 'Joined')}: {new Date(r.createdAt).toLocaleDateString(isAr ? 'ar' : 'en')}
+          </p>
+        </div>
+      )}
+      renderCardActions={(r) => (
+        <>
+          <button
+            type="button"
+            className="admin-icon-btn !w-auto px-3 text-xs"
+            onClick={async () => {
+              try {
+                await adminFetch(`/api/users/${r.id}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ isActive: !r.isActive }),
+                });
+                invalidate('users');
+                toast.success(tx(isAr, 'تم التحديث', 'Updated'));
+                bump();
+              } catch (e) {
+                toast.error(tx(isAr, 'فشل التحديث', 'Update failed'), { description: e instanceof Error ? e.message : '' });
+              }
+            }}
+          >
+            {r.isActive ? tx(isAr, 'إيقاف', 'Disable') : tx(isAr, 'تفعيل', 'Enable')}
+          </button>
+          <button
+            type="button"
+            className="admin-icon-btn !w-auto px-3 text-xs"
+            onClick={async () => {
+              try {
+                await adminFetch(`/api/users/${r.id}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ role: r.role === 'ADMIN' ? 'USER' : 'ADMIN' }),
+                });
+                invalidate('users');
+                toast.success(tx(isAr, 'تم تحديث الصلاحية', 'Role updated'));
+                bump();
+              } catch (e) {
+                toast.error(tx(isAr, 'فشل التحديث', 'Update failed'), { description: e instanceof Error ? e.message : '' });
+              }
+            }}
+          >
+            {r.role === 'ADMIN'
+              ? tx(isAr, 'إزالة الإدارة', 'Remove admin')
+              : tx(isAr, 'تعيين أدمن', 'Make admin')}
+          </button>
+          <button
+            type="button"
+            className="admin-icon-btn !w-auto px-3 text-xs text-rose-300 border-rose-400/30"
+            onClick={async () => {
+              if (!window.confirm(tx(isAr, 'حذف هذا المستخدم نهائياً؟', 'Permanently delete this user?'))) return;
+              try {
+                await adminFetch(`/api/users/${r.id}`, { method: 'DELETE' });
+                invalidate('users');
+                toast.success(tx(isAr, 'تم الحذف', 'Deleted'));
+                bump();
+              } catch (e) {
+                toast.error(tx(isAr, 'فشل الحذف', 'Delete failed'), { description: e instanceof Error ? e.message : '' });
+              }
+            }}
+          >
+            {tx(isAr, 'حذف', 'Delete')}
+          </button>
+        </>
+      )}
     />
   );
 }
@@ -1624,9 +1641,74 @@ export function UsersTab({ isAr }: { isAr: boolean }) {
 export function AgentsTab({ isAr }: { isAr: boolean }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [settingsAgentId, setSettingsAgentId] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    password: '',
+    phone: '',
+    title: '',
+    license: '',
+    companyId: '',
+  });
   const bump = () => setRefreshKey((k) => k + 1);
   type Row = { id: string; rating: number; verified: boolean; totalListings: number; user?: { name?: string; email?: string }; company?: { name?: string }; _count?: { properties: number } };
   const parseItems = useCallback((d: unknown): Row[] => (Array.isArray(d) ? (d as Row[]) : []), []);
+
+  useEffect(() => {
+    if (!addOpen) return;
+    fetch('/api/companies')
+      .then((r) => r.json())
+      .then((d) => {
+        const list = Array.isArray(d) ? d : [];
+        setCompanies(list.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name })));
+      })
+      .catch(() => setCompanies([]));
+  }, [addOpen]);
+
+  const submitAgent = async () => {
+    if (!form.name.trim()) {
+      toast.error(tx(isAr, 'الاسم مطلوب', 'Name is required'));
+      return;
+    }
+    if (!form.email.includes('@')) {
+      toast.error(tx(isAr, 'أدخل بريداً إلكترونياً صحيحاً', 'Enter a valid email'));
+      return;
+    }
+    if (form.password.length < 6) {
+      toast.error(tx(isAr, 'كلمة المرور 6 أحرف على الأقل', 'Password must be at least 6 characters'));
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/agents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          email: form.email.trim(),
+          password: form.password,
+          phone: form.phone.trim() || undefined,
+          title: form.title.trim() || undefined,
+          license: form.license.trim() || undefined,
+          companyId: form.companyId || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(typeof data?.error === 'string' ? data.error : tx(isAr, 'فشل الإنشاء', 'Create failed'));
+      toast.success(tx(isAr, 'تم إنشاء الوكيل', 'Agent created'));
+      setAddOpen(false);
+      setForm({ name: '', email: '', password: '', phone: '', title: '', license: '', companyId: '' });
+      invalidate('agents');
+      bump();
+    } catch (e) {
+      toast.error(tx(isAr, 'فشل الإنشاء', 'Create failed'), { description: e instanceof Error ? e.message : '' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   if (settingsAgentId) {
     return (
@@ -1640,87 +1722,299 @@ export function AgentsTab({ isAr }: { isAr: boolean }) {
   }
 
   return (
-    <AdminEntityGrid<Row>
-      isAr={isAr}
-      refreshKey={refreshKey}
-      subtitle={{
-        ar: 'اضغط على أي وكيل لإدارة ملفه وصلاحياته ومهامه',
-        en: 'Click any agent to manage profile, permissions, and tasks',
-      }}
-      endpoint="/api/agents"
-      parseItems={parseItems}
-      emptyAr="لا يوجد وكلاء"
-      emptyEn="No agents"
-      onItemClick={(r) => setSettingsAgentId(r.id)}
-      renderCard={(r) => (
-        <div className="p-4 w-full">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="h-11 w-11 rounded-full bg-gradient-to-br from-[#a78bfa]/30 to-[#2dd4bf]/30 flex items-center justify-center text-sm font-bold text-[#a78bfa] shrink-0">
-              {(r.user?.name ?? '?').charAt(0).toUpperCase()}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="font-semibold flex items-center gap-1.5 truncate">
-                {r.user?.name ?? '—'}
-                {r.verified && <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0" />}
+    <>
+      <AdminEntityGrid<Row>
+        isAr={isAr}
+        refreshKey={refreshKey}
+        subtitle={{
+          ar: 'اضغط على بطاقة الوكيل لفتح الإعدادات، أو أضف وكيلاً جديداً',
+          en: 'Click an agent card for settings, or add a new agent',
+        }}
+        endpoint="/api/agents"
+        parseItems={parseItems}
+        searchKeys={['name', 'email']}
+        searchPlaceholder={{ ar: 'بحث بالاسم…', en: 'Search by name…' }}
+        emptyAr="لا يوجد وكلاء — أضف أول وكيل"
+        emptyEn="No agents — add your first agent"
+        onAdd={() => setAddOpen(true)}
+        addLabel={{ ar: 'إضافة وكيل', en: 'Add agent' }}
+        onItemClick={(r) => setSettingsAgentId(r.id)}
+        renderCard={(r) => (
+          <div className="p-4 w-full">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="h-11 w-11 rounded-full bg-gradient-to-br from-[#a78bfa]/30 to-[#2dd4bf]/30 flex items-center justify-center text-sm font-bold text-[#a78bfa] shrink-0">
+                {(r.user?.name ?? '?').charAt(0).toUpperCase()}
               </div>
-              <div className="text-[11px] text-[var(--admin-text-faint)] truncate">{r.user?.email}</div>
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold flex items-center gap-1.5 truncate">
+                  {r.user?.name ?? '—'}
+                  {r.verified && (
+                  <ShieldCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0" aria-label={tx(isAr, 'موثّق', 'Verified')} />
+                )}
+                </div>
+                <div className="text-[11px] text-[var(--admin-text-faint)] truncate">{r.user?.email}</div>
+              </div>
             </div>
+            <div className="flex flex-wrap justify-between gap-2 text-xs text-[var(--admin-text-mute)]">
+              <span>{r.company?.name ?? tx(isAr, 'مستقل', 'Independent')}</span>
+              <span className="flex items-center gap-1">
+                <Star className="h-3 w-3 text-[#f5c97b] fill-current" />
+                {r.rating?.toFixed(1) ?? '0.0'}
+              </span>
+              <span className="font-bold">
+                {r._count?.properties ?? r.totalListings ?? 0} {tx(isAr, 'عقار', 'listings')}
+              </span>
+            </div>
+            <p className="mt-3 text-[10px] text-amber-200/70">{tx(isAr, 'اضغط للإعدادات', 'Tap for settings')}</p>
           </div>
-          <div className="flex flex-wrap justify-between gap-2 text-xs text-[var(--admin-text-mute)]">
-            <span>{r.company?.name ?? tx(isAr, 'مستقل', 'Independent')}</span>
-            <span className="flex items-center gap-1">
-              <Star className="h-3 w-3 text-[#f5c97b] fill-current" />
-              {r.rating?.toFixed(1) ?? '0.0'}
-            </span>
-            <span className="font-bold">{r._count?.properties ?? r.totalListings ?? 0} {tx(isAr, 'عقار', 'listings')}</span>
+        )}
+      />
+
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{tx(isAr, 'إضافة وكيل عقاري', 'Add real estate agent')}</DialogTitle>
+            <DialogDescription>
+              {tx(isAr, 'يُنشأ حساب دخول للوكيل تلقائياً', 'A login account will be created for the agent')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <Field label={tx(isAr, 'الاسم الكامل', 'Full name')}>
+              <input className="admin-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            </Field>
+            <Field label={tx(isAr, 'البريد الإلكتروني', 'Email')}>
+              <input type="email" className="admin-input" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            </Field>
+            <Field label={tx(isAr, 'كلمة المرور', 'Password')}>
+              <input type="password" className="admin-input" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
+            </Field>
+            <Field label={tx(isAr, 'الهاتف (اختياري)', 'Phone (optional)')}>
+              <input className="admin-input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            </Field>
+            <Field label={tx(isAr, 'المسمى الوظيفي (اختياري)', 'Job title (optional)')}>
+              <input className="admin-input" placeholder={tx(isAr, 'وكيل عقاري', 'Real estate agent')} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            </Field>
+            <Field label={tx(isAr, 'رقم الترخيص (اختياري)', 'License no. (optional)')}>
+              <input className="admin-input" value={form.license} onChange={(e) => setForm({ ...form, license: e.target.value })} />
+            </Field>
+            <Field label={tx(isAr, 'الشركة (اختياري)', 'Company (optional)')}>
+              <select className="admin-input" value={form.companyId} onChange={(e) => setForm({ ...form, companyId: e.target.value })}>
+                <option value="">{tx(isAr, '— مستقل —', '— Independent —')}</option>
+                {companies.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
           </div>
-          <p className="mt-3 text-[10px] text-amber-200/70">{tx(isAr, 'اضغط للإدارة ←', 'Tap to manage →')}</p>
-        </div>
-      )}
-    />
+          <DialogFooter>
+            <button type="button" className="admin-icon-btn !w-auto px-4" onClick={() => setAddOpen(false)}>
+              {tx(isAr, 'إلغاء', 'Cancel')}
+            </button>
+            <button type="button" className="admin-btn-premium" disabled={submitting} onClick={submitAgent}>
+              {submitting ? tx(isAr, 'جارٍ الإنشاء…', 'Creating…') : tx(isAr, 'إنشاء الوكيل', 'Create agent')}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
 // ─── Inquiries Tab ───────────────────────────
+const INQUIRY_TEMPLATE_HINT = {
+  ar: 'يمكنك استخدام: {name} {email} {phone} {property} {message}',
+  en: 'Placeholders: {name} {email} {phone} {property} {message}',
+};
+
+const DEFAULT_AUTO_REPLY_BODY = {
+  ar: 'مرحباً {name}،\n\nشكراً لتواصلك بخصوص «{property}».\nاستلمنا رسالتك وسيتواصل معك أحد مستشارينا قريباً.\n\nمع تحيات فريق CIAR',
+  en: 'Hello {name},\n\nThank you for your interest in "{property}".\nWe received your message and an advisor will contact you soon.\n\nBest regards,\nCIAR Team',
+};
+
 export function InquiriesTab({ isAr }: { isAr: boolean }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const bump = () => setRefreshKey((k) => k + 1);
-  type Row = { id: string; name: string; email: string; phone?: string | null; message: string; status: string; createdAt: string; property?: { title: string } };
-  const parseRows = useCallback((d: unknown): Row[] => (Array.isArray(d) ? (d as Row[]) : []), []);
-  const columns: ColumnDef<Row>[] = [
-    {
-      key: 'name',
-      header: { ar: 'العميل', en: 'Customer' },
-      render: (r) => (
-        <div>
-          <div className="font-semibold">{r.name}</div>
-          <div className="flex items-center gap-2 text-[11px] text-[var(--admin-text-faint)] mt-0.5">
-            <span className="flex items-center gap-1"><Mail className="h-2.5 w-2.5" />{r.email}</span>
-            {r.phone && <span className="flex items-center gap-1"><Phone className="h-2.5 w-2.5" />{r.phone}</span>}
-          </div>
-        </div>
-      ),
-    },
-    { key: 'property', header: { ar: 'العقار', en: 'Property' }, render: (r) => <span className="text-[var(--admin-text-mute)]">{r.property?.title ?? '—'}</span> },
-    {
-      key: 'message',
-      header: { ar: 'الرسالة', en: 'Message' },
-      render: (r) => <span className="text-[var(--admin-text-mute)] line-clamp-1 max-w-xs block">{r.message}</span>,
-    },
-    {
-      key: 'status',
-      header: { ar: 'الحالة', en: 'Status' },
-      render: (r) => {
-        const c = r.status === 'NEW' ? 'admin-pill-gold' : r.status === 'READ' ? 'admin-pill-up' : 'admin-pill-down';
-        return <span className={`admin-pill ${c}`}>{r.status}</span>;
-      },
-    },
-    {
-      key: 'date',
-      header: { ar: 'التاريخ', en: 'Date' },
-      render: (r) => <span className="text-[var(--admin-text-mute)] text-[12px]">{new Date(r.createdAt).toLocaleDateString(isAr ? 'ar' : 'en')}</span>,
-    },
-  ];
+
+  const [templates, setTemplates] = useState<InquiryAutoReply[]>([]);
+  const [templatesLoading, setTemplatesLoading] = useState(true);
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+  const [templateSubmitting, setTemplateSubmitting] = useState(false);
+  const [templateForm, setTemplateForm] = useState({
+    title: '',
+    body: '',
+    isActive: true,
+    sendOnNewInquiry: false,
+    order: 0,
+  });
+
+  const [replyOpen, setReplyOpen] = useState(false);
+  const [replyTarget, setReplyTarget] = useState<{
+    id: string;
+    name: string;
+    email: string;
+    phone?: string | null;
+    message: string;
+    property?: { title: string };
+    adminReply?: string | null;
+  } | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [replySubmitting, setReplySubmitting] = useState(false);
+
+  type Row = {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string | null;
+    message: string;
+    status: string;
+    createdAt: string;
+    adminReply?: string | null;
+    repliedAt?: string | null;
+    replySource?: 'manual' | 'auto' | null;
+    property?: { title: string };
+  };
+
+  const parseItems = useCallback((d: unknown): Row[] => (Array.isArray(d) ? (d as Row[]) : []), []);
+
+  const loadTemplates = useCallback(() => {
+    setTemplatesLoading(true);
+    fetch('/api/inquiry-auto-replies')
+      .then(async (r) => {
+        const d = await r.json();
+        if (!r.ok) throw new Error(typeof d?.error === 'string' ? d.error : 'Failed');
+        setTemplates(Array.isArray(d) ? d : []);
+      })
+      .catch(() => setTemplates([]))
+      .finally(() => setTemplatesLoading(false));
+  }, []);
+
+  useEffect(() => {
+    loadTemplates();
+  }, [loadTemplates, refreshKey]);
+
+  const inquiryContext = (r: Pick<Row, 'name' | 'email' | 'phone' | 'message' | 'property'>) => ({
+    name: r.name,
+    email: r.email,
+    phone: r.phone,
+    property: r.property?.title ?? null,
+    message: r.message,
+  });
+
+  const openReply = (r: Row) => {
+    setReplyTarget(r);
+    setReplyText(r.adminReply ?? '');
+    setReplyOpen(true);
+  };
+
+  const applyTemplateToReply = (template: InquiryAutoReply) => {
+    if (!replyTarget) return;
+    setReplyText(expandInquiryReplyTemplate(template.body, inquiryContext(replyTarget)));
+  };
+
+  const submitReply = async () => {
+    if (!replyTarget) return;
+    if (!replyText.trim()) {
+      toast.error(tx(isAr, 'اكتب نص الرد', 'Write your reply'));
+      return;
+    }
+    setReplySubmitting(true);
+    try {
+      const res = await fetch(`/api/inquiries/${replyTarget.id}/reply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adminReply: replyText.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(typeof data?.error === 'string' ? data.error : tx(isAr, 'فشل الإرسال', 'Failed'));
+      toast.success(tx(isAr, 'تم حفظ الرد', 'Reply saved'));
+      setReplyOpen(false);
+      setReplyTarget(null);
+      invalidate('inquiries');
+      bump();
+    } catch (e) {
+      toast.error(tx(isAr, 'فشل حفظ الرد', 'Could not save reply'), {
+        description: e instanceof Error ? e.message : '',
+      });
+    } finally {
+      setReplySubmitting(false);
+    }
+  };
+
+  const openNewTemplate = () => {
+    setEditingTemplateId(null);
+    setTemplateForm({
+      title: '',
+      body: isAr ? DEFAULT_AUTO_REPLY_BODY.ar : DEFAULT_AUTO_REPLY_BODY.en,
+      isActive: true,
+      sendOnNewInquiry: false,
+      order: templates.length,
+    });
+    setTemplateOpen(true);
+  };
+
+  const openEditTemplate = (t: InquiryAutoReply) => {
+    setEditingTemplateId(t.id);
+    setTemplateForm({
+      title: t.title,
+      body: t.body,
+      isActive: t.isActive,
+      sendOnNewInquiry: t.sendOnNewInquiry,
+      order: t.order,
+    });
+    setTemplateOpen(true);
+  };
+
+  const submitTemplate = async () => {
+    if (!templateForm.title.trim() || !templateForm.body.trim()) {
+      toast.error(tx(isAr, 'العنوان ونص الرد مطلوبان', 'Title and reply text are required'));
+      return;
+    }
+    setTemplateSubmitting(true);
+    try {
+      const payload = {
+        title: templateForm.title.trim(),
+        body: templateForm.body.trim(),
+        isActive: templateForm.isActive,
+        sendOnNewInquiry: templateForm.sendOnNewInquiry,
+        order: templateForm.order,
+      };
+      const res = editingTemplateId
+        ? await fetch(`/api/inquiry-auto-replies/${editingTemplateId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+        : await fetch('/api/inquiry-auto-replies', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+      const data = await res.json();
+      if (!res.ok) throw new Error(typeof data?.error === 'string' ? data.error : 'Failed');
+      toast.success(tx(isAr, editingTemplateId ? 'تم التحديث' : 'تمت الإضافة', editingTemplateId ? 'Updated' : 'Added'));
+      setTemplateOpen(false);
+      loadTemplates();
+    } catch (e) {
+      toast.error(tx(isAr, 'فشل الحفظ', 'Save failed'), { description: e instanceof Error ? e.message : '' });
+    } finally {
+      setTemplateSubmitting(false);
+    }
+  };
+
+  const deleteTemplate = async (id: string) => {
+    if (!window.confirm(tx(isAr, 'حذف هذا الرد التلقائي؟', 'Delete this auto-reply?'))) return;
+    try {
+      await adminFetch(`/api/inquiry-auto-replies/${id}`, { method: 'DELETE' });
+      toast.success(tx(isAr, 'تم الحذف', 'Deleted'));
+      loadTemplates();
+    } catch (e) {
+      toast.error(tx(isAr, 'فشل الحذف', 'Delete failed'), { description: e instanceof Error ? e.message : '' });
+    }
+  };
+
   const setStatus = async (r: Row, status: string) => {
     try {
       await adminFetch(`/api/inquiries/${r.id}`, {
@@ -1729,46 +2023,315 @@ export function InquiriesTab({ isAr }: { isAr: boolean }) {
         body: JSON.stringify({ status }),
       });
       invalidate('inquiries');
-      toast.success(tx(isAr, `الحالة: ${status}`, `Status: ${status}`));
+      toast.success(tx(isAr, 'تم تحديث الحالة', 'Status updated'));
       bump();
     } catch (e) {
       toast.error(tx(isAr, 'فشل التحديث', 'Update failed'), { description: e instanceof Error ? e.message : '' });
     }
   };
-  const rowActions = (r: Row): RowAction[] => [
-    { id: 'read', label: tx(isAr, 'تعليم كمقروء', 'Mark as read'), icon: Eye, onClick: () => setStatus(r, 'READ') },
-    { id: 'reply', label: tx(isAr, 'تعليم كمُجاب', 'Mark as replied'), icon: Reply, onClick: () => setStatus(r, 'REPLIED') },
-    { id: 'close', label: tx(isAr, 'إغلاق', 'Close'), icon: Ban, onClick: () => setStatus(r, 'CLOSED') },
-    {
-      id: 'del',
-      label: tx(isAr, 'حذف', 'Delete'),
-      icon: Trash2,
-      variant: 'danger',
-      onClick: async () => {
-        if (!window.confirm(tx(isAr, 'حذف الاستفسار؟', 'Delete this inquiry?'))) return;
-        try {
-          await adminFetch(`/api/inquiries/${r.id}`, { method: 'DELETE' });
-          invalidate('inquiries');
-          toast.success(tx(isAr, 'تم الحذف', 'Deleted'));
-          bump();
-        } catch (e) {
-          toast.error(tx(isAr, 'فشل الحذف', 'Delete failed'), { description: e instanceof Error ? e.message : '' });
-        }
-      },
-    },
-  ];
+
+  const statusPill = (status: string) => {
+    const c =
+      status === 'NEW' ? 'admin-pill-gold' : status === 'READ' || status === 'REPLIED' ? 'admin-pill-up' : 'admin-pill-down';
+    return <span className={`admin-pill ${c}`}>{inquiryStatusLabel(isAr, status)}</span>;
+  };
+
+  const activeAutoReply = templates.find((t) => t.isActive && t.sendOnNewInquiry);
+
   return (
-    <AdminSection<Row>
-      key={refreshKey}
-      isAr={isAr}
-      title={{ ar: 'الاستفسارات', en: 'Inquiries' }}
-      subtitle={{ ar: 'كل الاستفسارات الواردة من العملاء', en: 'All inquiries from customers' }}
-      endpoint="/api/inquiries"
-      parseRows={parseRows}
-      columns={columns}
-      searchKeys={['name', 'email', 'message']}
-      rowActions={rowActions}
-    />
+    <>
+      <div className="admin-card p-5 mb-4 space-y-4">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex items-start gap-2">
+            <Sparkles className="h-4 w-4 text-[#f5c97b] mt-1 shrink-0" />
+            <div>
+              <h3 className="font-heading font-bold">{tx(isAr, 'الردود التلقائية', 'Automatic replies')}</h3>
+              <p className="text-[12px] text-[var(--admin-text-mute)] mt-1 max-w-2xl">
+                {tx(
+                  isAr,
+                  'أنشئ قوالب جاهزة للرد على العملاء. فعِّل «يرسل تلقائياً» على قالب واحد ليُرسل فور وصول أي استفسار جديد.',
+                  'Create reply templates. Enable “Send automatically” on one template to reply instantly when a new inquiry arrives.',
+                )}
+              </p>
+              {activeAutoReply ? (
+                <p className="text-xs text-emerald-300/90 mt-2">
+                  {tx(isAr, 'الرد التلقائي النشط:', 'Active auto-reply:')} <strong>{activeAutoReply.title}</strong>
+                </p>
+              ) : (
+                <p className="text-xs text-[var(--admin-text-faint)] mt-2">
+                  {tx(isAr, 'لا يوجد رد تلقائي مفعّل حالياً', 'No automatic reply is enabled')}
+                </p>
+              )}
+            </div>
+          </div>
+          <button type="button" className="admin-btn-premium !text-xs !py-2" onClick={openNewTemplate}>
+            <Plus className="h-3.5 w-3.5" />
+            {tx(isAr, 'إضافة قالب', 'Add template')}
+          </button>
+        </div>
+
+        {templatesLoading ? (
+          <p className="text-sm text-[var(--admin-text-faint)]">{tx(isAr, 'جارٍ التحميل…', 'Loading…')}</p>
+        ) : templates.length === 0 ? (
+          <p className="text-sm text-[var(--admin-text-faint)]">
+            {tx(isAr, 'لا توجد قوالب — أضف قالباً للرد السريع', 'No templates — add one for quick replies')}
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            {templates.map((t) => (
+              <div key={t.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-4 flex flex-col gap-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-semibold text-sm">{t.title}</span>
+                  {t.isActive ? (
+                    <span className="admin-pill admin-pill-up text-[10px]">{tx(isAr, 'فعّال', 'Active')}</span>
+                  ) : (
+                    <span className="admin-pill admin-pill-down text-[10px]">{tx(isAr, 'متوقف', 'Off')}</span>
+                  )}
+                  {t.sendOnNewInquiry && (
+                    <span className="admin-pill admin-pill-gold text-[10px]">{tx(isAr, 'تلقائي', 'Auto-send')}</span>
+                  )}
+                </div>
+                <p className="text-xs text-[var(--admin-text-mute)] line-clamp-3 whitespace-pre-wrap">{t.body}</p>
+                <div className="flex flex-wrap gap-2 mt-auto pt-2">
+                  <button type="button" className="admin-icon-btn !w-auto px-3 text-xs" onClick={() => openEditTemplate(t)}>
+                    {tx(isAr, 'تعديل', 'Edit')}
+                  </button>
+                  <button
+                    type="button"
+                    className="admin-icon-btn !w-auto px-3 text-xs text-rose-300 border-rose-400/30"
+                    onClick={() => deleteTemplate(t.id)}
+                  >
+                    {tx(isAr, 'حذف', 'Delete')}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <AdminEntityGrid<Row>
+        isAr={isAr}
+        refreshKey={refreshKey}
+        subtitle={{
+          ar: 'اضغط «رد» للرد على العميل — يمكنك اختيار قالب جاهز أو كتابة رد مخصص',
+          en: 'Click Reply to respond — pick a template or write a custom message',
+        }}
+        endpoint="/api/inquiries"
+        parseItems={parseItems}
+        searchKeys={['name', 'email', 'message']}
+        searchPlaceholder={{ ar: 'بحث بالاسم أو الرسالة…', en: 'Search by name or message…' }}
+        emptyAr="لا توجد استفسارات"
+        emptyEn="No inquiries"
+        cardClickable={false}
+        onItemClick={() => {}}
+        renderCard={(r) => (
+          <div className="p-4 w-full">
+            <div className="flex items-start justify-between gap-2 mb-2">
+              <div className="font-semibold">{r.name}</div>
+              <div className="flex flex-wrap gap-1 justify-end">
+                {statusPill(r.status)}
+                {r.replySource === 'auto' && (
+                  <span className="admin-pill admin-pill-gold text-[10px]">{tx(isAr, 'رد تلقائي', 'Auto')}</span>
+                )}
+              </div>
+            </div>
+            <div className="text-[11px] text-[var(--admin-text-faint)] space-y-1 mb-2">
+              <div className="flex items-center gap-1">
+                <Mail className="h-3 w-3 shrink-0" />
+                {r.email}
+              </div>
+              {r.phone && (
+                <div className="flex items-center gap-1">
+                  <Phone className="h-3 w-3 shrink-0" />
+                  {r.phone}
+                </div>
+              )}
+            </div>
+            {r.property?.title && (
+              <p className="text-xs text-[#f5c97b] mb-2">
+                {tx(isAr, 'العقار:', 'Property:')} {r.property.title}
+              </p>
+            )}
+            <p className="text-sm text-[var(--admin-text-mute)]">{r.message}</p>
+            {r.adminReply && (
+              <div className="mt-3 rounded-lg border border-emerald-400/20 bg-emerald-500/5 p-3">
+                <p className="text-[10px] text-emerald-300/80 mb-1">{tx(isAr, 'الرد المحفوظ', 'Saved reply')}</p>
+                <p className="text-xs text-[var(--admin-text-mute)] whitespace-pre-wrap">{r.adminReply}</p>
+                {r.repliedAt && (
+                  <p className="text-[10px] text-[var(--admin-text-faint)] mt-1">
+                    {new Date(r.repliedAt).toLocaleString(isAr ? 'ar' : 'en')}
+                  </p>
+                )}
+              </div>
+            )}
+            <p className="text-[11px] text-[var(--admin-text-faint)] mt-2">
+              {new Date(r.createdAt).toLocaleDateString(isAr ? 'ar' : 'en', { dateStyle: 'medium' })}
+            </p>
+          </div>
+        )}
+        renderCardActions={(r) => (
+          <>
+            <button type="button" className="admin-btn-premium !text-xs !py-1.5 !px-3" onClick={() => openReply(r)}>
+              <Reply className="h-3.5 w-3.5" />
+              {tx(isAr, 'رد', 'Reply')}
+            </button>
+            <button type="button" className="admin-icon-btn !w-auto px-3 text-xs" onClick={() => setStatus(r, 'READ')}>
+              {tx(isAr, 'مقروء', 'Read')}
+            </button>
+            <button type="button" className="admin-icon-btn !w-auto px-3 text-xs" onClick={() => setStatus(r, 'CLOSED')}>
+              {tx(isAr, 'إغلاق', 'Close')}
+            </button>
+            <button
+              type="button"
+              className="admin-icon-btn !w-auto px-3 text-xs text-rose-300 border-rose-400/30"
+              onClick={async () => {
+                if (!window.confirm(tx(isAr, 'حذف الاستفسار؟', 'Delete this inquiry?'))) return;
+                try {
+                  await adminFetch(`/api/inquiries/${r.id}`, { method: 'DELETE' });
+                  invalidate('inquiries');
+                  toast.success(tx(isAr, 'تم الحذف', 'Deleted'));
+                  bump();
+                } catch (e) {
+                  toast.error(tx(isAr, 'فشل الحذف', 'Delete failed'), { description: e instanceof Error ? e.message : '' });
+                }
+              }}
+            >
+              {tx(isAr, 'حذف', 'Delete')}
+            </button>
+          </>
+        )}
+      />
+
+      <Dialog open={replyOpen} onOpenChange={setReplyOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{tx(isAr, 'الرد على الاستفسار', 'Reply to inquiry')}</DialogTitle>
+            <DialogDescription>
+              {replyTarget
+                ? `${replyTarget.name} · ${replyTarget.email}`
+                : tx(isAr, 'اكتب ردك للعميل', 'Write your reply to the customer')}
+            </DialogDescription>
+          </DialogHeader>
+          {replyTarget && templates.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              <span className="text-xs text-[var(--admin-text-faint)] w-full">
+                {tx(isAr, 'قوالب سريعة:', 'Quick templates:')}
+              </span>
+              {templates
+                .filter((t) => t.isActive)
+                .map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    className="admin-icon-btn !w-auto px-3 text-xs"
+                    onClick={() => applyTemplateToReply(t)}
+                  >
+                    {t.title}
+                  </button>
+                ))}
+            </div>
+          )}
+          <Field label={tx(isAr, 'نص الرد', 'Reply text')}>
+            <textarea
+              className="admin-input min-h-[140px]"
+              value={replyText}
+              onChange={(e) => setReplyText(e.target.value)}
+            />
+          </Field>
+          <DialogFooter className="flex-wrap gap-2">
+            <button type="button" className="admin-icon-btn !w-auto px-4" onClick={() => setReplyOpen(false)}>
+              {tx(isAr, 'إلغاء', 'Cancel')}
+            </button>
+            {replyTarget && replyText.trim() && (
+              <a
+                href={buildInquiryMailtoLink({
+                  to: replyTarget.email,
+                  subject: tx(
+                    isAr,
+                    `رد على استفسارك — ${replyTarget.property?.title ?? 'CIAR'}`,
+                    `Re: your inquiry — ${replyTarget.property?.title ?? 'CIAR'}`
+                  ),
+                  body: replyText.trim(),
+                })}
+                className="admin-icon-btn !w-auto px-4 inline-flex items-center gap-1.5"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Mail className="h-3.5 w-3.5" />
+                {tx(isAr, 'إرسال بالبريد', 'Send via email')}
+              </a>
+            )}
+            <button type="button" className="admin-btn-premium" disabled={replySubmitting} onClick={submitReply}>
+              {replySubmitting ? tx(isAr, 'جارٍ الحفظ…', 'Saving…') : tx(isAr, 'حفظ الرد', 'Save reply')}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={templateOpen} onOpenChange={setTemplateOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {editingTemplateId
+                ? tx(isAr, 'تعديل قالب الرد', 'Edit reply template')
+                : tx(isAr, 'قالب رد جديد', 'New reply template')}
+            </DialogTitle>
+            <DialogDescription>{tx(isAr, INQUIRY_TEMPLATE_HINT.ar, INQUIRY_TEMPLATE_HINT.en)}</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <Field label={tx(isAr, 'اسم القالب', 'Template name')}>
+              <input
+                className="admin-input"
+                placeholder={tx(isAr, 'مثال: ترحيب سريع', 'e.g. Quick welcome')}
+                value={templateForm.title}
+                onChange={(e) => setTemplateForm({ ...templateForm, title: e.target.value })}
+              />
+            </Field>
+            <Field label={tx(isAr, 'نص الرد', 'Reply text')}>
+              <textarea
+                className="admin-input min-h-[120px]"
+                value={templateForm.body}
+                onChange={(e) => setTemplateForm({ ...templateForm, body: e.target.value })}
+              />
+            </Field>
+            <Field label={tx(isAr, 'ترتيب العرض', 'Display order')}>
+              <input
+                type="number"
+                min={0}
+                className="admin-input"
+                value={templateForm.order}
+                onChange={(e) => setTemplateForm({ ...templateForm, order: Number(e.target.value) || 0 })}
+              />
+            </Field>
+            <label className="inline-flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={templateForm.isActive}
+                onChange={(e) => setTemplateForm({ ...templateForm, isActive: e.target.checked })}
+              />
+              {tx(isAr, 'القالب فعّال', 'Template is active')}
+            </label>
+            <label className="inline-flex items-center gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={templateForm.sendOnNewInquiry}
+                onChange={(e) => setTemplateForm({ ...templateForm, sendOnNewInquiry: e.target.checked })}
+              />
+              {tx(isAr, 'يرسل تلقائياً عند كل استفسار جديد', 'Send automatically on every new inquiry')}
+            </label>
+          </div>
+          <DialogFooter>
+            <button type="button" className="admin-icon-btn !w-auto px-4" onClick={() => setTemplateOpen(false)}>
+              {tx(isAr, 'إلغاء', 'Cancel')}
+            </button>
+            <button type="button" className="admin-btn-premium" disabled={templateSubmitting} onClick={submitTemplate}>
+              {templateSubmitting ? tx(isAr, 'جارٍ الحفظ…', 'Saving…') : tx(isAr, 'حفظ القالب', 'Save template')}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -2018,6 +2581,9 @@ export function FavoritesTab({ isAr }: { isAr: boolean }) {
 export function CompaniesTab({ isAr }: { isAr: boolean }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [settingsCompanyId, setSettingsCompanyId] = useState<string | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [form, setForm] = useState({ name: '', email: '', phone: '', website: '', description: '' });
   const bump = () => setRefreshKey((k) => k + 1);
   type Row = {
     id: string;
@@ -2031,6 +2597,38 @@ export function CompaniesTab({ isAr }: { isAr: boolean }) {
   };
   const parseItems = useCallback((d: unknown): Row[] => (Array.isArray(d) ? (d as Row[]) : []), []);
 
+  const submitCompany = async () => {
+    if (!form.name.trim()) {
+      toast.error(tx(isAr, 'اسم الشركة مطلوب', 'Company name is required'));
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/companies', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          email: form.email.trim() || undefined,
+          phone: form.phone.trim() || undefined,
+          website: form.website.trim() || undefined,
+          description: form.description.trim() || undefined,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(typeof data?.error === 'string' ? data.error : tx(isAr, 'فشل الإنشاء', 'Create failed'));
+      toast.success(tx(isAr, 'تمت إضافة الشركة', 'Company added'));
+      setAddOpen(false);
+      setForm({ name: '', email: '', phone: '', website: '', description: '' });
+      invalidate('companies');
+      bump();
+    } catch (e) {
+      toast.error(tx(isAr, 'فشل الإنشاء', 'Create failed'), { description: e instanceof Error ? e.message : '' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (settingsCompanyId) {
     return (
       <CompanySettingsPanel
@@ -2043,47 +2641,92 @@ export function CompaniesTab({ isAr }: { isAr: boolean }) {
   }
 
   return (
-    <AdminEntityGrid<Row>
-      isAr={isAr}
-      refreshKey={refreshKey}
-      subtitle={{
-        ar: 'اضغط على أي شركة لإدارة بياناتها وصلاحياتها وفريقها',
-        en: 'Click any company to manage profile, permissions, and team',
-      }}
-      endpoint="/api/companies"
-      parseItems={parseItems}
-      searchKeys={['name', 'email', 'phone']}
-      emptyAr="لا توجد شركات"
-      emptyEn="No companies"
-      onItemClick={(r) => setSettingsCompanyId(r.id)}
-      renderCard={(r) => (
-        <div className="p-4 w-full">
-          <div className="flex items-center gap-2 mb-3">
-            <Building className="h-5 w-5 text-[#f5c97b] shrink-0" />
-            <span className="font-semibold text-[var(--admin-text)] truncate">{r.name}</span>
+    <>
+      <AdminEntityGrid<Row>
+        isAr={isAr}
+        refreshKey={refreshKey}
+        subtitle={{
+          ar: 'اضغط على بطاقة الشركة للإعدادات، أو أضف شركة جديدة',
+          en: 'Click a company card for settings, or add a new company',
+        }}
+        endpoint="/api/companies"
+        parseItems={parseItems}
+        searchKeys={['name', 'email', 'phone']}
+        searchPlaceholder={{ ar: 'بحث باسم الشركة…', en: 'Search companies…' }}
+        emptyAr="لا توجد شركات — أضف أول شركة"
+        emptyEn="No companies — add your first company"
+        onAdd={() => setAddOpen(true)}
+        addLabel={{ ar: 'إضافة شركة', en: 'Add company' }}
+        onItemClick={(r) => setSettingsCompanyId(r.id)}
+        renderCard={(r) => (
+          <div className="p-4 w-full">
+            <div className="flex items-center gap-2 mb-3">
+              <Building className="h-5 w-5 text-[#f5c97b] shrink-0" />
+              <span className="font-semibold text-[var(--admin-text)] truncate">{r.name}</span>
+            </div>
+            <div className="text-[11px] text-[var(--admin-text-mute)] space-y-1 mb-3">
+              {r.email && (
+                <div className="flex items-center gap-1 truncate">
+                  <Mail className="h-3 w-3 shrink-0" />
+                  {r.email}
+                </div>
+              )}
+              {r.phone && (
+                <div className="flex items-center gap-1">
+                  <Phone className="h-3 w-3 shrink-0" />
+                  {r.phone}
+                </div>
+              )}
+            </div>
+            <div className="flex justify-between text-xs font-bold text-[var(--admin-text-mute)]">
+              <span>
+                {r._count?.agents ?? r.agentCount ?? 0} {tx(isAr, 'وكيل', 'agents')}
+              </span>
+              <span>
+                {r.listingCount ?? 0} {tx(isAr, 'إعلان', 'listings')}
+              </span>
+            </div>
+            <p className="mt-3 text-[10px] text-amber-200/70">{tx(isAr, 'اضغط للإعدادات', 'Tap for settings')}</p>
           </div>
-          <div className="text-[11px] text-[var(--admin-text-mute)] space-y-1 mb-3">
-            {r.email && (
-              <div className="flex items-center gap-1 truncate">
-                <Mail className="h-3 w-3 shrink-0" />
-                {r.email}
-              </div>
-            )}
-            {r.phone && (
-              <div className="flex items-center gap-1">
-                <Phone className="h-3 w-3 shrink-0" />
-                {r.phone}
-              </div>
-            )}
+        )}
+      />
+
+      <Dialog open={addOpen} onOpenChange={setAddOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{tx(isAr, 'إضافة شركة عقارية', 'Add real estate company')}</DialogTitle>
+            <DialogDescription>
+              {tx(isAr, 'يمكنك لاحقاً ربط الوكلاء بهذه الشركة من تبويب الوكلاء', 'You can link agents to this company later from the Agents tab')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3">
+            <Field label={tx(isAr, 'اسم الشركة', 'Company name')}>
+              <input className="admin-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            </Field>
+            <Field label={tx(isAr, 'البريد (اختياري)', 'Email (optional)')}>
+              <input type="email" className="admin-input" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+            </Field>
+            <Field label={tx(isAr, 'الهاتف (اختياري)', 'Phone (optional)')}>
+              <input className="admin-input" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+            </Field>
+            <Field label={tx(isAr, 'الموقع الإلكتروني (اختياري)', 'Website (optional)')}>
+              <input className="admin-input" placeholder="https://…" value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} />
+            </Field>
+            <Field label={tx(isAr, 'نبذة (اختياري)', 'About (optional)')}>
+              <textarea className="admin-input min-h-[72px]" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            </Field>
           </div>
-          <div className="flex justify-between text-xs font-bold text-[var(--admin-text-mute)]">
-            <span>{r._count?.agents ?? r.agentCount ?? 0} {tx(isAr, 'وكيل', 'agents')}</span>
-            <span>{r.listingCount ?? 0} {tx(isAr, 'إعلان', 'listings')}</span>
-          </div>
-          <p className="mt-3 text-[10px] text-amber-200/70">{tx(isAr, 'اضغط للإدارة ←', 'Tap to manage →')}</p>
-        </div>
-      )}
-    />
+          <DialogFooter>
+            <button type="button" className="admin-icon-btn !w-auto px-4" onClick={() => setAddOpen(false)}>
+              {tx(isAr, 'إلغاء', 'Cancel')}
+            </button>
+            <button type="button" className="admin-btn-premium" disabled={submitting} onClick={submitCompany}>
+              {submitting ? tx(isAr, 'جارٍ الحفظ…', 'Saving…') : tx(isAr, 'إضافة الشركة', 'Add company')}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
@@ -2243,7 +2886,12 @@ export function BannersTab({ isAr }: { isAr: boolean }) {
               <input className="admin-input" value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} />
             </Field>
             <Field label={tx(isAr, 'رابط الصورة', 'Image URL')}>
-              <input className="admin-input" placeholder="https://…" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} />
+              <ImageUrlInput
+                isAr={isAr}
+                value={form.image}
+                onChange={(url) => setForm({ ...form, image: url })}
+                placeholder="https://…"
+              />
             </Field>
             <Field label={tx(isAr, 'رابط البانر', 'Link URL')}>
               <input className="admin-input" placeholder="https://…" value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} />
@@ -2295,6 +2943,44 @@ export function BannersTab({ isAr }: { isAr: boolean }) {
 }
 
 // ─── News Tab ───────────────────────────
+function TickerColorPicker({
+  isAr,
+  label,
+  value,
+  onChange,
+  defaultHex,
+}: {
+  isAr: boolean;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  defaultHex: string;
+}) {
+  const display = value?.trim() || defaultHex;
+  return (
+    <Field label={label}>
+      <div className="flex items-center gap-3">
+        <input
+          type="color"
+          className="h-10 w-12 rounded-lg border border-white/15 cursor-pointer bg-transparent shrink-0"
+          value={display.startsWith('#') ? display : defaultHex}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        <span className="text-xs text-[var(--admin-text-mute)] flex-1">
+          {value?.trim()
+            ? value
+            : tx(isAr, 'افتراضي الموقع', 'Site default')}
+        </span>
+        {value?.trim() ? (
+          <button type="button" className="text-xs text-amber-200/80 hover:text-amber-100" onClick={() => onChange('')}>
+            {tx(isAr, 'إزالة', 'Clear')}
+          </button>
+        ) : null}
+      </div>
+    </Field>
+  );
+}
+
 export function NewsTab({ isAr }: { isAr: boolean }) {
   const designSettings = useAppStore((s) => s.designSettings);
   const updateDesignSettings = useAppStore((s) => s.updateDesignSettings);
@@ -2304,82 +2990,28 @@ export function NewsTab({ isAr }: { isAr: boolean }) {
   const [form, setForm] = useState({ content: '', type: 'info', link: '', order: 0, isActive: true });
   const [submitting, setSubmitting] = useState(false);
 
+  type Row = { id: string; content: string; type: string; isActive: boolean; order: number; createdAt: string; link?: string | null };
+  const [localNews, setLocalNews] = useState<Row[]>([]);
+
   const clampTickerDim = (value: number, min: number, max: number, fallback: number) => {
     if (!Number.isFinite(value)) return fallback;
     return Math.min(max, Math.max(min, Math.round(value)));
   };
 
-  type Row = { id: string; content: string; type: string; isActive: boolean; order: number; createdAt: string; link?: string | null };
-  const parseRows = useCallback((d: unknown): Row[] => (Array.isArray(d) ? (d as Row[]) : []), []);
-  const columns: ColumnDef<Row>[] = [
-    {
-      key: 'content',
-      header: { ar: 'المحتوى', en: 'Content' },
-      render: (r) => <span className="font-medium">{r.content}</span>,
-    },
-    {
-      key: 'type',
-      header: { ar: 'النوع', en: 'Type' },
-      render: (r) => {
-        const c = r.type === 'urgent' ? 'admin-pill-down' : r.type === 'promo' ? 'admin-pill-gold' : 'admin-pill-up';
-        return <span className={`admin-pill ${c}`}>{r.type}</span>;
-      },
-    },
-    { key: 'order', header: { ar: 'الترتيب', en: 'Order' }, render: (r) => <span className="font-mono">{r.order}</span> },
-    {
-      key: 'active',
-      header: { ar: 'الحالة', en: 'Status' },
-      render: (r) =>
-        r.isActive ? (
-          <span className="admin-pill admin-pill-up">{tx(isAr, 'فعّال', 'Active')}</span>
-        ) : (
-          <span className="admin-pill admin-pill-down">{tx(isAr, 'متوقف', 'Inactive')}</span>
-        ),
-    },
-  ];
+  const parseItems = useCallback((d: unknown): Row[] => {
+    const rows = Array.isArray(d) ? (d as Row[]) : [];
+    return [...rows].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+  }, []);
 
-  const rowActions = (r: Row): RowAction[] => [
-    {
-      id: 'toggle',
-      label: tx(isAr, r.isActive ? 'إيقاف' : 'تفعيل', r.isActive ? 'Deactivate' : 'Activate'),
-      icon: r.isActive ? ToggleLeft : ToggleRight,
-      onClick: async () => {
-        try {
-          await adminFetch('/api/news', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: r.id, isActive: !r.isActive }),
-          });
-          invalidate('news');
-          toast.success(tx(isAr, 'تم التحديث', 'Updated'));
-          bump();
-        } catch (e) {
-          toast.error(tx(isAr, 'فشل التحديث', 'Update failed'), { description: e instanceof Error ? e.message : '' });
-        }
-      },
-    },
-    {
-      id: 'del',
-      label: tx(isAr, 'حذف الخبر', 'Delete news'),
-      icon: Trash2,
-      variant: 'danger',
-      onClick: async () => {
-        if (!window.confirm(tx(isAr, 'حذف هذا الخبر؟', 'Delete this item?'))) return;
-        try {
-          await adminFetch(`/api/news?id=${encodeURIComponent(r.id)}`, { method: 'DELETE' });
-          invalidate('news');
-          toast.success(tx(isAr, 'تم الحذف', 'Deleted'));
-          bump();
-        } catch (e) {
-          toast.error(tx(isAr, 'فشل الحذف', 'Delete failed'), { description: e instanceof Error ? e.message : '' });
-        }
-      },
-    },
-  ];
+  const newsTypePill = (type: string) => {
+    const c =
+      type === 'urgent' ? 'admin-pill-down' : type === 'promo' ? 'admin-pill-gold' : type === 'warning' ? 'admin-pill-down' : 'admin-pill-up';
+    return <span className={`admin-pill ${c}`}>{newsTypeLabel(isAr, type)}</span>;
+  };
 
   const submit = async () => {
     if (!form.content.trim()) {
-      toast.error(tx(isAr, 'المحتوى مطلوب', 'Content is required'));
+      toast.error(tx(isAr, 'نص الخبر مطلوب', 'News text is required'));
       return;
     }
     setSubmitting(true);
@@ -2390,14 +3022,21 @@ export function NewsTab({ isAr }: { isAr: boolean }) {
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(typeof data?.error === 'string' ? data.error : `HTTP ${res.status}`);
-      toast.success(tx(isAr, 'تمت الإضافة', 'News added'));
+      if (!res.ok) throw new Error(typeof data?.error === 'string' ? data.error : tx(isAr, 'فشل الإضافة', 'Could not add'));
+      toast.success(tx(isAr, 'تم نشر الخبر في الشريط', 'News published to ticker'));
+      if (data?.id) {
+        setLocalNews((prev) => {
+          const row = data as Row;
+          if (prev.some((item) => item.id === row.id)) return prev;
+          return [...prev, row];
+        });
+      }
       setOpen(false);
       setForm({ content: '', type: 'info', link: '', order: 0, isActive: true });
       invalidate('news');
       bump();
     } catch (e) {
-      toast.error(tx(isAr, 'فشل الإنشاء', 'Create failed'), { description: e instanceof Error ? e.message : '' });
+      toast.error(tx(isAr, 'فشل الإضافة', 'Could not add'), { description: e instanceof Error ? e.message : '' });
     } finally {
       setSubmitting(false);
     }
@@ -2410,12 +3049,12 @@ export function NewsTab({ isAr }: { isAr: boolean }) {
           <div className="flex items-center gap-2">
             <Palette className="h-4 w-4 text-[#f5c97b]" />
             <div>
-              <h3 className="font-heading font-bold">{tx(isAr, 'مظهر الشريط الإخباري', 'Ticker appearance')}</h3>
+              <h3 className="font-heading font-bold">{tx(isAr, 'شكل الشريط الإخباري', 'Ticker look')}</h3>
               <p className="text-[12px] text-[var(--admin-text-mute)] mt-1 max-w-xl">
                 {tx(
                   isAr,
-                  'يُحفظ تلقائياً مع إعدادات الموقع (بعد ثوانٍ قليلة). اترك الحقول الفارغة لاستخدام المظهر الافتراضي للوضع الفاتح/الداكن.',
-                  'Saves automatically with site settings (short debounce). Leave color fields empty to keep the default light/dark theme look.',
+                  'اضبط الارتفاع والألوان بسهولة — يُحفظ تلقائياً مع إعدادات الموقع. اترك اللون فارغاً لاستخدام مظهر الموقع الافتراضي.',
+                  'Adjust height and colors easily — saves with site settings. Leave a color empty to use the site default.',
                 )}
               </p>
             </div>
@@ -2433,85 +3072,79 @@ export function NewsTab({ isAr }: { isAr: boolean }) {
                 newsTickerLabelBackground: '',
                 newsTickerSeparatorColor: '',
               });
-              toast.success(tx(isAr, 'تمت إعادة مظهر الشريط للافتراضي', 'Ticker appearance reset to defaults'));
+              toast.success(tx(isAr, 'تمت إعادة الشكل للافتراضي', 'Ticker look reset'));
             }}
           >
-            {tx(isAr, 'إعادة مظهر الشريط', 'Reset ticker look')}
+            {tx(isAr, 'إعادة الافتراضي', 'Reset to default')}
           </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <Field label={tx(isAr, 'ارتفاع الشريط (بكسل)', 'Bar height (px)')}>
-            <input
-              type="number"
-              min={28}
-              max={80}
-              className="admin-input"
-              value={designSettings.newsTickerHeightPx ?? 40}
-              onChange={(e) =>
-                updateDesignSettings({
-                  newsTickerHeightPx: clampTickerDim(Number(e.target.value), 28, 80, 40),
-                })
-              }
-            />
+          <Field label={tx(isAr, 'ارتفاع الشريط', 'Bar height')}>
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min={28}
+                max={80}
+                className="flex-1 accent-amber-400"
+                value={designSettings.newsTickerHeightPx ?? 40}
+                onChange={(e) =>
+                  updateDesignSettings({
+                    newsTickerHeightPx: clampTickerDim(Number(e.target.value), 28, 80, 40),
+                  })
+                }
+              />
+              <span className="text-sm font-semibold w-12 text-end">{designSettings.newsTickerHeightPx ?? 40}px</span>
+            </div>
           </Field>
-          <Field label={tx(isAr, 'حجم خط النص المتحرك (بكسل)', 'Scrolling text size (px)')}>
-            <input
-              type="number"
-              min={10}
-              max={24}
-              className="admin-input"
-              value={designSettings.newsTickerFontSizePx ?? 12}
-              onChange={(e) =>
-                updateDesignSettings({
-                  newsTickerFontSizePx: clampTickerDim(Number(e.target.value), 10, 24, 12),
-                })
-              }
-            />
+          <Field label={tx(isAr, 'حجم الخط', 'Text size')}>
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min={10}
+                max={24}
+                className="flex-1 accent-amber-400"
+                value={designSettings.newsTickerFontSizePx ?? 12}
+                onChange={(e) =>
+                  updateDesignSettings({
+                    newsTickerFontSizePx: clampTickerDim(Number(e.target.value), 10, 24, 12),
+                  })
+                }
+              />
+              <span className="text-sm font-semibold w-12 text-end">{designSettings.newsTickerFontSizePx ?? 12}px</span>
+            </div>
           </Field>
-          <Field label={tx(isAr, 'خلفية الشريط (CSS)', 'Bar background (CSS)')}>
-            <input
-              className="admin-input font-mono text-[13px]"
-              placeholder="linear-gradient(...) · rgba(...) · #hex"
-              value={designSettings.newsTickerBackground}
-              onChange={(e) => updateDesignSettings({ newsTickerBackground: e.target.value })}
-            />
-          </Field>
-          <Field label={tx(isAr, 'لون نص الأخبار (CSS)', 'News text color (CSS)')}>
-            <input
-              className="admin-input font-mono text-[13px]"
-              placeholder="#334155 · rgb(...)"
-              value={designSettings.newsTickerTextColor}
-              onChange={(e) => updateDesignSettings({ newsTickerTextColor: e.target.value })}
-            />
-          </Field>
-          <Field label={tx(isAr, 'خلفية عمود «عاجل» (CSS)', 'Label column background (CSS)')}>
-            <input
-              className="admin-input font-mono text-[13px]"
-              placeholder={tx(isAr, 'فارغ = تدرج خفيف بلون الهوية', 'Empty = subtle brand tint')}
-              value={designSettings.newsTickerLabelBackground}
-              onChange={(e) => updateDesignSettings({ newsTickerLabelBackground: e.target.value })}
-            />
-          </Field>
-          <Field label={tx(isAr, 'لون نص «عاجل» والجرس (CSS)', 'Label & bell color (CSS)')}>
-            <input
-              className="admin-input font-mono text-[13px]"
-              placeholder={tx(isAr, 'فارغ = اللون الأساسي للموقع', 'Empty = site primary color')}
-              value={designSettings.newsTickerLabelTextColor}
-              onChange={(e) => updateDesignSettings({ newsTickerLabelTextColor: e.target.value })}
-            />
-          </Field>
-          <Field label={tx(isAr, 'لون الفواصل | (CSS)', 'Separator color (CSS)')}>
-            <input
-              className="admin-input font-mono text-[13px]"
-              placeholder={tx(isAr, 'فارغ = لون خافت من السمة', 'Empty = muted theme color')}
-              value={designSettings.newsTickerSeparatorColor}
-              onChange={(e) => updateDesignSettings({ newsTickerSeparatorColor: e.target.value })}
-            />
-          </Field>
+          <TickerColorPicker
+            isAr={isAr}
+            label={tx(isAr, 'لون خلفية الشريط', 'Bar background color')}
+            value={designSettings.newsTickerBackground}
+            defaultHex="#0f172a"
+            onChange={(v) => updateDesignSettings({ newsTickerBackground: v })}
+          />
+          <TickerColorPicker
+            isAr={isAr}
+            label={tx(isAr, 'لون نص الأخبار', 'News text color')}
+            value={designSettings.newsTickerTextColor}
+            defaultHex="#e2e8f0"
+            onChange={(v) => updateDesignSettings({ newsTickerTextColor: v })}
+          />
+          <TickerColorPicker
+            isAr={isAr}
+            label={tx(isAr, 'خلفية عمود «عاجل»', 'Breaking label background')}
+            value={designSettings.newsTickerLabelBackground}
+            defaultHex="#1e293b"
+            onChange={(v) => updateDesignSettings({ newsTickerLabelBackground: v })}
+          />
+          <TickerColorPicker
+            isAr={isAr}
+            label={tx(isAr, 'لون نص «عاجل»', 'Breaking label text')}
+            value={designSettings.newsTickerLabelTextColor}
+            defaultHex="#f59e0b"
+            onChange={(v) => updateDesignSettings({ newsTickerLabelTextColor: v })}
+          />
         </div>
 
-        <p className="text-[11px] text-[var(--admin-text-faint)] mb-2">{tx(isAr, 'معاينة', 'Preview')}</p>
+        <p className="text-[11px] text-[var(--admin-text-faint)] mb-2">{tx(isAr, 'معاينة مباشرة', 'Live preview')}</p>
         <div
           className="rounded-lg border border-white/10 overflow-hidden glass-nav"
           style={{
@@ -2556,76 +3189,148 @@ export function NewsTab({ isAr }: { isAr: boolean }) {
                     : {}),
                 }}
               >
-                {tx(isAr, 'نص تجريبي للشريط الإخباري…', 'Sample ticker headline text…')}
-              </span>
-              <span
-                className={`mx-1 ${designSettings.newsTickerSeparatorColor?.trim() ? '' : 'text-foreground/20'}`}
-                style={
-                  designSettings.newsTickerSeparatorColor?.trim()
-                    ? { color: designSettings.newsTickerSeparatorColor }
-                    : undefined
-                }
-              >
-                |
+                {tx(isAr, 'مثال: عروض جديدة على العقارات في دبي…', 'Sample: New listings in Dubai…')}
               </span>
             </div>
           </div>
         </div>
       </div>
 
-      <AdminSection<Row>
-        key={refreshKey}
+      <AdminEntityGrid<Row>
         isAr={isAr}
-        title={{ ar: 'الأخبار وشريط الأخبار', en: 'News & Ticker' }}
-        subtitle={{ ar: 'إدارة الأخبار العاجلة — تظهر فوراً في الشريط أعلى الصفحات', en: 'Edits show instantly in the public ticker' }}
+        refreshKey={refreshKey}
+        localItems={localNews}
+        subtitle={{
+          ar: 'كل سطر يظهر في الشريط أعلى الموقع — الأصغر رقم الترتيب يظهر أولاً',
+          en: 'Each item scrolls in the top bar — lower order numbers appear first',
+        }}
         endpoint="/api/news?all=1"
-        parseRows={parseRows}
-        columns={columns}
+        parseItems={parseItems}
         searchKeys={['content']}
+        searchPlaceholder={{ ar: 'بحث في الأخبار…', en: 'Search news…' }}
+        emptyAr="لا توجد أخبار — أضف خبراً للشريط"
+        emptyEn="No news — add a ticker item"
         onAdd={() => setOpen(true)}
-        rowActions={rowActions}
+        addLabel={{ ar: 'إضافة خبر', en: 'Add news' }}
+        cardClickable={false}
+        onItemClick={() => {}}
+        renderCard={(r) => (
+          <div className="p-4 w-full">
+            <div className="flex flex-wrap items-center gap-2 mb-2">
+              {newsTypePill(r.type)}
+              {r.isActive ? (
+                <span className="admin-pill admin-pill-up">{tx(isAr, 'يعرض الآن', 'Showing now')}</span>
+              ) : (
+                <span className="admin-pill admin-pill-down">{tx(isAr, 'متوقف', 'Paused')}</span>
+              )}
+              <span className="text-[11px] text-[var(--admin-text-faint)] ms-auto">
+                {tx(isAr, 'الترتيب', 'Order')}: {r.order}
+              </span>
+            </div>
+            <p className="text-sm font-medium leading-relaxed">{r.content}</p>
+            {r.link?.trim() && (
+              <p className="text-[11px] text-amber-200/70 mt-2 truncate flex items-center gap-1">
+                <Link2 className="h-3 w-3 shrink-0" />
+                {r.link}
+              </p>
+            )}
+          </div>
+        )}
+        renderCardActions={(r) => (
+          <>
+            <button
+              type="button"
+              className="admin-icon-btn !w-auto px-3 text-xs"
+              onClick={async () => {
+                try {
+                  await adminFetch('/api/news', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: r.id, isActive: !r.isActive }),
+                  });
+                  invalidate('news');
+                  toast.success(tx(isAr, 'تم التحديث', 'Updated'));
+                  bump();
+                } catch (e) {
+                  toast.error(tx(isAr, 'فشل التحديث', 'Update failed'), { description: e instanceof Error ? e.message : '' });
+                }
+              }}
+            >
+              {r.isActive ? tx(isAr, 'إيقاف العرض', 'Pause') : tx(isAr, 'تفعيل العرض', 'Show')}
+            </button>
+            <button
+              type="button"
+              className="admin-icon-btn !w-auto px-3 text-xs text-rose-300 border-rose-400/30"
+              onClick={async () => {
+                if (!window.confirm(tx(isAr, 'حذف هذا الخبر؟', 'Delete this news item?'))) return;
+                try {
+                  await adminFetch(`/api/news?id=${encodeURIComponent(r.id)}`, { method: 'DELETE' });
+                  setLocalNews((prev) => prev.filter((item) => item.id !== r.id));
+                  invalidate('news');
+                  toast.success(tx(isAr, 'تم الحذف', 'Deleted'));
+                  bump();
+                } catch (e) {
+                  toast.error(tx(isAr, 'فشل الحذف', 'Delete failed'), { description: e instanceof Error ? e.message : '' });
+                }
+              }}
+            >
+              {tx(isAr, 'حذف', 'Delete')}
+            </button>
+          </>
+        )}
       />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{tx(isAr, 'إضافة خبر جديد', 'Add news item')}</DialogTitle>
+            <DialogTitle>{tx(isAr, 'إضافة خبر للشريط', 'Add ticker news')}</DialogTitle>
             <DialogDescription>
-              {tx(isAr, 'سيظهر فوراً في شريط الأخبار للزوار', 'Will appear instantly in the public ticker')}
+              {tx(isAr, 'يظهر مباشرة في الشريط أعلى صفحات الموقع', 'Appears immediately in the top news bar')}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3">
-            <Field label={tx(isAr, 'المحتوى', 'Content')}>
+            <Field label={tx(isAr, 'نص الخبر', 'News text')}>
               <textarea
                 className="admin-input min-h-[80px]"
+                placeholder={tx(isAr, 'مثال: خصم 10% على الإيجار هذا الشهر', 'e.g. 10% off rentals this month')}
                 value={form.content}
                 onChange={(e) => setForm({ ...form, content: e.target.value })}
               />
             </Field>
-            <Field label={tx(isAr, 'الرابط (اختياري)', 'Link (optional)')}>
-              <input className="admin-input" placeholder="https://…" value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} />
+            <Field label={tx(isAr, 'رابط (اختياري)', 'Link (optional)')}>
+              <input
+                className="admin-input"
+                placeholder={tx(isAr, 'https://example.com', 'https://example.com')}
+                value={form.link}
+                onChange={(e) => setForm({ ...form, link: e.target.value })}
+              />
             </Field>
             <div className="grid grid-cols-2 gap-3">
-              <Field label={tx(isAr, 'النوع', 'Type')}>
+              <Field label={tx(isAr, 'نوع الخبر', 'News type')}>
                 <select className="admin-input" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-                  <option value="info">info</option>
-                  <option value="warning">warning</option>
-                  <option value="urgent">urgent</option>
-                  <option value="promo">promo</option>
+                  {NEWS_TYPE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {isAr ? opt.ar : opt.en}
+                    </option>
+                  ))}
                 </select>
               </Field>
-              <Field label={tx(isAr, 'الترتيب', 'Order')}>
+              <Field label={tx(isAr, 'ترتيب الظهور', 'Display order')}>
                 <input
                   type="number"
+                  min={0}
                   className="admin-input"
                   value={form.order}
                   onChange={(e) => setForm({ ...form, order: Number(e.target.value) || 0 })}
                 />
+                <p className="text-[10px] text-[var(--admin-text-faint)] mt-1">
+                  {tx(isAr, '0 = الأول في الشريط', '0 = first in the bar')}
+                </p>
               </Field>
             </div>
-            <label className="inline-flex items-center gap-2 text-sm">
+            <label className="inline-flex items-center gap-2 text-sm cursor-pointer">
               <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
-              {tx(isAr, 'فعّال', 'Active')}
+              {tx(isAr, 'عرض في الشريط فوراً', 'Show in ticker immediately')}
             </label>
           </div>
           <DialogFooter>
@@ -2633,7 +3338,7 @@ export function NewsTab({ isAr }: { isAr: boolean }) {
               {tx(isAr, 'إلغاء', 'Cancel')}
             </button>
             <button type="button" className="admin-btn-premium" disabled={submitting} onClick={submit}>
-              {submitting ? tx(isAr, 'جارٍ الحفظ…', 'Saving…') : tx(isAr, 'حفظ', 'Save')}
+              {submitting ? tx(isAr, 'جارٍ النشر…', 'Publishing…') : tx(isAr, 'نشر في الشريط', 'Publish')}
             </button>
           </DialogFooter>
         </DialogContent>
@@ -2656,630 +3361,9 @@ export function FeaturesTab({ isAr }: { isAr: boolean }) {
   return <AdminFeaturesTab isAr={isAr} />;
 }
 
-export function ContentManagerTab({ isAr }: { isAr: boolean }) {
-  const router = useRouter();
-  const {
-    contentSettings,
-    updatePageContent,
-    resetPageContent,
-    socialSettings,
-    updateSocialSettings,
-    resetSocialSettings,
-  } = useAppStore();
-  const [activePageContentTab, setActivePageContentTab] = useState<ManagedPageKey>('home');
-  const [backgroundUrlDraft, setBackgroundUrlDraft] = useState('');
-  const [uploadingBackground, setUploadingBackground] = useState(false);
+export { ContentManagerTab } from './content-manager-tab';
+export { SiteConfigTab } from './site-config-tab';
 
-  const pageMeta: Record<ManagedPageKey, { ar: string; en: string }> = {
-    home: { ar: 'الرئيسية', en: 'Home' },
-    search: { ar: 'البحث', en: 'Search' },
-    agents: { ar: 'الوكلاء', en: 'Agents' },
-    contact: { ar: 'اتصل بنا', en: 'Contact' },
-    favorites: { ar: 'المفضلة', en: 'Favorites' },
-    login: { ar: 'دخول المستخدم', en: 'User Login' },
-    register: { ar: 'تسجيل المستخدم', en: 'User Register' },
-    'admin-login': { ar: 'دخول الأدمن', en: 'Admin Login' },
-  };
-
-  const activeContentEntry = contentSettings[activePageContentTab];
-  const hasCustomData = Boolean(
-    activeContentEntry.title?.trim()
-    || activeContentEntry.subtitle?.trim()
-    || activeContentEntry.badgeText?.trim()
-    || activeContentEntry.backgroundImageUrl?.trim()
-    || activeContentEntry.hideBadge
-    || activeContentEntry.textAlign
-    || activeContentEntry.titleSize
-    || typeof activeContentEntry.overlayOpacity === 'number'
-    || activeContentEntry.contentMaxWidth,
-  );
-  const openPageMap: Record<ManagedPageKey, string> = {
-    home: '/',
-    search: '/#search',
-    agents: '/#agents',
-    contact: '/#contact',
-    favorites: '/#favorites',
-    login: '/#login',
-    register: '/#register',
-    'admin-login': '/admin',
-  };
-  const previewImage = activeContentEntry.backgroundImageUrl?.trim();
-  const placeholderImage = 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1600&q=80&auto=format&fit=crop';
-  const galleryImages = Array.from(
-    new Set([
-      ...(activeContentEntry.backgroundImageUrl?.trim()
-        ? [activeContentEntry.backgroundImageUrl.trim()]
-        : []),
-      ...((activeContentEntry.backgroundImageUrls ?? [])
-        .map((url) => url.trim())
-        .filter(Boolean)),
-    ]),
-  );
-
-  const handleSetBackgroundPrimary = (url: string) => {
-    updatePageContent(activePageContentTab, {
-      backgroundImageUrl: url,
-      backgroundImageUrls: galleryImages,
-    });
-  };
-
-  const handleRemoveBackgroundImage = (url: string) => {
-    const nextGallery = galleryImages.filter((item) => item !== url);
-    updatePageContent(activePageContentTab, {
-      backgroundImageUrls: nextGallery,
-      backgroundImageUrl:
-        activeContentEntry.backgroundImageUrl?.trim() === url
-          ? nextGallery[0] ?? ''
-          : activeContentEntry.backgroundImageUrl ?? '',
-    });
-  };
-
-  const handleAddBackgroundUrl = () => {
-    const nextUrl = backgroundUrlDraft.trim();
-    if (!nextUrl) return;
-    const nextGallery = Array.from(new Set([...galleryImages, nextUrl]));
-    updatePageContent(activePageContentTab, {
-      backgroundImageUrl: activeContentEntry.backgroundImageUrl?.trim() || nextUrl,
-      backgroundImageUrls: nextGallery,
-    });
-    setBackgroundUrlDraft('');
-    toast.success(tx(isAr, 'تمت إضافة الخلفية', 'Background added'));
-  };
-
-  const handleUploadBackground = async (file: File) => {
-    setUploadingBackground(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('/api/admin/uploads', {
-        method: 'POST',
-        body: formData,
-      });
-      const payload = await response.json();
-      if (!response.ok || !payload?.url) {
-        throw new Error(payload?.error || 'Upload failed');
-      }
-
-      const uploadedUrl = String(payload.url);
-      const nextGallery = Array.from(new Set([...galleryImages, uploadedUrl]));
-      updatePageContent(activePageContentTab, {
-        backgroundImageUrl: activeContentEntry.backgroundImageUrl?.trim() || uploadedUrl,
-        backgroundImageUrls: nextGallery,
-      });
-      toast.success(tx(isAr, 'تم رفع الخلفية', 'Background uploaded'));
-    } catch (error) {
-      toast.error(
-        (error as Error)?.message || tx(isAr, 'فشل رفع الصورة', 'Failed to upload image'),
-      );
-    } finally {
-      setUploadingBackground(false);
-    }
-  };
-
-  return (
-    <div className="space-y-5">
-      <div className="admin-card p-5 sm:p-6">
-        <div className="inline-flex items-center gap-2 rounded-full border border-[#f5c97b]/30 bg-[#f5c97b]/10 px-3 py-1 text-[11px] font-semibold text-[#f5c97b]">
-          <Sparkles className="h-3.5 w-3.5" />
-          {tx(isAr, 'محرر المحتوى الذكي', 'Smart Content Editor')}
-        </div>
-        <h1 className="font-heading mt-3 text-2xl sm:text-3xl font-bold">{tx(isAr, 'إدارة محتوى الصفحات', 'Pages Content Manager')}</h1>
-        <p className="text-sm text-[var(--admin-text-mute)] mt-1">
-          {tx(
-            isAr,
-            'تحكم شامل بالعناوين والنصوص والخلفيات لكل صفحة',
-            'Full control over titles, text, and backgrounds for each page',
-          )}
-        </p>
-      </div>
-
-      <div className="admin-card p-5 space-y-5">
-        <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-2">
-          {(Object.keys(pageMeta) as Array<keyof typeof pageMeta>).map((page) => {
-            const entry = contentSettings[page];
-            const hasValues = Boolean(
-              entry.title?.trim()
-              || entry.subtitle?.trim()
-              || entry.badgeText?.trim()
-              || entry.backgroundImageUrl?.trim(),
-            );
-            return (
-              <button
-                key={page}
-                type="button"
-                onClick={() => setActivePageContentTab(page)}
-                className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all inline-flex items-center justify-center gap-1.5 ${
-                  activePageContentTab === page
-                    ? 'bg-[#f5c97b]/20 border-[#f5c97b]/40 text-[#f5c97b] shadow-[0_0_0_1px_rgba(245,201,123,0.2)]'
-                    : 'border-white/10 hover:bg-white/[0.04] text-[var(--admin-text-mute)] hover:text-[var(--admin-text)]'
-                }`}
-              >
-                {tx(isAr, pageMeta[page].ar, pageMeta[page].en)}
-                {hasValues && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />}
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
-          <div className="text-xs text-[var(--admin-text-faint)] mb-2">
-            {tx(isAr, 'المحتوى المطبق حالياً لكل صفحة', 'Currently applied content per page')}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-2">
-            {(Object.keys(pageMeta) as Array<ManagedPageKey>).map((page) => {
-              const entry = contentSettings[page];
-              const imageCount = Array.from(
-                new Set([
-                  ...(entry.backgroundImageUrl?.trim() ? [entry.backgroundImageUrl.trim()] : []),
-                  ...((entry.backgroundImageUrls ?? []).map((url) => url.trim()).filter(Boolean)),
-                ]),
-              ).length;
-              return (
-                <button
-                  key={`overview-${page}`}
-                  type="button"
-                  onClick={() => setActivePageContentTab(page)}
-                  className={`text-start rounded-lg border p-2 transition-colors ${
-                    activePageContentTab === page
-                      ? 'border-[#f5c97b]/40 bg-[#f5c97b]/10'
-                      : 'border-white/10 hover:bg-white/[0.03]'
-                  }`}
-                >
-                  <div className="text-[11px] text-[var(--admin-text-faint)] mb-0.5">
-                    {tx(isAr, pageMeta[page].ar, pageMeta[page].en)}
-                  </div>
-                  <div className="text-xs font-semibold truncate">
-                    {entry.title?.trim() || tx(isAr, 'عنوان افتراضي', 'Default title')}
-                  </div>
-                  <div className="text-[11px] text-[var(--admin-text-mute)] truncate">
-                    {entry.subtitle?.trim() || tx(isAr, 'نص افتراضي', 'Default subtitle')}
-                  </div>
-                  <div className="mt-1 text-[10px] text-emerald-300">
-                    {tx(isAr, `صور الخلفية: ${imageCount}`, `Backgrounds: ${imageCount}`)}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          <div className="lg:col-span-3 space-y-3">
-            <div className="rounded-xl border border-white/10 bg-gradient-to-r from-white/[0.03] to-white/[0.01] p-3 flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <div className="text-xs text-[var(--admin-text-faint)]">{tx(isAr, 'الصفحة المحددة', 'Selected page')}</div>
-                <div className="font-semibold text-base">{tx(isAr, pageMeta[activePageContentTab].ar, pageMeta[activePageContentTab].en)}</div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className="admin-icon-btn !w-auto px-3 h-8 text-xs"
-                  onClick={() => router.push(openPageMap[activePageContentTab])}
-                >
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  {tx(isAr, 'فتح الصفحة', 'Open page')}
-                </button>
-                <button
-                  type="button"
-                  className="admin-icon-btn !w-auto px-3 h-8 text-xs"
-                  onClick={() => {
-                    updatePageContent(activePageContentTab, {
-                      title: '',
-                      subtitle: '',
-                      badgeText: '',
-                      backgroundImageUrl: '',
-                      backgroundImageUrls: [],
-                      hideBadge: false,
-                      textAlign: 'center',
-                      titleSize: 'lg',
-                      overlayOpacity: 58,
-                      contentMaxWidth: 'xl',
-                    });
-                    toast.success(tx(isAr, 'تم تفريغ الحقول', 'Fields cleared'));
-                  }}
-                >
-                  {tx(isAr, 'تفريغ', 'Clear')}
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 rounded-xl border border-white/10 bg-white/[0.02] p-3">
-              <Field label={tx(isAr, 'العنوان', 'Title')}>
-                <input
-                  className="admin-input"
-                  value={activeContentEntry.title ?? ''}
-                  onChange={(e) => updatePageContent(activePageContentTab, { title: e.target.value })}
-                  placeholder={tx(isAr, 'عنوان الصفحة', 'Page title')}
-                />
-              </Field>
-              <Field label={tx(isAr, 'النص الفرعي', 'Subtitle')}>
-                <input
-                  className="admin-input"
-                  value={activeContentEntry.subtitle ?? ''}
-                  onChange={(e) => updatePageContent(activePageContentTab, { subtitle: e.target.value })}
-                  placeholder={tx(isAr, 'نص وصفي', 'Descriptive text')}
-                />
-              </Field>
-              <Field label={tx(isAr, 'نص الشارة', 'Badge text')}>
-                <input
-                  className="admin-input"
-                  value={activeContentEntry.badgeText ?? ''}
-                  onChange={(e) => updatePageContent(activePageContentTab, { badgeText: e.target.value })}
-                  placeholder={tx(isAr, 'اختياري', 'Optional')}
-                />
-              </Field>
-              <Field label={tx(isAr, 'الخلفية الأساسية', 'Primary background')}>
-                <input
-                  className="admin-input"
-                  value={activeContentEntry.backgroundImageUrl ?? ''}
-                  onChange={(e) => updatePageContent(activePageContentTab, { backgroundImageUrl: e.target.value })}
-                  placeholder="https://..."
-                />
-              </Field>
-              <Field label={tx(isAr, 'محاذاة المحتوى', 'Content alignment')}>
-                <select
-                  className="admin-input"
-                  value={activeContentEntry.textAlign ?? 'center'}
-                  onChange={(e) => updatePageContent(activePageContentTab, { textAlign: e.target.value as 'start' | 'center' | 'end' })}
-                >
-                  <option value="start">{tx(isAr, 'بداية', 'Start')}</option>
-                  <option value="center">{tx(isAr, 'منتصف', 'Center')}</option>
-                  <option value="end">{tx(isAr, 'نهاية', 'End')}</option>
-                </select>
-              </Field>
-              <Field label={tx(isAr, 'حجم العنوان', 'Title size')}>
-                <select
-                  className="admin-input"
-                  value={activeContentEntry.titleSize ?? 'lg'}
-                  onChange={(e) => updatePageContent(activePageContentTab, { titleSize: e.target.value as 'md' | 'lg' | 'xl' })}
-                >
-                  <option value="md">{tx(isAr, 'متوسط', 'Medium')}</option>
-                  <option value="lg">{tx(isAr, 'كبير', 'Large')}</option>
-                  <option value="xl">{tx(isAr, 'كبير جدًا', 'Extra large')}</option>
-                </select>
-              </Field>
-              <Field label={tx(isAr, 'عرض المحتوى', 'Content width')}>
-                <select
-                  className="admin-input"
-                  value={activeContentEntry.contentMaxWidth ?? 'xl'}
-                  onChange={(e) => updatePageContent(activePageContentTab, { contentMaxWidth: e.target.value as 'md' | 'lg' | 'xl' })}
-                >
-                  <option value="md">{tx(isAr, 'مضغوط', 'Compact')}</option>
-                  <option value="lg">{tx(isAr, 'متوازن', 'Balanced')}</option>
-                  <option value="xl">{tx(isAr, 'واسع', 'Wide')}</option>
-                </select>
-              </Field>
-              <Field label={tx(isAr, 'شفافية طبقة التعتيم', 'Overlay opacity')}>
-                <input
-                  type="range"
-                  min={0}
-                  max={95}
-                  step={1}
-                  className="w-full accent-[#f5c97b]"
-                  value={Math.min(Math.max(Number(activeContentEntry.overlayOpacity ?? 58), 0), 95)}
-                  onChange={(e) => updatePageContent(activePageContentTab, { overlayOpacity: Number(e.target.value) })}
-                />
-                <div className="mt-1 text-[11px] text-[var(--admin-text-faint)]">
-                  {Math.min(Math.max(Number(activeContentEntry.overlayOpacity ?? 58), 0), 95)}%
-                </div>
-              </Field>
-              <label className="inline-flex items-center gap-2 mt-1 text-sm">
-                <input
-                  type="checkbox"
-                  checked={Boolean(activeContentEntry.hideBadge)}
-                  onChange={(e) => updatePageContent(activePageContentTab, { hideBadge: e.target.checked })}
-                />
-                <span className="text-[var(--admin-text-mute)]">{tx(isAr, 'إخفاء الشارة أعلى العنوان', 'Hide badge above title')}</span>
-              </label>
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="text-sm font-semibold">
-                  {tx(isAr, 'مكتبة الخلفيات لهذه الصفحة', 'Background library for this page')}
-                </div>
-                <div className="text-[11px] text-[var(--admin-text-faint)]">
-                  {tx(isAr, 'يمكنك إضافة أكثر من خلفية', 'You can add multiple backgrounds')}
-                </div>
-              </div>
-
-              <div className="flex flex-col md:flex-row gap-2">
-                <div className="flex-1">
-                  <input
-                    className="admin-input"
-                    value={backgroundUrlDraft}
-                    onChange={(e) => setBackgroundUrlDraft(e.target.value)}
-                    placeholder={tx(isAr, 'ألصق رابط صورة جديدة...', 'Paste a new image URL...')}
-                  />
-                </div>
-                <button
-                  type="button"
-                  className="admin-icon-btn !w-auto px-3 h-10 text-xs"
-                  onClick={handleAddBackgroundUrl}
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  <span>{tx(isAr, 'إضافة رابط', 'Add URL')}</span>
-                </button>
-                <label className="admin-icon-btn !w-auto px-3 h-10 text-xs cursor-pointer">
-                  <Upload className="h-3.5 w-3.5" />
-                  <span>
-                    {uploadingBackground
-                      ? tx(isAr, 'جارٍ الرفع...', 'Uploading...')
-                      : tx(isAr, 'رفع صورة', 'Upload image')}
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/gif"
-                    className="hidden"
-                    onChange={(event) => {
-                      const selected = event.target.files?.[0];
-                      if (selected) {
-                        void handleUploadBackground(selected);
-                      }
-                      event.currentTarget.value = '';
-                    }}
-                    disabled={uploadingBackground}
-                  />
-                </label>
-              </div>
-
-              {galleryImages.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">
-                  {galleryImages.map((url) => {
-                    const isPrimary = activeContentEntry.backgroundImageUrl?.trim() === url;
-                    return (
-                      <div key={url} className="relative rounded-lg overflow-hidden border border-white/10">
-                        <div
-                          className="h-24 bg-cover bg-center"
-                          style={{ backgroundImage: `url('${url}')` }}
-                        />
-                        <div className="p-2 bg-black/35 space-y-1.5">
-                          <div className="text-[10px] text-white/75 truncate">{url}</div>
-                          <div className="flex items-center gap-1">
-                            <button
-                              type="button"
-                              className={`admin-icon-btn !h-7 !w-auto px-2 text-[11px] ${isPrimary ? 'bg-emerald-500/20 border-emerald-400/40 text-emerald-300' : ''}`}
-                              onClick={() => handleSetBackgroundPrimary(url)}
-                            >
-                              <Link2 className="h-3 w-3" />
-                              {tx(isAr, 'أساسي', 'Primary')}
-                            </button>
-                            <button
-                              type="button"
-                              className="admin-icon-btn !h-7 !w-auto px-2 text-[11px]"
-                              onClick={() => handleRemoveBackgroundImage(url)}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                              {tx(isAr, 'حذف', 'Delete')}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="rounded-lg border border-dashed border-white/15 p-4 text-center text-xs text-[var(--admin-text-faint)]">
-                  {tx(isAr, 'لا توجد خلفيات مضافة بعد', 'No backgrounds added yet')}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="lg:col-span-2 space-y-3">
-            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
-              <div className="text-xs text-[var(--admin-text-faint)] mb-1">{tx(isAr, 'معاينة مباشرة', 'Live preview')}</div>
-              <div
-                className="h-40 rounded-lg overflow-hidden border border-white/10 bg-cover bg-center relative"
-                style={{ backgroundImage: `url('${previewImage || placeholderImage}')` }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-black/10" />
-                <div className="absolute bottom-2 left-2 right-2">
-                  <div className="text-[10px] text-white/80">{activeContentEntry.badgeText || tx(isAr, 'شارة الصفحة', 'Page badge')}</div>
-                  <div className="text-sm text-white font-semibold truncate">{activeContentEntry.title || tx(isAr, 'عنوان الصفحة', 'Page title')}</div>
-                </div>
-              </div>
-              <div className="mt-2 text-[11px] text-[var(--admin-text-mute)] line-clamp-2">
-                {activeContentEntry.subtitle || tx(isAr, 'لا يوجد نص فرعي مخصص لهذه الصفحة', 'No custom subtitle for this page')}
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3 space-y-2">
-              <div className="text-xs text-[var(--admin-text-faint)]">{tx(isAr, 'الحالة', 'Status')}</div>
-              <div className="flex items-center justify-between text-sm">
-                <span>{tx(isAr, 'حقول مخصصة', 'Custom fields')}</span>
-                <span className={`admin-pill ${hasCustomData ? 'admin-pill-up' : 'admin-pill-down'}`}>
-                  {hasCustomData ? tx(isAr, 'موجود', 'Present') : tx(isAr, 'لا يوجد', 'Empty')}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span>{tx(isAr, 'عدد الأحرف في العنوان', 'Title length')}</span>
-                <span className="text-[var(--admin-text-mute)] tabular-nums">{(activeContentEntry.title ?? '').length}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span>{tx(isAr, 'جاهزية العرض', 'Display readiness')}</span>
-                <span className={`inline-flex items-center gap-1.5 ${hasCustomData ? 'text-emerald-400' : 'text-amber-300'}`}>
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  {hasCustomData ? tx(isAr, 'جاهز', 'Ready') : tx(isAr, 'افتراضي', 'Default')}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap justify-end gap-2">
-          <button
-            type="button"
-            className="admin-icon-btn !w-auto px-4"
-            onClick={() => {
-              resetPageContent(activePageContentTab);
-              toast.success(tx(isAr, 'تمت إعادة ضبط الصفحة', 'Page reset done'));
-            }}
-          >
-            {tx(isAr, 'إعادة ضبط هذه الصفحة', 'Reset this page')}
-          </button>
-          <button
-            type="button"
-            className="admin-btn-premium"
-            onClick={() => toast.success(tx(isAr, 'تم حفظ التعديلات تلقائياً', 'Changes are saved automatically'))}
-          >
-            {tx(isAr, 'تم', 'Done')}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export function SiteConfigTab({ isAr }: { isAr: boolean }) {
-  const { designSettings, contentSettings } = useAppStore();
-  const [featureToggles, setFeatureToggles] = useState<Array<{ key: string; name: string; isEnabled: boolean }>>([]);
-
-  useEffect(() => {
-    let mounted = true;
-    fetch('/api/features')
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data) => {
-        if (!mounted || !Array.isArray(data)) return;
-        setFeatureToggles(
-          data.map((f) => ({
-            key: String(f?.key ?? ''),
-            name: String(f?.name ?? f?.key ?? ''),
-            isEnabled: Boolean(f?.isEnabled),
-          })),
-        );
-      })
-      .catch(() => {});
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  const managedPages: Array<{
-    key: 'home' | 'search' | 'agents' | 'contact' | 'favorites' | 'login' | 'register' | 'admin-login';
-    ar: string;
-    en: string;
-  }> = [
-    { key: 'home', ar: 'الرئيسية', en: 'Home' },
-    { key: 'search', ar: 'البحث', en: 'Search' },
-    { key: 'agents', ar: 'الوكلاء', en: 'Agents' },
-    { key: 'contact', ar: 'اتصل بنا', en: 'Contact' },
-    { key: 'favorites', ar: 'المفضلة', en: 'Favorites' },
-    { key: 'login', ar: 'دخول المستخدم', en: 'User Login' },
-    { key: 'register', ar: 'تسجيل المستخدم', en: 'User Register' },
-    { key: 'admin-login', ar: 'دخول الأدمن', en: 'Admin Login' },
-  ];
-
-  return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="font-heading text-2xl sm:text-3xl font-bold">
-          {tx(isAr, 'الحالة الحالية للموقع', 'Current Site Setup')}
-        </h1>
-        <p className="text-sm text-[var(--admin-text-mute)] mt-1">
-          {tx(
-            isAr,
-            'كل الإعدادات المطبقة الآن على الموقع في شاشة واحدة',
-            'All currently applied site settings in one screen',
-          )}
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="admin-card p-5">
-          <h3 className="font-heading font-bold mb-3">{tx(isAr, 'ألوان الهوية', 'Brand Colors')}</h3>
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[var(--admin-text-mute)]">{tx(isAr, 'الأساسي', 'Primary')}</span>
-              <span className="inline-flex items-center gap-2">
-                <span className="h-3 w-3 rounded-full border border-white/20" style={{ backgroundColor: designSettings.primaryColor }} />
-                <code>{designSettings.primaryColor}</code>
-              </span>
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[var(--admin-text-mute)]">{tx(isAr, 'التمييز', 'Accent')}</span>
-              <span className="inline-flex items-center gap-2">
-                <span className="h-3 w-3 rounded-full border border-white/20" style={{ backgroundColor: designSettings.accentColor }} />
-                <code>{designSettings.accentColor}</code>
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div className="admin-card p-5 md:col-span-2">
-          <h3 className="font-heading font-bold mb-2">{tx(isAr, 'صورة الهيرو الحالية', 'Current Hero Image')}</h3>
-          <p className="text-[12px] text-[var(--admin-text-mute)] mb-3 truncate">{designSettings.heroImageUrl}</p>
-          <div className="h-28 rounded-xl overflow-hidden border border-white/10 bg-white/[0.04]">
-            {designSettings.heroImageUrl ? (
-              <img src={designSettings.heroImageUrl} alt="hero image preview" className="h-full w-full object-cover" />
-            ) : (
-              <div className="h-full w-full flex items-center justify-center text-[12px] text-[var(--admin-text-faint)]">
-                {tx(isAr, 'لا توجد صورة', 'No image')}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="admin-card p-5">
-        <h3 className="font-heading font-bold mb-3">{tx(isAr, 'محتوى الصفحات المطبق حالياً', 'Applied Pages Content')}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {managedPages.map((page) => {
-            const entry = contentSettings[page.key];
-            return (
-              <div key={page.key} className="rounded-xl border border-white/10 p-3 bg-white/[0.02]">
-                <div className="text-xs text-[var(--admin-text-faint)] mb-1">{tx(isAr, page.ar, page.en)}</div>
-                <div className="text-sm font-semibold truncate">{entry.title?.trim() || tx(isAr, '— افتراضي —', '— default —')}</div>
-                <div className="text-xs text-[var(--admin-text-mute)] truncate mt-1">
-                  {entry.subtitle?.trim() || tx(isAr, 'لا يوجد نص فرعي مخصص', 'No custom subtitle')}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="admin-card p-5">
-        <h3 className="font-heading font-bold mb-3">{tx(isAr, 'حالة المميزات', 'Feature Toggles Status')}</h3>
-        {featureToggles.length === 0 ? (
-          <p className="text-sm text-[var(--admin-text-mute)]">{tx(isAr, 'لا توجد بيانات حالياً', 'No data right now')}</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-            {featureToggles.map((feature) => (
-              <div key={feature.key} className="rounded-lg border border-white/10 px-3 py-2 flex items-center justify-between">
-                <span className="text-sm">{feature.name}</span>
-                <span className={`admin-pill ${feature.isEnabled ? 'admin-pill-up' : 'admin-pill-down'}`}>
-                  {feature.isEnabled ? tx(isAr, 'مفعل', 'Enabled') : tx(isAr, 'متوقف', 'Disabled')}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // ─── Coming-soon helper ──────────────────
 export function ComingSoon({ isAr, title }: { isAr: boolean; title: { ar: string; en: string } }) {
@@ -3313,7 +3397,13 @@ export function AnalyticsTab({ isAr }: { isAr: boolean }) {
 }
 
 // ─── Settings Tab ────────────────────────
-export function SettingsTab({ isAr }: { isAr: boolean }) {
+export function SettingsTab({
+  isAr,
+  onNavigateTab,
+}: {
+  isAr: boolean;
+  onNavigateTab?: (tab: import('./admin-nav').AdminTabId) => void;
+}) {
   const router = useRouter();
   const {
     locale,
@@ -3321,17 +3411,11 @@ export function SettingsTab({ isAr }: { isAr: boolean }) {
     designSettings,
     updateDesignSettings,
     resetDesignSettings,
-    contentSettings,
-    updatePageContent,
-    resetPageContent,
     socialSettings,
     updateSocialSettings,
     resetSocialSettings,
   } = useAppStore();
   const { theme, setTheme } = useTheme();
-  const [activePageContentTab, setActivePageContentTab] = useState<
-    'home' | 'search' | 'agents' | 'contact' | 'favorites' | 'login' | 'register' | 'admin-login'
-  >('home');
 
   const setLang = (next: 'ar' | 'en') => {
     setLocale(next);
@@ -3350,21 +3434,6 @@ export function SettingsTab({ isAr }: { isAr: boolean }) {
     updateDesignSettings({ heroImageUrl: value });
   };
 
-  const pageMeta: Record<
-    'home' | 'search' | 'agents' | 'contact' | 'favorites' | 'login' | 'register' | 'admin-login',
-    { ar: string; en: string }
-  > = {
-    home: { ar: 'الرئيسية', en: 'Home' },
-    search: { ar: 'البحث', en: 'Search' },
-    agents: { ar: 'الوكلاء', en: 'Agents' },
-    contact: { ar: 'اتصل بنا', en: 'Contact' },
-    favorites: { ar: 'المفضلة', en: 'Favorites' },
-    login: { ar: 'دخول المستخدم', en: 'User Login' },
-    register: { ar: 'تسجيل المستخدم', en: 'User Register' },
-    'admin-login': { ar: 'دخول الأدمن', en: 'Admin Login' },
-  };
-
-  const activeContentEntry = contentSettings[activePageContentTab];
 
   return (
     <div className="space-y-5">
@@ -3518,10 +3587,10 @@ export function SettingsTab({ isAr }: { isAr: boolean }) {
             {tx(isAr, 'تظهر كأول صورة في القسم الرئيسي', 'Appears as the first image in home hero')}
           </p>
           <Field label={tx(isAr, 'رابط الصورة', 'Image URL')}>
-            <input
-              className="admin-input"
+            <ImageUrlInput
+              isAr={isAr}
               value={designSettings.heroImageUrl}
-              onChange={(e) => updateHeroImage(e.target.value)}
+              onChange={updateHeroImage}
               placeholder="https://..."
             />
           </Field>
@@ -3558,82 +3627,25 @@ export function SettingsTab({ isAr }: { isAr: boolean }) {
         </div>
       </div>
 
-      <div className="admin-card p-5 space-y-4">
+      <div className="admin-card p-5 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h3 className="font-heading font-bold">{tx(isAr, 'إدارة محتوى الصفحات', 'Pages Content Manager')}</h3>
-          <p className="text-[12px] text-[var(--admin-text-mute)]">
+          <h3 className="font-heading font-bold">{tx(isAr, 'محتوى الصفحات', 'Page content')}</h3>
+          <p className="text-[12px] text-[var(--admin-text-mute)] mt-1 max-w-xl">
             {tx(
               isAr,
-              'تبويبات للتحكم بالعناوين والنصوص والخلفيات لكل صفحة',
-              'Tabs to control titles, text, and backgrounds per page',
+              'تعديل عناوين وصور وشكل كل صفحة من المحرر المخصص — أوضح وأسهل من الإعدادات هنا.',
+              'Edit titles, images, and layout per page in the dedicated editor.',
             )}
           </p>
         </div>
-
-        <div className="flex flex-wrap gap-2">
-          {(Object.keys(pageMeta) as Array<keyof typeof pageMeta>).map((page) => (
-            <button
-              key={page}
-              type="button"
-              onClick={() => setActivePageContentTab(page)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
-                activePageContentTab === page
-                  ? 'bg-[#f5c97b]/20 border-[#f5c97b]/40 text-[#f5c97b]'
-                  : 'border-white/10 hover:bg-white/[0.04]'
-              }`}
-            >
-              {tx(isAr, pageMeta[page].ar, pageMeta[page].en)}
-            </button>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <Field label={tx(isAr, 'العنوان', 'Title')}>
-            <input
-              className="admin-input"
-              value={activeContentEntry.title ?? ''}
-              onChange={(e) => updatePageContent(activePageContentTab, { title: e.target.value })}
-              placeholder={tx(isAr, 'عنوان الصفحة', 'Page title')}
-            />
-          </Field>
-          <Field label={tx(isAr, 'النص الفرعي', 'Subtitle')}>
-            <input
-              className="admin-input"
-              value={activeContentEntry.subtitle ?? ''}
-              onChange={(e) => updatePageContent(activePageContentTab, { subtitle: e.target.value })}
-              placeholder={tx(isAr, 'نص وصفي', 'Descriptive text')}
-            />
-          </Field>
-          <Field label={tx(isAr, 'نص الشارة', 'Badge text')}>
-            <input
-              className="admin-input"
-              value={activeContentEntry.badgeText ?? ''}
-              onChange={(e) => updatePageContent(activePageContentTab, { badgeText: e.target.value })}
-              placeholder={tx(isAr, 'اختياري', 'Optional')}
-            />
-          </Field>
-          <Field label={tx(isAr, 'رابط الخلفية', 'Background URL')}>
-            <input
-              className="admin-input"
-              value={activeContentEntry.backgroundImageUrl ?? ''}
-              onChange={(e) => updatePageContent(activePageContentTab, { backgroundImageUrl: e.target.value })}
-              placeholder="https://..."
-            />
-          </Field>
-        </div>
-
-        <div className="flex justify-end">
-          <button
-            type="button"
-            className="admin-icon-btn !w-auto px-4"
-            onClick={() => {
-              resetPageContent(activePageContentTab);
-              toast.success(tx(isAr, 'تمت إعادة ضبط الصفحة', 'Page reset done'));
-            }}
-          >
-            {tx(isAr, 'إعادة ضبط هذه الصفحة', 'Reset this page')}
-          </button>
-        </div>
+        <button
+          type="button"
+          className="admin-btn-premium !text-sm"
+          onClick={() => (onNavigateTab ? onNavigateTab('content-manager') : undefined)}
+        >
+          <Sparkles className="h-4 w-4" />
+          {tx(isAr, 'فتح محرر الصفحات', 'Open page editor')}
+        </button>
       </div>
 
       <div className="admin-card p-5 space-y-4">

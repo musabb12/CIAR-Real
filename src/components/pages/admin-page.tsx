@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShieldAlert, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
+import type { ManagedPageKey } from '@/types';
 
 import { AdminSidebar } from '@/components/admin/admin-sidebar';
 import { AdminTopbar } from '@/components/admin/admin-topbar';
@@ -57,6 +58,24 @@ export function AdminPage() {
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [activeTab, setActiveTab] = useState<AdminTabId>('dashboard');
   const [collapsed, setCollapsed] = useState(false);
+  const setStoreAdminTab = useAppStore((s) => s.setAdminTab);
+  const setContentManagerTargetPage = useAppStore((s) => s.setContentManagerTargetPage);
+
+  const navigateTab = useCallback(
+    (tab: AdminTabId) => {
+      setActiveTab(tab);
+      setStoreAdminTab(tab);
+    },
+    [setStoreAdminTab],
+  );
+
+  const openPageEditor = useCallback(
+    (page: ManagedPageKey) => {
+      setContentManagerTargetPage(page);
+      navigateTab('content-manager');
+    },
+    [navigateTab, setContentManagerTargetPage],
+  );
 
   const isAr = rtl;
   const tx = (ar: string, en: string) => (isAr ? ar : en);
@@ -168,9 +187,9 @@ export function AdminPage() {
             isAr={isAr}
             stats={stats}
             userName={userName}
-            onOpenProperties={() => setActiveTab('properties')}
-            onOpenAnalytics={() => setActiveTab('analytics')}
-            onOpenInsights={() => setActiveTab('site-config')}
+            onOpenProperties={() => navigateTab('properties')}
+            onOpenAnalytics={() => navigateTab('analytics')}
+            onOpenInsights={() => navigateTab('site-config')}
           />
         );
       case 'properties':
@@ -200,20 +219,20 @@ export function AdminPage() {
       case 'content-manager':
         return <ContentManagerTab isAr={isAr} />;
       case 'site-config':
-        return <SiteConfigTab isAr={isAr} />;
+        return <SiteConfigTab isAr={isAr} onNavigateTab={navigateTab} onEditPage={openPageEditor} />;
       case 'analytics':
         return <AnalyticsTab isAr={isAr} />;
       case 'settings':
-        return <SettingsTab isAr={isAr} />;
+        return <SettingsTab isAr={isAr} onNavigateTab={navigateTab} onEditPage={openPageEditor} />;
       default:
         return (
           <AdminDashboard
             isAr={isAr}
             stats={stats}
             userName={userName}
-            onOpenProperties={() => setActiveTab('properties')}
-            onOpenAnalytics={() => setActiveTab('analytics')}
-            onOpenInsights={() => setActiveTab('site-config')}
+            onOpenProperties={() => navigateTab('properties')}
+            onOpenAnalytics={() => navigateTab('analytics')}
+            onOpenInsights={() => navigateTab('site-config')}
           />
         );
     }
@@ -229,7 +248,7 @@ export function AdminPage() {
       </div>
       <AdminSidebar
         active={activeTab}
-        onSelect={setActiveTab}
+        onSelect={navigateTab}
         isAr={isAr}
         collapsed={collapsed}
         userName={userName}

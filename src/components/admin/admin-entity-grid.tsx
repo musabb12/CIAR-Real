@@ -6,6 +6,24 @@ import { toast } from 'sonner';
 
 const tx = (isAr: boolean, ar: string, en: string) => (isAr ? ar : en);
 
+function friendlyLoadError(isAr: boolean, msg: string): string {
+  if (msg.includes('Failed to fetch news')) {
+    return tx(
+      isAr,
+      'تعذّر تحميل الأخبار من قاعدة البيانات. يمكنك الإضافة مباشرة — جرّب «تحديث» بعد قليل.',
+      'Could not load news from the database. You can still add items — try Refresh shortly.',
+    );
+  }
+  if (msg.includes('Quota exceeded') || msg.includes('RESOURCE_EXHAUSTED')) {
+    return tx(
+      isAr,
+      'حصة قاعدة البيانات ممتلئة مؤقتاً. انتظر دقيقة ثم اضغط «تحديث».',
+      'Database quota is temporarily exceeded. Wait a minute then click Refresh.',
+    );
+  }
+  return msg;
+}
+
 export interface AdminEntityGridProps<T extends { id?: string }> {
   isAr: boolean;
   subtitle?: { ar: string; en: string };
@@ -23,6 +41,12 @@ export interface AdminEntityGridProps<T extends { id?: string }> {
   headerExtra?: ReactNode;
   refreshKey?: number;
   onApiResponse?: (payload: unknown) => void;
+  /** Footer actions on each card (clicks do not open the card) */
+  renderCardActions?: (item: T) => ReactNode;
+  /** Items added locally (e.g. after create while list fetch is unavailable) */
+  localItems?: T[];
+  /** If false, whole card is not a single click target */
+  cardClickable?: boolean;
 }
 
 export function AdminEntityGrid<T extends { id?: string }>({
@@ -42,6 +66,9 @@ export function AdminEntityGrid<T extends { id?: string }>({
   headerExtra,
   refreshKey = 0,
   onApiResponse,
+  renderCardActions,
+  localItems = [],
+  cardClickable = true,
 }: AdminEntityGridProps<T>) {
   const [items, setItems] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
@@ -58,16 +85,21 @@ export function AdminEntityGrid<T extends { id?: string }>({
           throw new Error(typeof (d as { error?: string }).error === 'string' ? (d as { error: string }).error : `HTTP ${r.status}`);
         }
         onApiResponse?.(d);
-        setItems(parseItems(d));
+        const fetched = parseItems(d);
+        const localOnly = localItems.filter(
+          (item) => !fetched.some((row) => row.id && item.id && row.id === item.id),
+        );
+        setItems([...localOnly, ...fetched]);
       })
       .catch((e: unknown) => {
-        const msg = e instanceof Error ? e.message : 'Failed to load';
+        const raw = e instanceof Error ? e.message : 'Failed to load';
+        const msg = friendlyLoadError(isAr, raw);
         setError(msg);
-        setItems([]);
+        setItems(localItems);
         toast.error(tx(isAr, 'فشل التحميل', 'Failed to load'), { description: msg });
       })
       .finally(() => setLoading(false));
-  }, [endpoint, parseItems, isAr, onApiResponse]);
+  }, [endpoint, parseItems, isAr, onApiResponse, localItems]);
 
   useEffect(() => {
     load();
@@ -146,14 +178,30 @@ export function AdminEntityGrid<T extends { id?: string }>({
       ) : (
         <div className={columnsClassName}>
           {filtered.map((item, i) => (
-            <button
+            <div
               key={item.id ?? i}
-              type="button"
-              onClick={() => onItemClick(item)}
-              className="admin-card p-0 text-start overflow-hidden transition-all hover:border-amber-400/35 hover:shadow-lg hover:shadow-amber-500/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50"
+              className="admin-card p-0 overflow-hidden flex flex-col transition-all hover:border-amber-400/35 hover:shadow-lg hover:shadow-amber-500/10"
             >
-              {renderCard(item)}
-            </button>
+              {cardClickable ? (
+                <button
+                  type="button"
+                  onClick={() => onItemClick(item)}
+                  className="flex-1 text-start p-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 focus-visible:ring-inset"
+                >
+                  {renderCard(item)}
+                </button>
+              ) : (
+                <div className="flex-1">{renderCard(item)}</div>
+              )}
+              {renderCardActions ? (
+                <div
+                  className="border-t border-white/10 px-3 py-2 flex flex-wrap gap-2"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {renderCardActions(item)}
+                </div>
+              ) : null}
+            </div>
           ))}
         </div>
       )}

@@ -1,3 +1,12 @@
+import { expandInquiryReplyTemplate } from '@/lib/inquiry-replies';
+import type { Query as FirestoreQuery } from 'firebase-admin/firestore';
+import {
+  getCachedRead,
+  getStaleCachedRead,
+  invalidateCachedReadPrefix,
+  isFirestoreQuotaError,
+  setCachedRead,
+} from '@/lib/firestore-read-cache';
 import {
   normalizeAdminPermissions,
   normalizeAdminTasks,
@@ -49,6 +58,7 @@ import type {
   Favorite,
   FeatureToggle,
   Inquiry,
+  InquiryAutoReply,
   Property,
   PropertyReview,
   SiteContentSettings,
@@ -56,7 +66,71 @@ import type {
   SiteSocialSettings,
   User,
   UserRole,
+  PropertyType,
 } from '@/types';
+
+const STATS_PROPERTY_TYPES: PropertyType[] = [
+  'APARTMENT',
+  'VILLA',
+  'HOUSE',
+  'LAND',
+  'OFFICE',
+  'COMMERCIAL',
+  'STUDIO',
+  'PENTHOUSE',
+  'TOWNHOUSE',
+  'DUPLEX',
+];
+
+const STATS_INQUIRY_STATUSES = ['NEW', 'READ', 'REPLIED', 'CLOSED'] as const;
+
+function propertyStatsCol() {
+  return col(FIRESTORE_COLLECTIONS.properties);
+}
+
+async function safeFirestoreCount(query: FirestoreQuery): Promise<number> {
+  try {
+    const snap = await query.count().get();
+    return snap.data().count;
+  } catch (err) {
+    if (isFirestoreQuotaError(err)) return 0;
+    throw err;
+  }
+}
+
+async function sumPropertyViewsFromSample(limit = 400): Promise<number> {
+  try {
+    const snap = await propertyStatsCol().select('views').limit(limit).get();
+    return snap.docs.reduce((sum, doc) => sum + asNumber(doc.data().views, 0), 0);
+  } catch (err) {
+    if (isFirestoreQuotaError(err)) return 0;
+    throw err;
+  }
+}
+
+async function fetchRecentInquiriesForStats() {
+  try {
+    const snap = await inquiryCollection()
+      .orderBy('createdAt', 'desc')
+      .limit(10)
+      .select('name', 'email', 'message', 'status', 'createdAt')
+      .get();
+    return snap.docs.map((doc) => {
+      const raw = doc.data() as Record<string, unknown>;
+      return {
+        id: doc.id,
+        name: asString(raw.name),
+        email: asString(raw.email),
+        message: asString(raw.message),
+        status: asString(raw.status, 'NEW'),
+        createdAt: toIso(raw.createdAt),
+      };
+    });
+  } catch (err) {
+    if (isFirestoreQuotaError(err)) return [];
+    throw err;
+  }
+}
 
 const SETTINGS_KEY = 'global-site-settings';
 
@@ -138,6 +212,10 @@ function favoriteCollection() {
 
 function inquiryCollection() {
   return col(FIRESTORE_COLLECTIONS.inquiries);
+}
+
+function inquiryAutoReplyCollection() {
+  return col(FIRESTORE_COLLECTIONS.inquiryAutoReplies);
 }
 
 function reviewCollection() {
@@ -849,6 +927,10 @@ async function buildInquiryResponse(id: string, raw: Record<string, unknown>): P
     phone: asNullableString(raw.phone),
     message: asString(raw.message),
     status: asString(raw.status, 'NEW'),
+    adminReply: asNullableString(raw.adminReply),
+    repliedAt: raw.repliedAt ? toIso(raw.repliedAt) : null,
+    replySource: (raw.replySource as Inquiry['replySource']) ?? null,
+    autoReplyTemplateId: asNullableString(raw.autoReplyTemplateId),
     createdAt: toIso(raw.createdAt),
     updatedAt: toIso(raw.updatedAt),
     property: property ?? undefined,
@@ -897,7 +979,152 @@ export async function createInquiryInFirestore(input: {
     updatedAt: nowIso(),
   };
   await inquiryCollection().doc(id).set(payload);
-  return buildInquiryResponse(id, payload);
+  const inquiry = await buildInquiryResponse(id, payload);
+  await maybeApplyAutoReplyToInquiry(inquiry);
+  const refreshed = await inquiryCollection().doc(id).get();
+  return buildInquiryResponse(id, refreshed.data() as Record<string, unknown>);
+}
+
+async function maybeApplyAutoReplyToInquiry(inquiry: Inquiry) {
+  const template = await getActiveAutoReplyForNewInquiries();
+  if (!template) return;
+
+  const replyText = expandInquiryReplyTemplate(template.body, {
+    name: inquiry.name,
+    email: inquiry.email,
+    phone: inquiry.phone,
+    property: inquiry.property?.title ?? null,
+    message: inquiry.message,
+  });
+
+  await inquiryCollection().doc(inquiry.id).update(
+    cleanUndefined({
+      adminReply: replyText,
+      repliedAt: nowIso(),
+      replySource: 'auto',
+      autoReplyTemplateId: template.id,
+      status: 'REPLIED',
+      updatedAt: nowIso(),
+    })
+  );
+}
+
+export async function replyToInquiryInFirestore(
+  id: string,
+  input: { adminReply: string; replySource?: 'manual' | 'auto'; autoReplyTemplateId?: string | null }
+) {
+  const text = input.adminReply.trim();
+  if (!text) throw new Error('Reply message is required');
+
+  const ref = inquiryCollection().doc(id);
+  const snap = await ref.get();
+  if (!snap.exists) return null;
+
+  await ref.update(
+    cleanUndefined({
+      adminReply: text,
+      repliedAt: nowIso(),
+      replySource: input.replySource ?? 'manual',
+      autoReplyTemplateId: input.autoReplyTemplateId ?? null,
+      status: 'REPLIED',
+      updatedAt: nowIso(),
+    })
+  );
+
+  const updated = await ref.get();
+  return buildInquiryResponse(id, updated.data() as Record<string, unknown>);
+}
+
+function autoReplyDocToModel(id: string, raw: Record<string, unknown>): InquiryAutoReply {
+  return {
+    id,
+    title: asString(raw.title),
+    body: asString(raw.body),
+    isActive: asBoolean(raw.isActive, true),
+    sendOnNewInquiry: asBoolean(raw.sendOnNewInquiry, false),
+    order: asNumber(raw.order, 0),
+    createdAt: toIso(raw.createdAt),
+    updatedAt: toIso(raw.updatedAt),
+  };
+}
+
+export async function listInquiryAutoRepliesFromFirestore() {
+  const snap = await inquiryAutoReplyCollection().get();
+  return snap.docs
+    .map((doc) => autoReplyDocToModel(doc.id, doc.data() as Record<string, unknown>))
+    .sort((a, b) => a.order - b.order || a.title.localeCompare(b.title));
+}
+
+export async function getActiveAutoReplyForNewInquiries(): Promise<InquiryAutoReply | null> {
+  const rows = await listInquiryAutoRepliesFromFirestore();
+  return rows.find((r) => r.isActive && r.sendOnNewInquiry) ?? null;
+}
+
+async function clearOtherAutoReplyDefaults(exceptId?: string) {
+  const snap = await inquiryAutoReplyCollection().where('sendOnNewInquiry', '==', true).get();
+  const batch = inquiryAutoReplyCollection().firestore.batch();
+  let hasUpdates = false;
+  for (const doc of snap.docs) {
+    if (exceptId && doc.id === exceptId) continue;
+    batch.update(doc.ref, { sendOnNewInquiry: false, updatedAt: nowIso() });
+    hasUpdates = true;
+  }
+  if (hasUpdates) await batch.commit();
+}
+
+export async function createInquiryAutoReplyInFirestore(input: {
+  title: string;
+  body: string;
+  isActive?: boolean;
+  sendOnNewInquiry?: boolean;
+  order?: number;
+}) {
+  const id = makeId('iarp');
+  if (input.sendOnNewInquiry) {
+    await clearOtherAutoReplyDefaults(id);
+  }
+  const payload = {
+    title: input.title.trim(),
+    body: input.body.trim(),
+    isActive: input.isActive ?? true,
+    sendOnNewInquiry: input.sendOnNewInquiry ?? false,
+    order: input.order ?? 0,
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  };
+  await inquiryAutoReplyCollection().doc(id).set(payload);
+  return autoReplyDocToModel(id, payload);
+}
+
+export async function updateInquiryAutoReplyInFirestore(
+  id: string,
+  input: Partial<{
+    title: string;
+    body: string;
+    isActive: boolean;
+    sendOnNewInquiry: boolean;
+    order: number;
+  }>
+) {
+  const ref = inquiryAutoReplyCollection().doc(id);
+  const snap = await ref.get();
+  if (!snap.exists) return null;
+
+  if (input.sendOnNewInquiry) {
+    await clearOtherAutoReplyDefaults(id);
+  }
+
+  await ref.update(cleanUndefined({ ...input, updatedAt: nowIso() }));
+  const updated = await ref.get();
+  return autoReplyDocToModel(id, updated.data() as Record<string, unknown>);
+}
+
+export async function deleteInquiryAutoReplyInFirestore(id: string) {
+  const ref = inquiryAutoReplyCollection().doc(id);
+  const snap = await ref.get();
+  if (!snap.exists) return false;
+  await ref.delete();
+  return true;
 }
 
 export async function updateInquiryInFirestore(
@@ -908,6 +1135,10 @@ export async function updateInquiryInFirestore(
     email: string;
     phone: string | null;
     message: string;
+    adminReply: string | null;
+    repliedAt: string | null;
+    replySource: 'manual' | 'auto' | null;
+    autoReplyTemplateId: string | null;
   }>
 ) {
   const ref = inquiryCollection().doc(id);
@@ -1086,10 +1317,25 @@ function newsDocToNews(id: string, raw: Record<string, unknown>): NewsItem {
 }
 
 export async function listNewsFromFirestore(all = false) {
-  const snap = await newsCollection().get();
-  let rows = snap.docs.map((doc) => newsDocToNews(doc.id, doc.data() as Record<string, unknown>));
-  if (!all) rows = rows.filter((item) => item.isActive);
-  return rows.sort((a, b) => a.order - b.order || (b.createdAt > a.createdAt ? 1 : -1));
+  const cacheKey = `news:${all ? 'all' : 'active'}`;
+  const cached = getCachedRead<NewsItem[]>(cacheKey, 60_000);
+  if (cached) return cached;
+
+  try {
+    const snap = await newsCollection().orderBy('order', 'asc').limit(200).get();
+    let rows = snap.docs.map((doc) => newsDocToNews(doc.id, doc.data() as Record<string, unknown>));
+    if (!all) rows = rows.filter((item) => item.isActive);
+    rows = rows.sort((a, b) => a.order - b.order || (b.createdAt > a.createdAt ? 1 : -1));
+    setCachedRead(cacheKey, rows);
+    return rows;
+  } catch (err) {
+    if (isFirestoreQuotaError(err)) {
+      const stale = getStaleCachedRead<NewsItem[]>(cacheKey, 15 * 60_000);
+      if (stale) return stale;
+      return [];
+    }
+    throw err;
+  }
 }
 
 export async function createNewsInFirestore(input: {
@@ -1110,7 +1356,18 @@ export async function createNewsInFirestore(input: {
     updatedAt: nowIso(),
   };
   await newsCollection().doc(id).set(payload);
-  return newsDocToNews(id, payload);
+  const item = newsDocToNews(id, payload);
+  const allCached = getStaleCachedRead<NewsItem[]>('news:all', 15 * 60_000) ?? [];
+  const nextAll = [...allCached, item].sort((a, b) => a.order - b.order);
+  setCachedRead('news:all', nextAll);
+  if (item.isActive) {
+    const activeCached = getStaleCachedRead<NewsItem[]>('news:active', 15 * 60_000) ?? [];
+    setCachedRead(
+      'news:active',
+      [...activeCached, item].sort((a, b) => a.order - b.order),
+    );
+  }
+  return item;
 }
 
 export async function updateNewsInFirestore(
@@ -1137,6 +1394,7 @@ export async function updateNewsInFirestore(
     })
   );
   const updated = await ref.get();
+  invalidateCachedReadPrefix('news:');
   return newsDocToNews(id, updated.data() as Record<string, unknown>);
 }
 
@@ -1145,6 +1403,7 @@ export async function deleteNewsInFirestore(id: string) {
   const snap = await ref.get();
   if (!snap.exists) return false;
   await ref.delete();
+  invalidateCachedReadPrefix('news:');
   return true;
 }
 
@@ -1258,54 +1517,52 @@ export async function createContactMessageInFirestore(input: {
 }
 
 export async function getAdminStatsFromFirestore() {
+  const propCol = propertyStatsCol();
+
   const [
-    properties,
-    users,
-    agents,
-    inquiries,
+    propertyCount,
+    featuredCount,
+    userCount,
+    agentCount,
+    inquiryCount,
+    views,
+    propertiesByType,
+    inquiriesByStatus,
+    recentInquiries,
   ] = await Promise.all([
-    listAllPropertiesFromFirestore(),
-    listUsersFromFirestore(),
-    listAgentsFromFirestore(),
-    listInquiriesFromFirestore(),
+    safeFirestoreCount(propCol),
+    safeFirestoreCount(propCol.where('isFeatured', '==', true)),
+    safeFirestoreCount(userCollection()),
+    safeFirestoreCount(agentCollection()),
+    safeFirestoreCount(inquiryCollection()),
+    sumPropertyViewsFromSample(),
+    Promise.all(
+      STATS_PROPERTY_TYPES.map(async (type) => ({
+        type,
+        count: await safeFirestoreCount(propCol.where('propertyType', '==', type)),
+      })),
+    ).then((rows) => rows.filter((row) => row.count > 0)),
+    Promise.all(
+      STATS_INQUIRY_STATUSES.map(async (status) => ({
+        status,
+        count: await safeFirestoreCount(inquiryCollection().where('status', '==', status)),
+      })),
+    ).then((rows) => rows.filter((row) => row.count > 0)),
+    fetchRecentInquiriesForStats(),
   ]);
-
-  const views = properties.reduce((sum, property) => sum + (property.views || 0), 0);
-  const propertiesByType = new Map<string, number>();
-  const inquiriesByStatus = new Map<string, number>();
-
-  for (const property of properties) {
-    propertiesByType.set(
-      property.propertyType,
-      (propertiesByType.get(property.propertyType) || 0) + 1
-    );
-  }
-
-  for (const inquiry of inquiries) {
-    inquiriesByStatus.set(
-      inquiry.status,
-      (inquiriesByStatus.get(inquiry.status) || 0) + 1
-    );
-  }
 
   return {
     totals: {
-      properties: properties.length,
-      users: users.length,
-      agents: agents.length,
-      inquiries: inquiries.length,
+      properties: propertyCount,
+      users: userCount,
+      agents: agentCount,
+      inquiries: inquiryCount,
       views,
-      featuredProperties: properties.filter((property) => property.isFeatured).length,
+      featuredProperties: featuredCount,
     },
-    propertiesByType: Array.from(propertiesByType.entries()).map(([type, count]) => ({
-      type,
-      count,
-    })),
-    inquiriesByStatus: Array.from(inquiriesByStatus.entries()).map(([status, count]) => ({
-      status,
-      count,
-    })),
-    recentInquiries: sortByCreatedDesc(inquiries).slice(0, 10),
+    propertiesByType,
+    inquiriesByStatus,
+    recentInquiries,
   };
 }
 
@@ -1313,6 +1570,85 @@ export function accountTypeToRole(accountType: AccountType): UserRole {
   if (accountType === 'OWNER') return 'OWNER';
   if (accountType === 'COMPANY') return 'COMPANY';
   return 'USER';
+}
+
+export async function createCompanyInFirestore(input: {
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  description?: string | null;
+  address?: string | null;
+}) {
+  const id = makeId('company');
+  const payload = {
+    id,
+    name: input.name.trim(),
+    logo: null,
+    description: input.description?.trim() || null,
+    phone: input.phone?.trim() || null,
+    email: input.email?.trim() || null,
+    website: input.website?.trim() || null,
+    address: input.address?.trim() || null,
+    founded: null,
+    agentCount: 0,
+    listingCount: 0,
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  };
+  await companyCollection().doc(id).set(payload);
+  return getCompanyDetailFromFirestore(id);
+}
+
+export async function createAgentWithUserInFirestore(input: {
+  name: string;
+  email: string;
+  /** bcrypt hash */
+  password: string;
+  phone?: string | null;
+  title?: string | null;
+  license?: string | null;
+  companyId?: string | null;
+}) {
+  const email = input.email.trim().toLowerCase();
+  const existing = await getUserByEmail(email);
+  if (existing) {
+    throw new Error('An account with this email already exists');
+  }
+
+  const user = await createUserInFirestore({
+    name: input.name.trim(),
+    email,
+    password: input.password,
+    phone: input.phone?.trim() || null,
+    role: 'AGENT',
+    isActive: true,
+  });
+
+  const agentId = makeId('agent');
+  const agentPayload = cleanUndefined({
+    id: agentId,
+    userId: user.id,
+    bio: null,
+    title: input.title?.trim() || txAgentTitleDefault(),
+    license: input.license?.trim() || null,
+    phone: input.phone?.trim() || null,
+    whatsapp: null,
+    experience: null,
+    rating: 0,
+    totalListings: 0,
+    totalSales: 0,
+    verified: false,
+    companyId: input.companyId?.trim() || null,
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  });
+  await agentCollection().doc(agentId).set(agentPayload);
+  return getAgentDetailFromFirestore(agentId);
+}
+
+function txAgentTitleDefault() {
+  return 'وكيل عقاري';
 }
 
 export async function createPartnerProfileForUser(input: {

@@ -43,6 +43,10 @@ export function mapAuthApiError(
       'محاولات تسجيل كثيرة. انتظر قليلًا ثم حاول مجددًا.',
       'Too many registration attempts. Please try again later.',
     ],
+    local_auth_mode: [
+      'تم إنشاء الحساب محليًا على الخادم (بدون Firebase). يمكنك تسجيل الدخول فورًا.',
+      'Account created on this server without Firebase. You can sign in right away.',
+    ],
     'FIREBASE_SERVICE_ACCOUNT_JSON is not set': [
       'خدمة قاعدة البيانات غير مهيأة على Vercel — راجع متغيرات البيئة',
       'Database is not configured on the server — check Vercel environment variables',

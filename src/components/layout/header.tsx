@@ -30,6 +30,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { useAppStore } from '@/store/app-store';
+import { CiarWordmark } from '@/components/brand/ciar-wordmark';
 import type { AppPage } from '@/types';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import { locales, type Locale } from '@/lib/i18n';
@@ -359,12 +360,12 @@ export function Header() {
           {/* ---- Logo ---- */}
           <button
             onClick={() => handleNavClick('home')}
-            className="group flex items-center gap-2.5 transition-opacity hover:opacity-80"
+            className="group flex items-center transition-opacity hover:opacity-90"
+            aria-label="CIAR"
           >
-            <img
-              src="/logo-transparent.png"
-              alt="CIAR"
-              className="h-14 sm:h-16 lg:h-20 w-auto object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.25)]"
+            <CiarWordmark
+              size="lg"
+              variant={scrolled ? 'luxury' : isDark ? 'light' : 'luxury'}
             />
           </button>
 
@@ -636,13 +637,10 @@ export function Header() {
           <div className="flex h-16 items-center justify-between border-b border-gray-100 px-4 sm:px-6 dark:border-white/5">
             <button
               onClick={() => handleNavClick('home')}
-              className="flex items-center gap-2.5"
+              className="flex items-center"
+              aria-label="CIAR"
             >
-              <img
-                src="/logo-transparent.png"
-                alt="CIAR"
-                className="h-14 sm:h-16 w-auto object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.25)]"
-              />
+              <CiarWordmark size="md" variant="luxury" />
             </button>
             <Button
               variant="ghost"

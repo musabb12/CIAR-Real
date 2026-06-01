@@ -36,6 +36,7 @@ export function AdminAnalyticsTab({ isAr }: { isAr: boolean }) {
   const [data, setData] = useState<StatsPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     setLoading(true);
@@ -46,9 +47,15 @@ export function AdminAnalyticsTab({ isAr }: { isAr: boolean }) {
         setData(d);
         setErr(null);
       })
-      .catch((e: unknown) => setErr(e instanceof Error ? e.message : 'Error'))
+      .catch((e: unknown) =>
+        setErr(
+          e instanceof Error
+            ? e.message
+            : tx(isAr, 'تعذّر تحميل التقارير', 'Could not load reports'),
+        ),
+      )
       .finally(() => setLoading(false));
-  }, []);
+  }, [isAr, reloadKey]);
 
   if (loading) {
     return (
@@ -59,9 +66,29 @@ export function AdminAnalyticsTab({ isAr }: { isAr: boolean }) {
   }
 
   if (err || !data) {
+    const friendly = err?.includes('Failed to fetch admin stats')
+      ? tx(
+          isAr,
+          'تعذّر جلب الإحصائيات من قاعدة البيانات. قد تكون الحصة مؤقتاً ممتلئة — جرّب إعادة التحميل.',
+          'Could not load stats from the database. Quota may be temporarily exceeded — try reloading.',
+        )
+      : (err ?? tx(isAr, 'لا توجد بيانات', 'No data'));
+
     return (
-      <div className="admin-card p-8 text-center text-rose-300">
-        {err ?? tx(isAr, 'لا توجد بيانات', 'No data')}
+      <div className="space-y-5">
+        <div>
+          <h1 className="font-heading text-2xl sm:text-3xl font-bold">{tx(isAr, 'التقارير', 'Reports')}</h1>
+        </div>
+        <div className="admin-card p-8 text-center space-y-4">
+          <p className="text-rose-300 text-sm">{friendly}</p>
+          <button
+            type="button"
+            className="admin-btn-premium !text-sm mx-auto"
+            onClick={() => setReloadKey((k) => k + 1)}
+          >
+            {tx(isAr, 'إعادة المحاولة', 'Retry')}
+          </button>
+        </div>
       </div>
     );
   }
@@ -106,7 +133,7 @@ export function AdminAnalyticsTab({ isAr }: { isAr: boolean }) {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-heading text-2xl sm:text-3xl font-bold">{tx(isAr, 'التحليلات', 'Analytics')}</h1>
+        <h1 className="font-heading text-2xl sm:text-3xl font-bold">{tx(isAr, 'التقارير', 'Reports')}</h1>
         <p className="text-sm text-[var(--admin-text-mute)] mt-1">
           {tx(isAr, 'ملخص الأداء والتوزيع حسب النوع والحالة', 'Performance overview by type and status')}
         </p>

@@ -9,6 +9,7 @@ import {
   listNewsFromFirestore,
   updateNewsInFirestore,
 } from '@/lib/firestore-platform';
+import { isFirestoreQuotaError } from '@/lib/firestore-read-cache';
 
 // GET /api/news — Active items by default. Use ?all=1 for admin (includes inactive).
 export async function GET(request: NextRequest) {
@@ -24,6 +25,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(news);
   } catch (error) {
     console.error('Error fetching news:', error);
+    if (isFirestoreQuotaError(error)) {
+      return NextResponse.json([]);
+    }
     return NextResponse.json({ error: 'Failed to fetch news' }, { status: 500 });
   }
 }

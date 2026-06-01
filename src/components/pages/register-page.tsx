@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import {
-  Building2,
   User,
   Mail,
   Lock,
@@ -23,6 +22,7 @@ import { toast } from 'sonner';
 import type { AccountType } from '@/types';
 import { resolvePageAfterLogin } from '@/lib/auth-roles';
 import { mapAuthApiError } from '@/lib/auth-errors';
+import { CiarWordmark } from '@/components/brand/ciar-wordmark';
 
 export function RegisterPage() {
   const { t, rtl } = useTranslation();
@@ -102,7 +102,16 @@ export function RegisterPage() {
       const data = await res.json();
       if (res.ok) {
         setSuccess(true);
-        toast.success(tx('تم إنشاء الحساب بنجاح', 'Account created'));
+        if (data.localAuth) {
+          toast.message(tx('تم إنشاء الحساب (وضع محلي)', 'Account created (local mode)'), {
+            description: tx(
+              'الحساب يعمل بدون Firebase على هذا الخادم — يمكنك تسجيل الدخول مباشرة.',
+              'Account works without Firebase on this server — you can sign in immediately.',
+            ),
+          });
+        } else {
+          toast.success(tx('تم إنشاء الحساب بنجاح', 'Account created'));
+        }
         setTimeout(() => {
           login(data.user);
           setCurrentPage(resolvePageAfterLogin(data.user.role));
@@ -133,13 +142,8 @@ export function RegisterPage() {
       <div className="relative z-[1] w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
         {/* ── Left: Marketing panel (visible on all breakpoints; stacks above form on small screens) ── */}
         <div className="text-white space-y-6 sm:space-y-8 px-0 sm:px-2 max-lg:pb-2">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500 to-emerald-600 shadow-lg shadow-amber-500/30">
-              <Building2 className="h-6 w-6 text-white" />
-            </div>
-            <span className="font-heading text-3xl font-bold bg-gradient-to-r from-amber-400 via-amber-300 to-emerald-400 bg-clip-text text-transparent">
-              CIAR
-            </span>
+          <div className="flex items-center">
+            <CiarWordmark size="xl" variant="light" />
           </div>
 
           <div>

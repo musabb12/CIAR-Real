@@ -2087,6 +2087,41 @@ textarea,
 }
 
 /* ============================================================
+   CIAR wordmark (text logo)
+   ============================================================ */
+
+.ciar-wordmark {
+  font-family: var(--font-playfair), var(--font-el-messiri), Georgia, 'Times New Roman', serif;
+  font-weight: 600;
+  font-style: italic;
+  letter-spacing: 0.2em;
+  text-indent: 0.2em;
+  line-height: 1;
+}
+
+.ciar-wordmark--luxury {
+  background: linear-gradient(
+    115deg,
+    #f5c97b 0%,
+    #fb923c 22%,
+    #fbbf24 48%,
+    #2dd4bf 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: drop-shadow(0 2px 14px rgba(251, 146, 60, 0.28));
+}
+
+.ciar-wordmark--light {
+  color: #fff;
+  text-shadow:
+    0 0 28px rgba(251, 146, 60, 0.45),
+    0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* ============================================================
    34. LUXURY ADMIN DASHBOARD — World-class Theme
    ============================================================ */
 

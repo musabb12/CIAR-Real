@@ -12,7 +12,7 @@ import {
   createLocalUser,
   getLocalUserByEmail,
   toSafeLocalUser,
-} from '@/lib/local-auth-store';
+} from '@/lib/in-memory-auth-store';
 import {
   accountTypeToRole,
   createPartnerProfileForUser,

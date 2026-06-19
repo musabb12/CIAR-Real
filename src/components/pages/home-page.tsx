@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Search, PhoneCall, Home, ArrowRight, MapPin, Building2, Globe, Users, Megaphone,
+  Search, PhoneCall, Home, ArrowRight, MapPin, Building2, Globe, Users, Megaphone, UserPlus,
   Briefcase, Star, Quote, CheckCircle, Shield, Building, Layers, Warehouse,
   Castle, Landmark, Brain, Eye, TrendingUp, BarChart3, Flame, Leaf, Wifi,
   Zap, ShieldAlert, Trophy,
@@ -286,8 +286,16 @@ export function HomePage() {
   }, [currentUser, setCurrentPage, setAdminTab, setRegisterAccountTypePreset]);
 
   const homeContent = contentSettings.home;
-  const heroTitle = homeContent.title?.trim() || 'CIAR';
+  const customHeroTitle = homeContent.title?.trim();
+  const showBrandHero =
+    !customHeroTitle || customHeroTitle === 'CIAR' || customHeroTitle === 'CIAR RE';
+  const heroTitle = showBrandHero ? 'CIAR RE' : customHeroTitle;
   const heroSubtitle = homeContent.subtitle?.trim() || t.hero.subtitle;
+
+  const handleRegister = useCallback(() => {
+    setRegisterAccountTypePreset('OWNER');
+    setCurrentPage('register');
+  }, [setRegisterAccountTypePreset, setCurrentPage]);
 
   return (
     <motion.div className="luxury-page min-h-screen flex flex-col">
@@ -335,10 +343,12 @@ export function HomePage() {
             </p>
           </MotionHeroItem>
           <MotionHeroItem>
-            <h1 className="luxury-hero-title mb-4">{heroTitle}</h1>
+            <h1 className={`luxury-hero-title mb-4 ${showBrandHero ? 'luxury-hero-title--brand' : ''}`}>
+              {heroTitle}
+            </h1>
           </MotionHeroItem>
           <MotionHeroItem>
-            <p className="luxury-hero-subtitle mx-auto mb-10">{heroSubtitle}</p>
+            <p className="luxury-hero-subtitle mx-auto mb-8">{heroSubtitle}</p>
           </MotionHeroItem>
 
           {/* Search Bar */}
@@ -383,7 +393,13 @@ export function HomePage() {
           </div>
           </MotionHeroItem>
 
-          <MotionHeroItem className="mt-4 flex justify-center">
+          <MotionHeroItem className="mt-2 flex flex-wrap justify-center gap-3">
+            {!currentUser ? (
+              <Button type="button" onClick={handleRegister} variant="luxury" className="h-11 px-6 rounded-xl">
+                <UserPlus className="me-2 h-4 w-4" />
+                {t.hero.registerFree}
+              </Button>
+            ) : null}
             <Button
               type="button"
               onClick={handleAddListing}
@@ -391,7 +407,16 @@ export function HomePage() {
               className="h-11 rounded-xl border-white/35 bg-white/10 px-6 text-white hover:bg-white/20 hover:text-white font-semibold backdrop-blur-sm"
             >
               <Megaphone className="me-2 h-4 w-4" />
-              {t.nav.addYourListing}
+              {t.hero.addProperty}
+            </Button>
+            <Button
+              type="button"
+              onClick={viewAll}
+              variant="ghost"
+              className="h-11 rounded-xl text-white/90 hover:bg-white/10 hover:text-white px-5"
+            >
+              {t.hero.browseProperties}
+              <ArrowRight className="ms-2 h-4 w-4" />
             </Button>
           </MotionHeroItem>
 

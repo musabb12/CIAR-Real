@@ -137,6 +137,12 @@
   max-width: 36rem;
 }
 
+.luxury-hero-title--brand {
+  letter-spacing: 0.12em;
+  text-indent: 0.12em;
+  font-weight: 700;
+}
+
 /* Enhanced search dock */
 .estate-search-dock {
   box-shadow:

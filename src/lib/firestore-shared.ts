@@ -132,6 +132,12 @@ export function sortByCreatedDesc<T extends { createdAt?: string }>(rows: T[]): 
   return [...rows].sort((a, b) => toIso(b.createdAt) > toIso(a.createdAt) ? 1 : -1);
 }
 
+/** Strip sensitive fields before sending user data to the client. */
+export function sanitizeUserForApi<T extends { password?: string | null }>(user: T): Omit<T, 'password'> {
+  const { password: _password, ...safe } = user;
+  return safe;
+}
+
 export function userDocToUser(
   id: string,
   raw: Record<string, unknown>,

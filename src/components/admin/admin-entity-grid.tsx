@@ -14,6 +14,20 @@ function friendlyLoadError(isAr: boolean, msg: string): string {
       'Could not load news from the database. You can still add items — try Refresh shortly.',
     );
   }
+  if (msg.includes('Failed to fetch agents')) {
+    return tx(
+      isAr,
+      'تعذّر تحميل الوكلاء. انتظر قليلاً ثم اضغط «تحديث» — قد تكون قاعدة البيانات مشغولة.',
+      'Could not load agents. Wait a moment and click Refresh — the database may be busy.',
+    );
+  }
+  if (msg.includes('Failed to fetch companies')) {
+    return tx(
+      isAr,
+      'تعذّر تحميل الشركات. انتظر قليلاً ثم اضغط «تحديث».',
+      'Could not load companies. Wait a moment and click Refresh.',
+    );
+  }
   if (msg.includes('Quota exceeded') || msg.includes('RESOURCE_EXHAUSTED')) {
     return tx(
       isAr,

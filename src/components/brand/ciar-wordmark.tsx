@@ -17,6 +17,13 @@ const sizeMap = {
   xl: 'text-4xl sm:text-5xl lg:text-[3.25rem]',
 };
 
+const taglineSizeMap = {
+  sm: 'text-[9px] sm:text-[10px]',
+  md: 'text-[10px] sm:text-[11px]',
+  lg: 'text-[11px] sm:text-xs',
+  xl: 'text-xs sm:text-[13px]',
+};
+
 export function CiarWordmark({
   className,
   size = 'md',
@@ -36,6 +43,48 @@ export function CiarWordmark({
       aria-label="CIAR"
     >
       ciar
+    </span>
+  );
+}
+
+export type CiarBrandLockupProps = CiarWordmarkProps & {
+  showTagline?: boolean;
+  tagline?: string;
+  align?: 'start' | 'center';
+};
+
+/** Logo + optional "Real Estate" tagline */
+export function CiarBrandLockup({
+  className,
+  size = 'md',
+  variant = 'luxury',
+  showTagline = true,
+  tagline = 'Real Estate',
+  align = 'start',
+}: CiarBrandLockupProps) {
+  return (
+    <span
+      className={cn(
+        'inline-flex flex-col',
+        align === 'center' ? 'items-center' : 'items-start',
+        className,
+      )}
+    >
+      <CiarWordmark size={size} variant={variant} />
+      {showTagline ? (
+        <span
+          className={cn(
+            'ciar-tagline mt-1.5',
+            taglineSizeMap[size],
+            variant === 'luxury' && 'ciar-tagline--luxury',
+            variant === 'light' && 'ciar-tagline--light',
+            variant === 'admin' && 'ciar-tagline--admin',
+            variant === 'plain' && 'ciar-tagline--plain',
+          )}
+        >
+          {tagline}
+        </span>
+      ) : null}
     </span>
   );
 }

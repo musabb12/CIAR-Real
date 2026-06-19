@@ -3,6 +3,7 @@ import type { Query as FirestoreQuery } from 'firebase-admin/firestore';
 import {
   getCachedRead,
   getStaleCachedRead,
+  invalidateCachedRead,
   invalidateCachedReadPrefix,
   isFirestoreQuotaError,
   setCachedRead,
@@ -37,6 +38,7 @@ import {
   makeId,
   nowIso,
   regionDocToRegion,
+  sanitizeUserForApi,
   sortByCreatedDesc,
   toIso,
   userDocToUser,
@@ -296,17 +298,21 @@ async function buildUserResponse(id: string, raw: Record<string, unknown>) {
   };
 }
 
-async function buildAgentResponse(
+function agentDocToListItem(
   id: string,
-  raw: Record<string, unknown>
-): Promise<Agent & { _count: { properties: number } }> {
-  const user = await getUserById(asString(raw.userId));
-  const company = await getCompanyById(asNullableString(raw.companyId));
-  const propertiesCount = await countByField('properties', 'agentId', id);
+  raw: Record<string, unknown>,
+  userMap: Map<string, User | null>,
+  companyMap: Map<string, Company | null>,
+): Agent & { _count: { properties: number } } {
+  const userId = asString(raw.userId);
+  const companyId = asNullableString(raw.companyId);
+  const user = userMap.get(userId);
+  const company = companyId ? companyMap.get(companyId) : null;
+  const totalListings = asNumber(raw.totalListings, 0);
   return {
     id,
-    userId: asString(raw.userId),
-    user: user ?? undefined,
+    userId,
+    user: user ? sanitizeUserForApi(user) : undefined,
     bio: asNullableString(raw.bio),
     title: asNullableString(raw.title),
     license: asNullableString(raw.license),
@@ -314,7 +320,38 @@ async function buildAgentResponse(
     whatsapp: asNullableString(raw.whatsapp),
     experience: asNullableNumber(raw.experience),
     rating: asNumber(raw.rating, 0),
-    totalListings: asNumber(raw.totalListings, propertiesCount),
+    totalListings,
+    totalSales: asNumber(raw.totalSales, 0),
+    verified: asBoolean(raw.verified, false),
+    companyId,
+    company: company ?? undefined,
+    createdAt: toIso(raw.createdAt),
+    updatedAt: toIso(raw.updatedAt),
+    _count: {
+      properties: totalListings,
+    },
+  };
+}
+
+async function buildAgentResponse(
+  id: string,
+  raw: Record<string, unknown>
+): Promise<Agent & { _count: { properties: number } }> {
+  const user = await getUserById(asString(raw.userId));
+  const company = await getCompanyById(asNullableString(raw.companyId));
+  const totalListings = asNumber(raw.totalListings, 0);
+  return {
+    id,
+    userId: asString(raw.userId),
+    user: user ? sanitizeUserForApi(user) : undefined,
+    bio: asNullableString(raw.bio),
+    title: asNullableString(raw.title),
+    license: asNullableString(raw.license),
+    phone: asNullableString(raw.phone),
+    whatsapp: asNullableString(raw.whatsapp),
+    experience: asNullableNumber(raw.experience),
+    rating: asNumber(raw.rating, 0),
+    totalListings,
     totalSales: asNumber(raw.totalSales, 0),
     verified: asBoolean(raw.verified, false),
     companyId: asNullableString(raw.companyId),
@@ -322,7 +359,7 @@ async function buildAgentResponse(
     createdAt: toIso(raw.createdAt),
     updatedAt: toIso(raw.updatedAt),
     _count: {
-      properties: propertiesCount,
+      properties: totalListings,
     },
   };
 }
@@ -440,21 +477,70 @@ export async function deleteUserInFirestore(id: string) {
   return true;
 }
 
-export async function listAgentsFromFirestore(countryId?: string | null) {
-  const snap = await agentCollection().get();
-  let rows = await Promise.all(
-    snap.docs.map(async (doc) => buildAgentResponse(doc.id, doc.data() as Record<string, unknown>))
-  );
-  if (countryId) {
-    const properties = await listAllPropertiesFromFirestore();
-    const allowed = new Set(
-      properties
-        .filter((property) => property.countryId === countryId && property.agentId)
-        .map((property) => property.agentId as string)
-    );
-    rows = rows.filter((agent) => allowed.has(agent.id));
+export async function listAgentsFromFirestore(
+  countryId?: string | null,
+  options?: { skipCache?: boolean },
+) {
+  const cacheKey = `agents:${countryId || 'all'}`;
+  if (!options?.skipCache) {
+    const cached = getCachedRead<Agent[]>(cacheKey, 60_000);
+    if (cached && cached.length > 0) return cached;
   }
-  return rows.sort((a, b) => b.rating - a.rating);
+
+  try {
+    const snap = await agentCollection().get();
+    let docs = snap.docs;
+
+    if (countryId) {
+      const propSnap = await propertyStatsCol()
+        .where('countryId', '==', countryId)
+        .select('agentId')
+        .limit(500)
+        .get();
+      const allowed = new Set(
+        propSnap.docs
+          .map((doc) => asNullableString((doc.data() as Record<string, unknown>).agentId))
+          .filter(Boolean) as string[],
+      );
+      docs = docs.filter((doc) => allowed.has(doc.id));
+    }
+
+    const userIds = [
+      ...new Set(
+        docs
+          .map((doc) => asString((doc.data() as Record<string, unknown>).userId))
+          .filter(Boolean),
+      ),
+    ];
+    const companyIds = [
+      ...new Set(
+        docs
+          .map((doc) => asNullableString((doc.data() as Record<string, unknown>).companyId))
+          .filter(Boolean) as string[],
+      ),
+    ];
+
+    const [users, companies] = await Promise.all([
+      Promise.all(userIds.map((id) => getUserById(id))),
+      Promise.all(companyIds.map((id) => getCompanyById(id))),
+    ]);
+    const userMap = new Map(userIds.map((id, index) => [id, users[index]]));
+    const companyMap = new Map(companyIds.map((id, index) => [id, companies[index]]));
+
+    const rows = docs
+      .map((doc) => agentDocToListItem(doc.id, doc.data() as Record<string, unknown>, userMap, companyMap))
+      .sort((a, b) => b.rating - a.rating);
+
+    if (rows.length > 0) setCachedRead(cacheKey, rows);
+    return rows;
+  } catch (err) {
+    if (isFirestoreQuotaError(err)) {
+      const stale = getStaleCachedRead<Agent[]>(cacheKey, 15 * 60_000);
+      if (stale && stale.length > 0) return stale;
+      return [];
+    }
+    throw err;
+  }
 }
 
 export async function getAgentDetailFromFirestore(id: string) {
@@ -496,6 +582,8 @@ export async function updateAgentInFirestore(
   });
   await agentCollection().doc(id).update(payload);
   await refreshPropertiesForAgent(id);
+  invalidateCachedReadPrefix('agents:');
+  invalidateCachedRead('companies:all');
   return getAgentDetailFromFirestore(id);
 }
 
@@ -504,31 +592,54 @@ export async function deleteAgentInFirestore(id: string) {
   if (!existing) return false;
   await clearAgentFromProperties(id);
   await agentCollection().doc(id).delete();
+  invalidateCachedReadPrefix('agents:');
+  invalidateCachedRead('companies:all');
   return true;
 }
 
-export async function listCompaniesFromFirestore() {
-  const [companies, agents, properties] = await Promise.all([
-    getAllCompanies(),
-    getAllAgents(),
-    listAllPropertiesFromFirestore(),
-  ]);
-  return companies.map((company) => {
-    const agentIds = new Set(
-      agents.filter((agent) => agent.companyId === company.id).map((agent) => agent.id)
-    );
-    const listingCount = properties.filter(
-      (property) => property.agentId && agentIds.has(property.agentId)
-    ).length;
-    return {
-      ...company,
-      agentCount: agentIds.size,
-      listingCount,
-      _count: {
-        agents: agentIds.size,
-      },
-    };
-  });
+export async function listCompaniesFromFirestore(options?: { skipCache?: boolean }) {
+  const cacheKey = 'companies:all';
+  if (!options?.skipCache) {
+    const cached = getCachedRead<Company[]>(cacheKey, 60_000);
+    if (cached && cached.length > 0) return cached;
+  }
+
+  try {
+    const [companies, agentSnap] = await Promise.all([getAllCompanies(), agentCollection().get()]);
+    const agentsByCompany = new Map<string, { count: number; listings: number }>();
+
+    for (const doc of agentSnap.docs) {
+      const raw = doc.data() as Record<string, unknown>;
+      const companyId = asNullableString(raw.companyId);
+      if (!companyId) continue;
+      const entry = agentsByCompany.get(companyId) ?? { count: 0, listings: 0 };
+      entry.count += 1;
+      entry.listings += asNumber(raw.totalListings, 0);
+      agentsByCompany.set(companyId, entry);
+    }
+
+    const rows = companies.map((company) => {
+      const stats = agentsByCompany.get(company.id) ?? { count: 0, listings: 0 };
+      return {
+        ...company,
+        agentCount: stats.count,
+        listingCount: stats.listings,
+        _count: {
+          agents: stats.count,
+        },
+      };
+    });
+
+    if (rows.length > 0) setCachedRead(cacheKey, rows);
+    return rows;
+  } catch (err) {
+    if (isFirestoreQuotaError(err)) {
+      const stale = getStaleCachedRead<Company[]>(cacheKey, 15 * 60_000);
+      if (stale && stale.length > 0) return stale;
+      return [];
+    }
+    throw err;
+  }
 }
 
 async function getRawCompanyById(id: string) {
@@ -1316,22 +1427,66 @@ function newsDocToNews(id: string, raw: Record<string, unknown>): NewsItem {
   };
 }
 
-export async function listNewsFromFirestore(all = false) {
-  const cacheKey = `news:${all ? 'all' : 'active'}`;
-  const cached = getCachedRead<NewsItem[]>(cacheKey, 60_000);
-  if (cached) return cached;
+function sortNewsRows(rows: NewsItem[]): NewsItem[] {
+  return [...rows].sort((a, b) => a.order - b.order || (b.createdAt > a.createdAt ? 1 : -1));
+}
 
+function syncNewsCaches(rows: NewsItem[]): void {
+  const sorted = sortNewsRows(rows);
+  if (sorted.length > 0) {
+    setCachedRead('news:all', sorted);
+    const active = sorted.filter((item) => item.isActive);
+    if (active.length > 0) setCachedRead('news:active', active);
+    else invalidateCachedRead('news:active');
+  } else {
+    invalidateCachedReadPrefix('news:');
+  }
+}
+
+function patchNewsInCache(item: NewsItem): void {
+  const allCached = getStaleCachedRead<NewsItem[]>('news:all', 15 * 60_000) ?? [];
+  const idx = allCached.findIndex((row) => row.id === item.id);
+  const nextAll = idx >= 0 ? allCached.map((row, i) => (i === idx ? item : row)) : [...allCached, item];
+  syncNewsCaches(nextAll);
+}
+
+function removeNewsFromCache(id: string): void {
+  const allCached = getStaleCachedRead<NewsItem[]>('news:all', 15 * 60_000) ?? [];
+  syncNewsCaches(allCached.filter((row) => row.id !== id));
+}
+
+async function fetchNewsDocsFromFirestore(): Promise<NewsItem[]> {
   try {
     const snap = await newsCollection().orderBy('order', 'asc').limit(200).get();
-    let rows = snap.docs.map((doc) => newsDocToNews(doc.id, doc.data() as Record<string, unknown>));
+    return snap.docs.map((doc) => newsDocToNews(doc.id, doc.data() as Record<string, unknown>));
+  } catch (orderErr) {
+    const code = (orderErr as { code?: number })?.code;
+    const msg = orderErr instanceof Error ? orderErr.message : String(orderErr);
+    const missingIndex =
+      code === 9 || msg.includes('FAILED_PRECONDITION') || msg.includes('requires an index');
+    if (!missingIndex && !isFirestoreQuotaError(orderErr)) throw orderErr;
+    const snap = await newsCollection().limit(200).get();
+    return snap.docs.map((doc) => newsDocToNews(doc.id, doc.data() as Record<string, unknown>));
+  }
+}
+
+export async function listNewsFromFirestore(all = false, options?: { skipCache?: boolean }) {
+  const cacheKey = `news:${all ? 'all' : 'active'}`;
+  if (!options?.skipCache) {
+    const cached = getCachedRead<NewsItem[]>(cacheKey, 60_000);
+    if (cached && cached.length > 0) return cached;
+  }
+
+  try {
+    let rows = await fetchNewsDocsFromFirestore();
     if (!all) rows = rows.filter((item) => item.isActive);
-    rows = rows.sort((a, b) => a.order - b.order || (b.createdAt > a.createdAt ? 1 : -1));
-    setCachedRead(cacheKey, rows);
+    rows = sortNewsRows(rows);
+    if (rows.length > 0) setCachedRead(cacheKey, rows);
     return rows;
   } catch (err) {
     if (isFirestoreQuotaError(err)) {
       const stale = getStaleCachedRead<NewsItem[]>(cacheKey, 15 * 60_000);
-      if (stale) return stale;
+      if (stale && stale.length > 0) return stale;
       return [];
     }
     throw err;
@@ -1357,16 +1512,7 @@ export async function createNewsInFirestore(input: {
   };
   await newsCollection().doc(id).set(payload);
   const item = newsDocToNews(id, payload);
-  const allCached = getStaleCachedRead<NewsItem[]>('news:all', 15 * 60_000) ?? [];
-  const nextAll = [...allCached, item].sort((a, b) => a.order - b.order);
-  setCachedRead('news:all', nextAll);
-  if (item.isActive) {
-    const activeCached = getStaleCachedRead<NewsItem[]>('news:active', 15 * 60_000) ?? [];
-    setCachedRead(
-      'news:active',
-      [...activeCached, item].sort((a, b) => a.order - b.order),
-    );
-  }
+  patchNewsInCache(item);
   return item;
 }
 
@@ -1394,8 +1540,9 @@ export async function updateNewsInFirestore(
     })
   );
   const updated = await ref.get();
-  invalidateCachedReadPrefix('news:');
-  return newsDocToNews(id, updated.data() as Record<string, unknown>);
+  const item = newsDocToNews(id, updated.data() as Record<string, unknown>);
+  patchNewsInCache(item);
+  return item;
 }
 
 export async function deleteNewsInFirestore(id: string) {
@@ -1403,7 +1550,7 @@ export async function deleteNewsInFirestore(id: string) {
   const snap = await ref.get();
   if (!snap.exists) return false;
   await ref.delete();
-  invalidateCachedReadPrefix('news:');
+  removeNewsFromCache(id);
   return true;
 }
 
@@ -1644,6 +1791,8 @@ export async function createAgentWithUserInFirestore(input: {
     updatedAt: nowIso(),
   });
   await agentCollection().doc(agentId).set(agentPayload);
+  invalidateCachedReadPrefix('agents:');
+  invalidateCachedRead('companies:all');
   return getAgentDetailFromFirestore(agentId);
 }
 

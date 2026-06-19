@@ -2121,6 +2121,39 @@ textarea,
     0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
+.ciar-tagline {
+  font-family: var(--font-inter), system-ui, sans-serif;
+  font-weight: 600;
+  font-style: normal;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.ciar-tagline--luxury {
+  color: #ea580c;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.ciar-tagline--light {
+  color: #ffffff;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+}
+
+.ciar-tagline--admin {
+  color: #f5c97b;
+}
+
+.ciar-tagline--plain {
+  color: var(--muted-foreground);
+}
+
+.dark .ciar-tagline--luxury {
+  color: #fbbf24;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.35);
+}
+
 /* ============================================================
    34. LUXURY ADMIN DASHBOARD — World-class Theme
    ============================================================ */

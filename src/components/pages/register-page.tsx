@@ -22,7 +22,7 @@ import { toast } from 'sonner';
 import type { AccountType } from '@/types';
 import { resolvePageAfterLogin } from '@/lib/auth-roles';
 import { mapAuthApiError } from '@/lib/auth-errors';
-import { CiarWordmark } from '@/components/brand/ciar-wordmark';
+import { CiarBrandLockup } from '@/components/brand/ciar-wordmark';
 
 export function RegisterPage() {
   const { t, rtl } = useTranslation();
@@ -142,18 +142,18 @@ export function RegisterPage() {
       <div className="relative z-[1] w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
         {/* ── Left: Marketing panel (visible on all breakpoints; stacks above form on small screens) ── */}
         <div className="text-white space-y-6 sm:space-y-8 px-0 sm:px-2 max-lg:pb-2">
-          <div className="flex items-center">
-            <CiarWordmark size="xl" variant="light" />
+          <div className="flex items-start">
+            <CiarBrandLockup size="xl" variant="light" />
           </div>
 
           <div>
             <h2 className="font-heading text-4xl xl:text-5xl font-bold leading-tight">
-              {tx('انضم إلى عائلة CIAR', 'Join the CIAR family')}
+              {tx('ابدأ خلال دقيقة', 'Get started in a minute')}
             </h2>
             <p className="mt-4 text-white/70 text-lg leading-relaxed">
               {tx(
-                'احصل على وصول حصري لأفخر العقارات حول العالم، وتجربة بحث ذكية مدعومة بالذكاء الاصطناعي.',
-                'Get exclusive access to the world\'s finest properties and an AI-powered search experience.',
+                'سجّل مجاناً، أضف عقارك بصور ووصف بسيط، وانشر إعلانك — بدون تعقيد.',
+                'Sign up free, add your property with photos and details, and publish — no hassle.',
               )}
             </p>
           </div>

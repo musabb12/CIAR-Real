@@ -3,6 +3,7 @@ import {
   createCompanyInFirestore,
   listCompaniesFromFirestore,
 } from '@/lib/firestore-platform';
+import { isFirestoreQuotaError } from '@/lib/firestore-read-cache';
 
 /** GET /api/companies — List real-estate companies with agent counts */
 export async function GET() {
@@ -11,6 +12,9 @@ export async function GET() {
     return NextResponse.json(companies);
   } catch (error) {
     console.error('Error fetching companies:', error);
+    if (isFirestoreQuotaError(error)) {
+      return NextResponse.json([]);
+    }
     return NextResponse.json({ error: 'Failed to fetch companies' }, { status: 500 });
   }
 }

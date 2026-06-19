@@ -4,15 +4,20 @@ import {
   createAgentWithUserInFirestore,
   listAgentsFromFirestore,
 } from '@/lib/firestore-platform';
+import { isFirestoreQuotaError } from '@/lib/firestore-read-cache';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const countryId = searchParams.get('countryId');
-    const agents = await listAgentsFromFirestore(countryId);
+    const fresh = searchParams.get('fresh') === '1';
+    const agents = await listAgentsFromFirestore(countryId, { skipCache: fresh });
     return NextResponse.json(agents);
   } catch (error) {
     console.error('Error fetching agents:', error);
+    if (isFirestoreQuotaError(error)) {
+      return NextResponse.json([]);
+    }
     return NextResponse.json({ error: 'Failed to fetch agents' }, { status: 500 });
   }
 }

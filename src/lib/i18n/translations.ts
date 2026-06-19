@@ -28,6 +28,9 @@ export interface Translations {
     featuredSubtitle: string;
     explore: string;
     exploreSubtitle: string;
+    registerFree: string;
+    addProperty: string;
+    browseProperties: string;
   };
   // Property
   property: {
@@ -393,7 +396,7 @@ export const translations: Record<Locale, Translations> = {
     },
     hero: {
       title: 'Find Your Dream Property',
-      subtitle: 'Discover premium properties in over 60 countries worldwide',
+      subtitle: 'Sign up, add your listing, and go live in minutes — simple from start to finish',
       searchPlaceholder: 'Search properties...',
       search: 'Search',
       countries: 'Countries+',
@@ -405,6 +408,9 @@ export const translations: Record<Locale, Translations> = {
       featuredSubtitle: 'Handpicked premium properties for you',
       explore: 'Explore Property Types',
       exploreSubtitle: 'Explore diverse property categories to find exactly what you need',
+      registerFree: 'Sign up free',
+      addProperty: 'Add your property',
+      browseProperties: 'Browse listings',
     },
     property: {
       featured: 'Featured',
@@ -672,13 +678,13 @@ export const translations: Record<Locale, Translations> = {
       support247: '24/7 Support',
     },
     howItWorks: {
-      title: 'How It Works',
-      step1Title: 'Search',
-      step1Desc: 'Browse thousands of properties with advanced search and filters',
-      step2Title: 'Connect',
-      step2Desc: 'Get in touch directly with verified real estate agents',
-      step3Title: 'Settle',
-      step3Desc: 'Find your ideal property and make it your new home',
+      title: 'Three simple steps',
+      step1Title: 'Create your account',
+      step1Desc: 'Free sign-up in under a minute — no complicated forms',
+      step2Title: 'Add your property',
+      step2Desc: 'Upload photos, set price and location — we guide you through it',
+      step3Title: 'Publish & connect',
+      step3Desc: 'Your listing goes live and interested buyers reach you quickly',
     },
     cta: {
       title: 'Start Your Property Journey Today',
@@ -751,7 +757,7 @@ export const translations: Record<Locale, Translations> = {
     },
     hero: {
       title: 'اعثر على عقار أحلامك',
-      subtitle: 'اكتشف عقارات متميزة في أكثر من 60 دولة حول العالم',
+      subtitle: 'سجّل، أضف عقارك، وابدأ خلال دقائق — كل شيء بسيط وواضح',
       searchPlaceholder: 'ابحث عن عقارات...',
       search: 'بحث',
       countries: 'دولة+',
@@ -763,6 +769,9 @@ export const translations: Record<Locale, Translations> = {
       featuredSubtitle: 'عقارات متميزة مختارة بعناية لك',
       explore: 'استكشف أنواع العقارات',
       exploreSubtitle: 'استكشف فئات العقارات المتنوعة للعثور على ما تريده بالضبط',
+      registerFree: 'سجّل مجاناً',
+      addProperty: 'أضف عقارك',
+      browseProperties: 'تصفّح العقارات',
     },
     property: {
       featured: 'مميز',
@@ -1030,13 +1039,13 @@ export const translations: Record<Locale, Translations> = {
       support247: 'دعم على مدار الساعة',
     },
     howItWorks: {
-      title: 'كيف تعمل المنصة',
-      step1Title: 'ابحث',
-      step1Desc: 'تصفح آلاف العقارات باستخدام البحث المتقدم والفلاتر',
-      step2Title: 'تواصل',
-      step2Desc: 'تواصل مباشرة مع وكلاء عقارات موثقين',
-      step3Title: 'استقر',
-      step3Desc: 'اعثر على عقارك المثالي واجعله بيتك الجديد',
+      title: 'ثلاث خطوات بسيطة',
+      step1Title: 'أنشئ حسابك',
+      step1Desc: 'تسجيل مجاني خلال دقيقة — بدون تعقيد',
+      step2Title: 'أضف عقارك',
+      step2Desc: 'ارفع الصور وحدّد السعر والموقع — نرشدك خطوة بخطوة',
+      step3Title: 'انشر وتواصل',
+      step3Desc: 'يظهر إعلانك مباشرة ويصلك المهتمون بسرعة',
     },
     cta: {
       title: 'ابدأ رحلتك العقارية اليوم',
@@ -1121,6 +1130,9 @@ export const translations: Record<Locale, Translations> = {
       featuredSubtitle: 'Propriétés premium sélectionnées pour vous',
       explore: 'Explorer les types de biens',
       exploreSubtitle: 'Explorez diverses catégories de biens pour trouver exactement ce que vous cherchez',
+      registerFree: 'Inscription gratuite',
+      addProperty: 'Ajouter votre bien',
+      browseProperties: 'Parcourir les annonces',
     },
     property: {
       featured: 'En vedette',
@@ -1479,6 +1491,9 @@ export const translations: Record<Locale, Translations> = {
       featuredSubtitle: 'Propiedades premium seleccionadas para ti',
       explore: 'Explorar tipos de propiedades',
       exploreSubtitle: 'Explora diversas categorías de propiedades para encontrar exactamente lo que necesitas',
+      registerFree: 'Registro gratis',
+      addProperty: 'Añadir propiedad',
+      browseProperties: 'Ver anuncios',
     },
     property: {
       featured: 'Destacado',
@@ -1837,6 +1852,9 @@ export const translations: Record<Locale, Translations> = {
       featuredSubtitle: 'Sizin için özenle seçilmiş premium emlaklar',
       explore: 'Emlak Türlerini Keşfet',
       exploreSubtitle: 'İhtiyacınız olanı bulmak için çeşitli emlak kategorilerini keşfedin',
+      registerFree: 'Ücretsiz kayıt',
+      addProperty: 'Emlak ekle',
+      browseProperties: 'İlanlara göz at',
     },
     property: {
       featured: 'Öne Çıkan',

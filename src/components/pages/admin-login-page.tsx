@@ -237,7 +237,7 @@ export function AdminLoginPage() {
                   {tx('دخول لوحة التحكم', 'Enter Dashboard')}
                 </>
               )}
-            </Button>
+            </Button>  
 
             <div className="pt-3 border-t border-white/10">
               <button

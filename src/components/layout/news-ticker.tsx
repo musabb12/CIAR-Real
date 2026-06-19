@@ -59,11 +59,21 @@ export function NewsTicker() {
   const sepColor = designSettings.newsTickerSeparatorColor?.trim() ?? '';
 
   const loadNews = useCallback(() => {
-    fetch('/api/news')
+    fetch('/api/news?fresh=1')
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
-          setNews(data as NewsItem[]);
+          setNews(
+            (data as Array<{ id: string; type: NewsItem['type']; content: string; link?: string | null }>).map(
+              (item) => ({
+                id: item.id,
+                type: item.type,
+                text: item.content,
+                content: item.content,
+                link: item.link ?? null,
+              }),
+            ),
+          );
         }
       })
       .catch(() => {

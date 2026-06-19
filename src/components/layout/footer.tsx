@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppStore } from '@/store/app-store';
-import { CiarWordmark } from '@/components/brand/ciar-wordmark';
+import { CiarBrandLockup } from '@/components/brand/ciar-wordmark';
 import { useTranslation } from '@/lib/i18n/use-translation';
 
 /* ------------------------------------------------------------------ */
@@ -244,16 +244,11 @@ export function Footer() {
               {/* Logo */}
               <button
                 onClick={() => setCurrentPage('home')}
-                className="flex items-center transition-opacity hover:opacity-90"
-                aria-label="CIAR"
+                className="flex items-start transition-opacity hover:opacity-90"
+                aria-label="CIAR Real Estate"
               >
-                <CiarWordmark size="xl" variant="luxury" />
+                <CiarBrandLockup size="xl" variant="luxury" />
               </button>
-
-              {/* Tagline */}
-              <p className="mt-1.5 text-xs font-medium uppercase tracking-[0.25em] text-amber-500/50">
-                Luxury Real Estate
-              </p>
 
               {/* Description */}
               <p className="mt-5 text-sm leading-relaxed text-gray-400">

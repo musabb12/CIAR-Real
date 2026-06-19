@@ -20,8 +20,9 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const all = searchParams.get('all') === '1';
+    const fresh = searchParams.get('fresh') === '1';
 
-    const news = await listNewsFromFirestore(all);
+    const news = await listNewsFromFirestore(all, { skipCache: fresh });
     return NextResponse.json(news);
   } catch (error) {
     console.error('Error fetching news:', error);

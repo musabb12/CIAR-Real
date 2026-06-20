@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Search,
   Plus,
@@ -68,15 +68,26 @@ export function AdminSection<T extends { id?: string }>({
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
+  const parseRowsRef = useRef(parseRows);
+  const onApiResponseRef = useRef(onApiResponse);
+  const onFilteredRowsRef = useRef(onFilteredRows);
+  const fetchGenRef = useRef(0);
+  parseRowsRef.current = parseRows;
+  onApiResponseRef.current = onApiResponse;
+  onFilteredRowsRef.current = onFilteredRows;
 
   const tx = (ar: string, en: string) => (isAr ? ar : en);
 
-  const load = useCallback(() => {
-    setLoading(true);
+  const load = useCallback((options?: { silent?: boolean }) => {
+    const gen = ++fetchGenRef.current;
+    if (!options?.silent) {
+      setLoading(true);
+    }
     setFetchError(null);
     fetch(endpoint)
       .then(async (r) => {
         const d = await r.json();
+        if (gen !== fetchGenRef.current) return;
         if (!r.ok) {
           const msg = typeof d?.error === 'string' ? d.error : `HTTP ${r.status}`;
           throw new Error(msg);
@@ -91,16 +102,22 @@ export function AdminSection<T extends { id?: string }>({
         ) {
           throw new Error((d as { error: string }).error);
         }
-        setRows(parseRows(d));
+        onApiResponseRef.current?.(d);
+        setRows(parseRowsRef.current(d));
       })
       .catch((e: unknown) => {
+        if (gen !== fetchGenRef.current) return;
         const msg = e instanceof Error ? e.message : 'Failed to load';
         setFetchError(msg);
         setRows([]);
         toast.error(isAr ? 'فشل تحميل البيانات' : 'Failed to load data', { description: msg });
       })
-      .finally(() => setLoading(false));
-  }, [endpoint, parseRows, isAr, onApiResponse]);
+      .finally(() => {
+        if (gen === fetchGenRef.current) {
+          setLoading(false);
+        }
+      });
+  }, [endpoint, isAr]);
 
   useEffect(() => {
     load();
@@ -119,8 +136,8 @@ export function AdminSection<T extends { id?: string }>({
   }, [rows, search, searchKeys]);
 
   useEffect(() => {
-    onFilteredRows?.(filtered);
-  }, [filtered, onFilteredRows]);
+    onFilteredRowsRef.current?.(filtered);
+  }, [filtered]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
@@ -140,7 +157,7 @@ export function AdminSection<T extends { id?: string }>({
           {toolbarActions}
           <button
             type="button"
-            onClick={load}
+            onClick={() => load({ silent: rows.length > 0 })}
             className="admin-icon-btn !w-auto px-3 gap-1.5 text-xs"
             title={tx('تحديث', 'Refresh')}
           >

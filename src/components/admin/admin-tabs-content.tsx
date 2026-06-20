@@ -309,13 +309,15 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
   }, []);
 
   const onPropertiesApiResponse = useCallback((raw: unknown) => {
-    const o = raw as { backendConfigured?: boolean; backendMessage?: string };
-    if (o.backendConfigured === false) {
+    const o = raw as { backendConfigured?: boolean; backendMessage?: string; dataSource?: string };
+    if (o.backendConfigured === false && o.dataSource !== 'demo') {
       setPropertiesListMode('stub');
       setPropertiesListStubReason(typeof o.backendMessage === 'string' ? o.backendMessage : null);
     } else {
       setPropertiesListMode('live');
-      setPropertiesListStubReason(null);
+      setPropertiesListStubReason(
+        o.dataSource === 'demo' && typeof o.backendMessage === 'string' ? o.backendMessage : null,
+      );
     }
   }, []);
   const columns: ColumnDef<PropertiesTabRow>[] = [
@@ -1318,26 +1320,30 @@ export function LocationsTab({ isAr }: { isAr: boolean }) {
     isFeatured?: boolean;
     _count?: { properties: number };
   };
-  const parseItems = useCallback(
-    (d: unknown): Row[] => {
+  const parseItems = useCallback((d: unknown): Row[] => {
+    if (Array.isArray(d)) {
+      return d as Row[];
+    }
+    const data = d as { countries?: Row[] };
+    return data.countries ?? [];
+  }, []);
+
+  const onLocationsApiResponse = useCallback(
+    (d: unknown) => {
       if (Array.isArray(d)) {
         setDemoNotice(null);
-        return d as Row[];
+        return;
       }
       const data = d as {
-        countries?: Row[];
         dataSource?: string;
         messageAr?: string;
         messageEn?: string;
       };
       if (data.dataSource === 'demo') {
         setDemoNotice(isAr ? data.messageAr ?? null : data.messageEn ?? null);
-      } else if (data.dataSource === 'firestore') {
-        setDemoNotice(null);
       } else {
         setDemoNotice(null);
       }
-      return data.countries ?? [];
     },
     [isAr],
   );
@@ -1408,6 +1414,7 @@ export function LocationsTab({ isAr }: { isAr: boolean }) {
         }}
         endpoint="/api/locations?includeInactive=true"
         parseItems={parseItems}
+        onApiResponse={onLocationsApiResponse}
         searchKeys={['name', 'code']}
         onAdd={() => setOpen(true)}
         addLabel={{ ar: 'إضافة دولة', en: 'Add country' }}

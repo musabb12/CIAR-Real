@@ -116,9 +116,12 @@ export function NewsTab({ isAr }: { isAr: boolean }) {
     return sortNews(Array.isArray(data) ? (data as NewsRow[]) : []);
   }, []);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const load = useCallback(
+    async (options?: { silent?: boolean }) => {
+      if (!options?.silent) {
+        setLoading(true);
+      }
+      setError(null);
     try {
       let rows = await fetchNews(true);
       if (rows.length === 0) {
@@ -138,7 +141,9 @@ export function NewsTab({ isAr }: { isAr: boolean }) {
     } finally {
       setLoading(false);
     }
-  }, [fetchNews, isAr]);
+  },
+    [fetchNews, isAr],
+  );
 
   useEffect(() => {
     void load();
@@ -447,7 +452,7 @@ export function NewsTab({ isAr }: { isAr: boolean }) {
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <button type="button" onClick={() => void load()} className="admin-icon-btn !w-auto px-3 text-xs gap-1.5">
+            <button type="button" onClick={() => void load({ silent: items.length > 0 })} className="admin-icon-btn !w-auto px-3 text-xs gap-1.5">
               <Loader2 className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
               {tx(isAr, 'تحديث', 'Refresh')}
             </button>

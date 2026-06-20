@@ -1,10 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Loader2, Plus, Search, Inbox } from 'lucide-react';
 import { toast } from 'sonner';
 
 const tx = (isAr: boolean, ar: string, en: string) => (isAr ? ar : en);
+
+/** Stable empty default — avoids infinite re-fetch when `localItems` is omitted. */
+const EMPTY_LOCAL_ITEMS: never[] = [];
 
 function friendlyLoadError(isAr: boolean, msg: string): string {
   if (msg.includes('Failed to fetch news')) {
@@ -81,39 +84,60 @@ export function AdminEntityGrid<T extends { id?: string }>({
   refreshKey = 0,
   onApiResponse,
   renderCardActions,
-  localItems = [],
+  localItems,
   cardClickable = true,
 }: AdminEntityGridProps<T>) {
   const [items, setItems] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const stableLocalItems = localItems ?? EMPTY_LOCAL_ITEMS;
+  const parseItemsRef = useRef(parseItems);
+  const onApiResponseRef = useRef(onApiResponse);
+  const localItemsRef = useRef(stableLocalItems);
+  const fetchGenRef = useRef(0);
+  parseItemsRef.current = parseItems;
+  onApiResponseRef.current = onApiResponse;
+  localItemsRef.current = stableLocalItems;
 
-  const load = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    fetch(endpoint)
-      .then(async (r) => {
-        const d = await r.json();
-        if (!r.ok) {
-          throw new Error(typeof (d as { error?: string }).error === 'string' ? (d as { error: string }).error : `HTTP ${r.status}`);
-        }
-        onApiResponse?.(d);
-        const fetched = parseItems(d);
-        const localOnly = localItems.filter(
-          (item) => !fetched.some((row) => row.id && item.id && row.id === item.id),
-        );
-        setItems([...localOnly, ...fetched]);
-      })
-      .catch((e: unknown) => {
-        const raw = e instanceof Error ? e.message : 'Failed to load';
-        const msg = friendlyLoadError(isAr, raw);
-        setError(msg);
-        setItems(localItems);
-        toast.error(tx(isAr, 'فشل التحميل', 'Failed to load'), { description: msg });
-      })
-      .finally(() => setLoading(false));
-  }, [endpoint, parseItems, isAr, onApiResponse, localItems]);
+  const load = useCallback(
+    (options?: { silent?: boolean }) => {
+      const gen = ++fetchGenRef.current;
+      if (!options?.silent) {
+        setLoading(true);
+      }
+      setError(null);
+      fetch(endpoint)
+        .then(async (r) => {
+          const d = await r.json();
+          if (gen !== fetchGenRef.current) return;
+          if (!r.ok) {
+            throw new Error(typeof (d as { error?: string }).error === 'string' ? (d as { error: string }).error : `HTTP ${r.status}`);
+          }
+          onApiResponseRef.current?.(d);
+          const fetched = parseItemsRef.current(d);
+          const locals = localItemsRef.current;
+          const localOnly = locals.filter(
+            (item) => !fetched.some((row) => row.id && item.id && row.id === item.id),
+          );
+          setItems([...localOnly, ...fetched]);
+        })
+        .catch((e: unknown) => {
+          if (gen !== fetchGenRef.current) return;
+          const raw = e instanceof Error ? e.message : 'Failed to load';
+          const msg = friendlyLoadError(isAr, raw);
+          setError(msg);
+          setItems(localItemsRef.current);
+          toast.error(tx(isAr, 'فشل التحميل', 'Failed to load'), { description: msg });
+        })
+        .finally(() => {
+          if (gen === fetchGenRef.current) {
+            setLoading(false);
+          }
+        });
+    },
+    [endpoint, isAr],
+  );
 
   useEffect(() => {
     load();
@@ -144,7 +168,11 @@ export function AdminEntityGrid<T extends { id?: string }>({
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {headerExtra}
-          <button type="button" onClick={load} className="admin-icon-btn !w-auto px-3 text-xs gap-1.5">
+          <button
+            type="button"
+            onClick={() => load({ silent: items.length > 0 })}
+            className="admin-icon-btn !w-auto px-3 text-xs gap-1.5"
+          >
             <Loader2 className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
             {tx(isAr, 'تحديث', 'Refresh')}
           </button>

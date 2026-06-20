@@ -8,16 +8,24 @@ import {
   listFeaturesFromFirestore,
   updateFeatureInFirestore,
 } from '@/lib/firestore-platform';
+import { getDefaultFeaturesForApi } from '@/lib/demo-admin-data';
+import { isFirestoreQuotaError } from '@/lib/firestore-read-cache';
 
 export async function GET() {
   if (!isFirebaseAdminConfigured()) {
-    return NextResponse.json([]);
+    return NextResponse.json(getDefaultFeaturesForApi());
   }
 
   try {
     const features = await listFeaturesFromFirestore();
+    if (features.length === 0) {
+      return NextResponse.json(getDefaultFeaturesForApi());
+    }
     return NextResponse.json(features);
-  } catch {
+  } catch (error) {
+    if (isFirestoreQuotaError(error)) {
+      return NextResponse.json(getDefaultFeaturesForApi());
+    }
     return NextResponse.json({ error: 'Failed to fetch features' }, { status: 500 });
   }
 }

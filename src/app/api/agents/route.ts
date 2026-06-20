@@ -4,19 +4,29 @@ import {
   createAgentWithUserInFirestore,
   listAgentsFromFirestore,
 } from '@/lib/firestore-platform';
+import { isFirebaseAdminConfigured } from '@/lib/firebase-admin';
+import { listDemoAgents } from '@/lib/demo-admin-data';
 import { isFirestoreQuotaError } from '@/lib/firestore-read-cache';
 
 export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const countryId = searchParams.get('countryId');
+  const fresh = searchParams.get('fresh') === '1';
+
+  if (!isFirebaseAdminConfigured()) {
+    return NextResponse.json(listDemoAgents(countryId));
+  }
+
   try {
-    const { searchParams } = new URL(request.url);
-    const countryId = searchParams.get('countryId');
-    const fresh = searchParams.get('fresh') === '1';
     const agents = await listAgentsFromFirestore(countryId, { skipCache: fresh });
+    if (agents.length === 0) {
+      return NextResponse.json(listDemoAgents(countryId));
+    }
     return NextResponse.json(agents);
   } catch (error) {
     console.error('Error fetching agents:', error);
     if (isFirestoreQuotaError(error)) {
-      return NextResponse.json([]);
+      return NextResponse.json(listDemoAgents(countryId));
     }
     return NextResponse.json({ error: 'Failed to fetch agents' }, { status: 500 });
   }

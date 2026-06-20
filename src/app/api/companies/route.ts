@@ -3,17 +3,26 @@ import {
   createCompanyInFirestore,
   listCompaniesFromFirestore,
 } from '@/lib/firestore-platform';
+import { isFirebaseAdminConfigured } from '@/lib/firebase-admin';
+import { listDemoCompanies } from '@/lib/demo-admin-data';
 import { isFirestoreQuotaError } from '@/lib/firestore-read-cache';
 
 /** GET /api/companies — List real-estate companies with agent counts */
 export async function GET() {
+  if (!isFirebaseAdminConfigured()) {
+    return NextResponse.json(listDemoCompanies());
+  }
+
   try {
     const companies = await listCompaniesFromFirestore();
+    if (companies.length === 0) {
+      return NextResponse.json(listDemoCompanies());
+    }
     return NextResponse.json(companies);
   } catch (error) {
     console.error('Error fetching companies:', error);
     if (isFirestoreQuotaError(error)) {
-      return NextResponse.json([]);
+      return NextResponse.json(listDemoCompanies());
     }
     return NextResponse.json({ error: 'Failed to fetch companies' }, { status: 500 });
   }

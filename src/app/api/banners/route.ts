@@ -3,19 +3,32 @@ import {
   createBannerInFirestore,
   listBannersFromFirestore,
 } from '@/lib/firestore-platform';
+import { isFirebaseAdminConfigured } from '@/lib/firebase-admin';
+import { listDemoBanners } from '@/lib/demo-admin-data';
+import { isFirestoreQuotaError } from '@/lib/firestore-read-cache';
 
 // GET /api/banners - List banners
 export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const position = searchParams.get('position');
+  const isActive = searchParams.get('isActive');
+  const filters = { position, isActive };
+
+  if (!isFirebaseAdminConfigured()) {
+    return NextResponse.json(listDemoBanners(filters));
+  }
+
   try {
-    const { searchParams } = new URL(request.url);
-    const position = searchParams.get('position');
-    const isActive = searchParams.get('isActive');
-
-    const banners = await listBannersFromFirestore({ position, isActive });
-
+    const banners = await listBannersFromFirestore(filters);
+    if (banners.length === 0) {
+      return NextResponse.json(listDemoBanners(filters));
+    }
     return NextResponse.json(banners);
   } catch (error) {
     console.error('Error fetching banners:', error);
+    if (isFirestoreQuotaError(error)) {
+      return NextResponse.json(listDemoBanners(filters));
+    }
     return NextResponse.json(
       { error: 'Failed to fetch banners' },
       { status: 500 }

@@ -208,6 +208,8 @@ export function countryDocToCountry(id: string, raw: Record<string, unknown>): S
     currencySymbol: asNullableString(raw.currencySymbol),
     isActive: asBoolean(raw.isActive, true),
     isFeatured: asBoolean(raw.isFeatured, false),
+    description: asNullableString(raw.description),
+    displayOrder: asNumber(raw.displayOrder, 0),
     createdAt: toIso(raw.createdAt),
     updatedAt: toIso(raw.updatedAt),
     regions: Array.isArray(raw.regions)

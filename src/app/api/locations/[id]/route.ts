@@ -82,6 +82,14 @@ export async function PUT(
           : undefined,
       isActive: typeof body?.isActive === 'boolean' ? body.isActive : undefined,
       isFeatured: typeof body?.isFeatured === 'boolean' ? body.isFeatured : undefined,
+      description:
+        body?.description !== undefined
+          ? String(body.description).trim() || null
+          : undefined,
+      displayOrder:
+        body?.displayOrder !== undefined && Number.isFinite(Number(body.displayOrder))
+          ? Math.max(0, Math.round(Number(body.displayOrder)))
+          : undefined,
     });
 
     if (!updated) {

@@ -36,6 +36,7 @@ const defaultDesignSettings: SiteDesignSettings = {
   newsTickerLabelTextColor: '',
   newsTickerLabelBackground: '',
   newsTickerSeparatorColor: '',
+  newsTickerFontFamily: '',
 };
 
 const defaultContentSettings: SiteContentSettings = {

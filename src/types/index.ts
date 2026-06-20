@@ -110,6 +110,10 @@ export interface Country {
   currencySymbol: string | null;
   isActive: boolean;
   isFeatured?: boolean;
+  /** Short marketing blurb shown in country highlights */
+  description?: string | null;
+  /** Lower numbers appear first among featured countries */
+  displayOrder?: number;
   regions?: Region[];
 }
 
@@ -344,6 +348,8 @@ export interface SiteDesignSettings {
   newsTickerLabelBackground: string;
   /** CSS color for the «|» separators; empty uses muted foreground */
   newsTickerSeparatorColor: string;
+  /** Ticker font key (cairo, tajawal, …); empty uses site body font */
+  newsTickerFontFamily: string;
 }
 
 export interface SiteSocialSettings {

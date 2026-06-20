@@ -14,9 +14,13 @@ import {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
 
-  // Pagination
+  // Pagination — admin dashboard may request more rows at once
   const page = parseInt(searchParams.get('page') || '1', 10);
-  const limit = Math.min(parseInt(searchParams.get('limit') || '12', 10), 30);
+  const isAdmin = searchParams.get('admin') === '1';
+  const requestedLimit = parseInt(searchParams.get('limit') || (isAdmin ? '500' : '12'), 10);
+  const limit = isAdmin
+    ? Math.min(Math.max(1, requestedLimit), 500)
+    : Math.min(Math.max(1, requestedLimit), 30);
 
   const countryId = searchParams.get('countryId');
   const cityId = searchParams.get('cityId');
@@ -50,6 +54,7 @@ export async function GET(request: NextRequest) {
     sort,
     page,
     limit,
+    admin: isAdmin,
   };
 
   if (!isFirebaseAdminConfigured()) {

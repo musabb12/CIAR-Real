@@ -5,6 +5,7 @@ import { Bell } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import { onInvalidate } from '@/lib/admin-events';
 import { useAppStore } from '@/store/app-store';
+import { resolveNewsTickerFontFamily } from '@/lib/news-ticker-fonts';
 
 interface NewsItem {
   id: string;
@@ -57,6 +58,11 @@ export function NewsTicker() {
   const labelTextColor = designSettings.newsTickerLabelTextColor?.trim() ?? '';
   const labelBg = designSettings.newsTickerLabelBackground?.trim() ?? '';
   const sepColor = designSettings.newsTickerSeparatorColor?.trim() ?? '';
+  const fontFamily = resolveNewsTickerFontFamily(designSettings.newsTickerFontFamily);
+  const tickerTextStyle: CSSProperties = {
+    fontSize: fontSizePx,
+    ...(fontFamily ? { fontFamily } : {}),
+  };
 
   const loadNews = useCallback(() => {
     fetch('/api/news?fresh=1')
@@ -123,7 +129,7 @@ export function NewsTicker() {
           <span
             className={`font-semibold tracking-wide uppercase ${labelTextColor ? '' : 'text-primary'}`}
             style={{
-              fontSize: fontSizePx,
+              ...tickerTextStyle,
               ...(labelTextColor ? { color: labelTextColor } : {}),
             }}
           >
@@ -149,7 +155,7 @@ export function NewsTicker() {
                 <span
                   className={textColor ? '' : 'text-foreground/80'}
                   style={{
-                    fontSize: fontSizePx,
+                    ...tickerTextStyle,
                     ...(textColor ? { color: textColor } : {}),
                   }}
                 >

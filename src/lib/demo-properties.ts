@@ -1,6 +1,6 @@
 import { normalizeFlagStorage } from '@/lib/country-flags';
 import { getSeedCountriesCatalog, getSeedCountryById } from '@/lib/seed-countries-catalog';
-import type { City, Country, Property, Region } from '@/types';
+import type { City, Country, ListingType, Property, PropertyType, Region } from '@/types';
 
 const ISO = new Date().toISOString();
 
@@ -16,7 +16,7 @@ function img(propertyId: string, url: string, cover = true) {
 }
 
 /** Offline showcase listings when Firestore quota is exceeded or DB is unreachable. */
-const DEMO_PROPERTIES: Property[] = [
+const HANDCRAFTED_DEMO_PROPERTIES: Property[] = [
   {
     id: 'ciar-demo-riyadh-1',
     title: 'فيلا فاخرة — الرياض',
@@ -199,6 +199,129 @@ const DEMO_PROPERTIES: Property[] = [
   },
 ];
 
+const DEMO_IMAGE_POOL = [
+  'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&q=80',
+  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1200&q=80',
+  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&q=80',
+  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=1200&q=80',
+  'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=80',
+  'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=1200&q=80',
+  'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=1200&q=80',
+  'https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=1200&q=80',
+];
+
+const AR_COUNTRY_CODES = new Set([
+  'SA', 'AE', 'EG', 'KW', 'QA', 'BH', 'OM', 'JO', 'LB', 'IQ', 'SY', 'PS', 'LY', 'TN', 'DZ', 'MA', 'SD', 'YE', 'MR', 'SO', 'DJ', 'KM',
+]);
+
+const TYPE_AR: Record<PropertyType, string> = {
+  APARTMENT: 'شقة',
+  VILLA: 'فيلا',
+  HOUSE: 'منزل',
+  LAND: 'أرض',
+  OFFICE: 'مكتب',
+  COMMERCIAL: 'تجاري',
+  STUDIO: 'استوديو',
+  PENTHOUSE: 'بنتهاوس',
+  TOWNHOUSE: 'تاون هاوس',
+  DUPLEX: 'دوبلكس',
+};
+
+function demoListingTitle(
+  country: Country,
+  city: City,
+  propertyType: PropertyType,
+  listingType: ListingType,
+): string {
+  if (AR_COUNTRY_CODES.has(country.code.toUpperCase())) {
+    const lt = listingType === 'RENT' ? 'للإيجار' : listingType === 'SHORT_TERM' ? 'إيجار قصير' : 'للبيع';
+    return `${TYPE_AR[propertyType]} ${lt} — ${city.name}`;
+  }
+  return `${propertyType.replace('_', ' ')} ${listingType} — ${city.name}, ${country.name}`;
+}
+
+function buildCatalogDemoProperty(
+  country: Country & { regions?: Array<Region & { cities?: City[] }> },
+  region: Region & { cities?: City[] },
+  city: City,
+  seq: number,
+): Property {
+  const propertyTypes: PropertyType[] = ['APARTMENT', 'VILLA', 'HOUSE', 'TOWNHOUSE', 'PENTHOUSE', 'STUDIO'];
+  const listingTypes: ListingType[] = ['SALE', 'RENT', 'SALE', 'RENT'];
+  const propertyType = propertyTypes[seq % propertyTypes.length];
+  const listingType = listingTypes[seq % listingTypes.length];
+  const id = `ciar-demo-catalog-${country.id}-${city.id}-${seq}`;
+  const basePrice = 80000 + (seq % 17) * 175000;
+  const price = listingType === 'RENT' ? Math.round(basePrice / 120) : basePrice;
+  const area = 65 + (seq % 12) * 35;
+  const bedrooms = 1 + (seq % 5);
+  const bathrooms = 1 + (seq % 4);
+
+  return {
+    id,
+    title: demoListingTitle(country, city, propertyType, listingType),
+    slug: `demo-${country.id}-${city.id}-${seq}`,
+    description: `Premium ${propertyType.toLowerCase()} in ${city.name}, ${country.name}.`,
+    price,
+    listingType,
+    propertyType,
+    status: 'AVAILABLE',
+    area,
+    bedrooms,
+    bathrooms,
+    floors: propertyType === 'APARTMENT' || propertyType === 'STUDIO' ? 1 + (seq % 20) : 1 + (seq % 3),
+    yearBuilt: 2015 + (seq % 10),
+    isFeatured: seq % 5 === 0,
+    views: 120 + seq * 37,
+    countryId: country.id,
+    regionId: region.id,
+    cityId: city.id,
+    address: city.name,
+    latitude: 20 + (seq % 40),
+    longitude: -10 + (seq % 50),
+    agentId: null,
+    createdAt: ISO,
+    updatedAt: ISO,
+    country: {
+      id: country.id,
+      name: country.name,
+      code: country.code,
+      flag: normalizeFlagStorage(country.flag, country.code),
+      currency: country.currency ?? null,
+      currencySymbol: country.currencySymbol ?? null,
+      isActive: country.isActive !== false,
+    },
+    region: { id: region.id, name: region.name, countryId: country.id },
+    city: { id: city.id, name: city.name, regionId: region.id },
+    images: [img(id, DEMO_IMAGE_POOL[seq % DEMO_IMAGE_POOL.length])],
+  };
+}
+
+/** Hand-crafted + one listing per catalog city (68 countries × ~2 cities each). */
+function buildFullDemoPropertyCatalog(): Property[] {
+  const byId = new Map<string, Property>();
+  for (const row of HANDCRAFTED_DEMO_PROPERTIES) {
+    byId.set(row.id, row);
+  }
+
+  let seq = 0;
+  for (const country of getSeedCountriesCatalog()) {
+    for (const region of country.regions ?? []) {
+      for (const city of region.cities ?? []) {
+        const generated = buildCatalogDemoProperty(country, region, city, seq);
+        if (!byId.has(generated.id)) {
+          byId.set(generated.id, generated);
+        }
+        seq += 1;
+      }
+    }
+  }
+
+  return Array.from(byId.values());
+}
+
+const DEMO_PROPERTIES: Property[] = buildFullDemoPropertyCatalog();
+
 export type DemoPropertyQuery = {
   countryId?: string | null;
   cityId?: string | null;
@@ -210,6 +333,7 @@ export type DemoPropertyQuery = {
   sort?: string | null;
   page?: number;
   limit?: number;
+  admin?: boolean;
 };
 
 export function listDemoProperties(q: DemoPropertyQuery): {
@@ -246,7 +370,8 @@ export function listDemoProperties(q: DemoPropertyQuery): {
   else rows.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
   const page = Math.max(1, q.page ?? 1);
-  const limit = Math.min(Math.max(1, q.limit ?? 12), 30);
+  const maxLimit = q.admin ? 500 : 30;
+  const limit = Math.min(Math.max(1, q.limit ?? 12), maxLimit);
   const total = rows.length;
   const totalPages = Math.max(1, Math.ceil(total / limit));
   const start = (page - 1) * limit;

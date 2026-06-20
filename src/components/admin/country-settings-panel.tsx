@@ -1,22 +1,38 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
-  Loader2,
-  MapPin,
-  Plus,
-  Trash2,
-  Pencil,
+  BarChart3,
+  Building2,
   ChevronDown,
   ChevronRight,
-  Building2,
+  Copy,
+  ExternalLink,
+  Flag,
   Globe2,
+  Loader2,
+  MapPin,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Search,
   Settings2,
+  Star,
+  Trash2,
+  Wrench,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { FlagPicker, CountryFlagBadge } from '@/components/admin/flag-picker';
+import {
+  COMMON_CURRENCIES,
+  getCountryNativeNames,
+  getCurrencyMeta,
+  getDialCode,
+} from '@/lib/country-meta';
 import { normalizeFlagStorage } from '@/lib/country-flags';
+import { getSeedCountryById } from '@/lib/seed-countries-catalog';
+import { useAppStore } from '@/store/app-store';
 import { cn } from '@/lib/utils';
 
 type CityRow = {
@@ -41,6 +57,8 @@ export type CountryDetail = {
   flag?: string | null;
   currency?: string | null;
   currencySymbol?: string | null;
+  description?: string | null;
+  displayOrder?: number;
   isActive?: boolean;
   isFeatured?: boolean;
   regions?: RegionRow[];
@@ -51,11 +69,36 @@ export type CountryDetail = {
   warning?: string;
 };
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+type PanelTab = 'flag' | 'regions' | 'display' | 'tools';
+
+function Field({ label, children, hint }: { label: string; children: React.ReactNode; hint?: string }) {
   return (
     <div>
       <label className="block text-[13px] font-semibold text-white/80 mb-1.5">{label}</label>
       {children}
+      {hint ? <p className="text-[11px] text-[var(--admin-text-faint)] mt-1">{hint}</p> : null}
+    </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: string | number;
+  icon: React.ComponentType<{ className?: string }>;
+}) {
+  return (
+    <div className="admin-card p-4 flex items-center gap-3 min-w-[140px] flex-1">
+      <div className="h-10 w-10 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
+        <Icon className="h-5 w-5 text-amber-300" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-xl font-bold tabular-nums leading-none">{value}</p>
+        <p className="text-[11px] text-[var(--admin-text-faint)] mt-1 truncate">{label}</p>
+      </div>
     </div>
   );
 }
@@ -81,6 +124,15 @@ function mapSettingsError(isAr: boolean, message: string): string {
   return m;
 }
 
+async function copyText(value: string, isAr: boolean) {
+  try {
+    await navigator.clipboard.writeText(value);
+    toast.success(isAr ? 'تم النسخ' : 'Copied');
+  } catch {
+    toast.error(isAr ? 'تعذر النسخ' : 'Copy failed');
+  }
+}
+
 interface Props {
   countryId: string;
   isAr: boolean;
@@ -90,11 +142,15 @@ interface Props {
 
 export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated }: Props) {
   const tx = (ar: string, en: string) => (isAr ? ar : en);
+  const setAdminTab = useAppStore((s) => s.setAdminTab);
+  const setFilters = useAppStore((s) => s.setFilters);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [country, setCountry] = useState<CountryDetail | null>(null);
-  const [tab, setTab] = useState<'general' | 'regions' | 'display'>('general');
+  const [tab, setTab] = useState<PanelTab>('flag');
   const [expandedRegions, setExpandedRegions] = useState<Set<string>>(new Set());
+  const [regionSearch, setRegionSearch] = useState('');
 
   const [form, setForm] = useState({
     name: '',
@@ -102,6 +158,8 @@ export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated }: Pro
     flag: '',
     currency: '',
     currencySymbol: '',
+    description: '',
+    displayOrder: 0,
     isActive: true,
     isFeatured: false,
   });
@@ -134,6 +192,8 @@ export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated }: Pro
         flag: normalizeFlagStorage(data.flag, data.code) ?? data.code,
         currency: data.currency ?? '',
         currencySymbol: data.currencySymbol ?? '',
+        description: data.description ?? '',
+        displayOrder: data.displayOrder ?? 0,
         isActive: data.isActive !== false,
         isFeatured: Boolean(data.isFeatured),
       });
@@ -149,6 +209,29 @@ export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated }: Pro
   useEffect(() => {
     void load();
   }, [load]);
+
+  const regions = country?.regions ?? [];
+  const totalCities = useMemo(
+    () => regions.reduce((sum, region) => sum + (region.cities?.length ?? 0), 0),
+    [regions],
+  );
+
+  const filteredRegions = useMemo(() => {
+    const q = regionSearch.trim().toLowerCase();
+    if (!q) return regions;
+    return regions.filter((region) => {
+      if (region.name.toLowerCase().includes(q)) return true;
+      return (region.cities ?? []).some((city) => city.name.toLowerCase().includes(q));
+    });
+  }, [regions, regionSearch]);
+
+  const nativeNames = useMemo(
+    () => (form.code.length === 2 ? getCountryNativeNames(form.code) : null),
+    [form.code],
+  );
+
+  const dialCode = useMemo(() => getDialCode(form.code), [form.code]);
+  const currencyMeta = useMemo(() => getCurrencyMeta(form.code), [form.code]);
 
   const blockIfReadOnly = () => {
     if (!readOnly) return false;
@@ -178,6 +261,8 @@ export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated }: Pro
           flag: normalizeFlagStorage(form.flag, form.code),
           currency: form.currency.trim() || null,
           currencySymbol: form.currencySymbol.trim() || null,
+          description: form.description.trim() || null,
+          displayOrder: form.displayOrder,
           isActive: form.isActive,
           isFeatured: form.isFeatured,
         }),
@@ -194,7 +279,61 @@ export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated }: Pro
     }
   };
 
+  const syncFlagFromCode = () => {
+    if (form.code.length !== 2) {
+      toast.error(tx('أدخل رمز ISO مكوّناً من حرفين', 'Enter a 2-letter ISO code'));
+      return;
+    }
+    setForm((f) => ({ ...f, flag: f.code.toUpperCase() }));
+    toast.success(tx('تم مزامنة العلم مع الرمز', 'Flag synced with ISO code'));
+  };
+
+  const fillCurrencyFromCatalog = () => {
+    const meta = currencyMeta ?? getCurrencyMeta(form.code);
+    if (!meta?.currency) {
+      toast.error(tx('لا توجد عملة معروفة لهذا الرمز', 'No known currency for this code'));
+      return;
+    }
+    setForm((f) => ({
+      ...f,
+      currency: meta.currency,
+      currencySymbol: meta.currencySymbol,
+    }));
+    toast.success(tx('تم تعبئة العملة', 'Currency filled'));
+  };
+
+  const restoreCatalogDefaults = () => {
+    const seed = getSeedCountryById(countryId) ?? getSeedCountryById(form.code);
+    if (!seed) {
+      toast.error(tx('لا توجد بيانات كتالوج لهذه الدولة', 'No catalog defaults for this country'));
+      return;
+    }
+    setForm({
+      name: seed.name,
+      code: seed.code,
+      flag: normalizeFlagStorage(seed.flag, seed.code) ?? seed.code,
+      currency: seed.currency ?? '',
+      currencySymbol: seed.currencySymbol ?? '',
+      description: form.description,
+      displayOrder: form.displayOrder,
+      isActive: seed.isActive !== false,
+      isFeatured: Boolean(seed.isFeatured),
+    });
+    toast.success(tx('تم استرجاع بيانات الكتالوج — اضغط «حفظ الكل»', 'Catalog defaults loaded — click Save all'));
+  };
+
+  const openCountryProperties = () => {
+    setFilters({ countryId, page: 1 });
+    setAdminTab('properties');
+    onBack();
+    toast.message(tx('عرض عقارات الدولة', 'Showing country properties'));
+  };
+
+  const expandAllRegions = () => setExpandedRegions(new Set(regions.map((r) => r.id)));
+  const collapseAllRegions = () => setExpandedRegions(new Set());
+
   const addRegion = async () => {
+    if (blockIfReadOnly()) return;
     const name = newRegionName.trim();
     if (!name) return;
     try {
@@ -278,6 +417,7 @@ export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated }: Pro
   };
 
   const deleteRegion = async (regionId: string) => {
+    if (blockIfReadOnly()) return;
     if (!window.confirm(tx('حذف المنطقة وجميع مدنها؟', 'Delete this region and its cities?'))) return;
     try {
       await adminJson(`/api/locations/${countryId}/regions/${regionId}`, { method: 'DELETE' });
@@ -336,8 +476,6 @@ export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated }: Pro
     );
   }
 
-  const regions = country.regions ?? [];
-
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3">
@@ -348,8 +486,8 @@ export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated }: Pro
         <div className="min-w-0 flex-1">
           <h2 className="font-heading text-xl font-bold truncate">{country.name}</h2>
           <p className="text-xs text-[var(--admin-text-faint)]">
-            {tx('إعدادات الدولة', 'Country settings')} · {form.code} ·{' '}
-            {country._count?.properties ?? 0} {tx('عقار', 'listings')}
+            {tx('إعدادات الدولة', 'Country settings')} · {form.code} · {country._count?.properties ?? 0}{' '}
+            {tx('عقار', 'listings')}
           </p>
         </div>
         <button
@@ -371,12 +509,24 @@ export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated }: Pro
         </div>
       )}
 
+      <div className="flex flex-wrap gap-3">
+        <StatCard label={tx('مناطق', 'Regions')} value={regions.length} icon={MapPin} />
+        <StatCard label={tx('مدن', 'Cities')} value={totalCities} icon={Building2} />
+        <StatCard label={tx('عقارات', 'Listings')} value={country._count?.properties ?? 0} icon={BarChart3} />
+        <StatCard
+          label={tx('الحالة', 'Status')}
+          value={form.isActive ? tx('نشطة', 'Active') : tx('معطّلة', 'Inactive')}
+          icon={Globe2}
+        />
+      </div>
+
       <div className="flex flex-wrap gap-2 border-b border-white/10 pb-2">
         {(
           [
-            ['general', tx('عام', 'General'), Settings2],
+            ['flag', tx('علم', 'Flag'), Flag],
             ['regions', tx('المناطق والمدن', 'Regions & cities'), MapPin],
             ['display', tx('العرض', 'Display'), Globe2],
+            ['tools', tx('أدوات', 'Tools'), Wrench],
           ] as const
         ).map(([id, label, Icon]) => (
           <button
@@ -396,54 +546,109 @@ export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated }: Pro
         ))}
       </div>
 
-      {tab === 'general' && (
-        <div className="admin-card p-5 grid gap-4 lg:grid-cols-2">
-          <Field label={tx('اسم الدولة', 'Country name')}>
-            <input
-              className="admin-input"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-            />
-          </Field>
-          <Field label={tx('الرمز (ISO)', 'ISO code')}>
-            <input
-              className="admin-input font-mono"
-              value={form.code}
-              onChange={(e) => {
-                const code = e.target.value.toUpperCase().slice(0, 2);
-                setForm((f) => ({
-                  ...f,
-                  code,
-                  flag: f.flag || code,
-                }));
-              }}
-            />
-          </Field>
-          <Field label={tx('العملة', 'Currency')}>
-            <input
-              className="admin-input"
-              value={form.currency}
-              onChange={(e) => setForm({ ...form, currency: e.target.value })}
-              placeholder="SAR"
-            />
-          </Field>
-          <Field label={tx('رمز العملة', 'Currency symbol')}>
-            <input
-              className="admin-input"
-              value={form.currencySymbol}
-              onChange={(e) => setForm({ ...form, currencySymbol: e.target.value })}
-              placeholder="ر.س"
-            />
-          </Field>
-          <div className="lg:col-span-2">
-            <Field label={tx('علم الدولة', 'Country flag')}>
-              <FlagPicker
-                value={form.flag}
-                countryCode={form.code}
-                isAr={isAr}
-                onChange={(code) => setForm({ ...form, flag: code })}
+      {tab === 'flag' && (
+        <div className="space-y-4">
+          <div className="admin-card p-5 grid gap-4 lg:grid-cols-2">
+            <Field label={tx('اسم الدولة', 'Country name')}>
+              <input
+                className="admin-input"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
             </Field>
+            <Field label={tx('الرمز (ISO)', 'ISO code')}>
+              <input
+                className="admin-input font-mono"
+                value={form.code}
+                onChange={(e) => {
+                  const code = e.target.value.toUpperCase().slice(0, 2);
+                  setForm((f) => ({ ...f, code, flag: f.flag || code }));
+                }}
+              />
+            </Field>
+
+            {nativeNames && (
+              <div className="lg:col-span-2 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-sm">
+                <p className="text-[var(--admin-text-faint)] text-xs mb-1">{tx('الاسم الرسمي', 'Official name')}</p>
+                <p>
+                  <span className="text-[var(--admin-text-mute)]">{tx('عربي:', 'Arabic:')}</span> {nativeNames.ar}
+                  <span className="mx-2 text-white/20">|</span>
+                  <span className="text-[var(--admin-text-mute)]">{tx('إنجليزي:', 'English:')}</span> {nativeNames.en}
+                </p>
+              </div>
+            )}
+
+            <Field label={tx('العملة', 'Currency')}>
+              <div className="flex gap-2">
+                <input
+                  className="admin-input flex-1"
+                  value={form.currency}
+                  onChange={(e) => setForm({ ...form, currency: e.target.value })}
+                  placeholder="SAR"
+                />
+                <button
+                  type="button"
+                  className="admin-icon-btn !w-auto px-3 text-xs shrink-0"
+                  onClick={fillCurrencyFromCatalog}
+                  title={tx('تعبئة تلقائية', 'Auto-fill')}
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </Field>
+            <Field label={tx('رمز العملة', 'Currency symbol')}>
+              <input
+                className="admin-input"
+                value={form.currencySymbol}
+                onChange={(e) => setForm({ ...form, currencySymbol: e.target.value })}
+                placeholder="ر.س"
+              />
+            </Field>
+
+            <div className="lg:col-span-2">
+              <Field label={tx('عملات شائعة', 'Common currencies')} hint={tx('اختر لتعبئة الحقول أعلاه', 'Pick to fill fields above')}>
+                <div className="flex flex-wrap gap-2">
+                  {COMMON_CURRENCIES.map((row) => (
+                    <button
+                      key={row.currency}
+                      type="button"
+                      className="rounded-lg border border-white/10 px-3 py-1.5 text-xs hover:bg-white/5 transition-colors"
+                      onClick={() =>
+                        setForm((f) => ({
+                          ...f,
+                          currency: row.currency,
+                          currencySymbol: row.currencySymbol,
+                        }))
+                      }
+                    >
+                      {row.currency} {row.currencySymbol}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+            </div>
+
+            <div className="lg:col-span-2 flex flex-wrap gap-2">
+              <button type="button" className="admin-icon-btn !w-auto px-3 text-xs gap-1.5" onClick={syncFlagFromCode}>
+                <Flag className="h-3.5 w-3.5" />
+                {tx('مزامنة العلم مع ISO', 'Sync flag from ISO')}
+              </button>
+              <button type="button" className="admin-icon-btn !w-auto px-3 text-xs gap-1.5" onClick={fillCurrencyFromCatalog}>
+                <RefreshCw className="h-3.5 w-3.5" />
+                {tx('تعبئة العملة من الكتالوج', 'Fill currency from catalog')}
+              </button>
+            </div>
+
+            <div className="lg:col-span-2">
+              <Field label={tx('علم الدولة', 'Country flag')}>
+                <FlagPicker
+                  value={form.flag}
+                  countryCode={form.code}
+                  isAr={isAr}
+                  onChange={(code) => setForm({ ...form, flag: code })}
+                />
+              </Field>
+            </div>
           </div>
         </div>
       )}
@@ -468,12 +673,32 @@ export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated }: Pro
             </button>
           </div>
 
-          {regions.length === 0 ? (
+          <div className="flex flex-wrap gap-2 items-center">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--admin-text-faint)]" />
+              <input
+                className="admin-input ps-9"
+                value={regionSearch}
+                onChange={(e) => setRegionSearch(e.target.value)}
+                placeholder={tx('بحث في المناطق والمدن...', 'Search regions & cities...')}
+              />
+            </div>
+            <button type="button" className="admin-icon-btn !w-auto px-3 text-xs" onClick={expandAllRegions}>
+              {tx('توسيع الكل', 'Expand all')}
+            </button>
+            <button type="button" className="admin-icon-btn !w-auto px-3 text-xs" onClick={collapseAllRegions}>
+              {tx('طي الكل', 'Collapse all')}
+            </button>
+          </div>
+
+          {filteredRegions.length === 0 ? (
             <div className="admin-card p-8 text-center text-sm text-[var(--admin-text-faint)]">
-              {tx('لا توجد مناطق بعد. أضف أول منطقة أعلاه.', 'No regions yet. Add your first region above.')}
+              {regionSearch
+                ? tx('لا نتائج للبحث', 'No search results')
+                : tx('لا توجد مناطق بعد. أضف أول منطقة أعلاه.', 'No regions yet. Add your first region above.')}
             </div>
           ) : (
-            regions.map((region) => {
+            filteredRegions.map((region) => {
               const open = expandedRegions.has(region.id);
               const cities = region.cities ?? [];
               return (
@@ -490,9 +715,7 @@ export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated }: Pro
                       <input
                         className="admin-input flex-1 h-9"
                         value={editNames[`r-${region.id}`] ?? region.name}
-                        onChange={(e) =>
-                          setEditNames((p) => ({ ...p, [`r-${region.id}`]: e.target.value }))
-                        }
+                        onChange={(e) => setEditNames((p) => ({ ...p, [`r-${region.id}`]: e.target.value }))}
                       />
                     ) : (
                       <div className="flex-1 min-w-0">
@@ -540,9 +763,7 @@ export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated }: Pro
                         <input
                           className="admin-input flex-1 min-w-[160px] h-9"
                           value={newCityByRegion[region.id] ?? ''}
-                          onChange={(e) =>
-                            setNewCityByRegion((p) => ({ ...p, [region.id]: e.target.value }))
-                          }
+                          onChange={(e) => setNewCityByRegion((p) => ({ ...p, [region.id]: e.target.value }))}
                           placeholder={tx('اسم المدينة', 'City name')}
                           onKeyDown={(e) => e.key === 'Enter' && void addCity(region.id)}
                         />
@@ -566,9 +787,7 @@ export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated }: Pro
                               <input
                                 className="admin-input flex-1 h-8 text-sm"
                                 value={editNames[`c-${city.id}`] ?? city.name}
-                                onChange={(e) =>
-                                  setEditNames((p) => ({ ...p, [`c-${city.id}`]: e.target.value }))
-                                }
+                                onChange={(e) => setEditNames((p) => ({ ...p, [`c-${city.id}`]: e.target.value }))}
                               />
                             ) : (
                               <span className="flex-1 text-sm font-medium">{city.name}</span>
@@ -621,35 +840,173 @@ export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated }: Pro
       )}
 
       {tab === 'display' && (
-        <div className="admin-card p-5 space-y-4 max-w-lg">
-          <label className="flex items-center justify-between gap-4 cursor-pointer">
-            <div>
-              <p className="font-semibold text-sm">{tx('دولة نشطة', 'Active country')}</p>
-              <p className="text-xs text-[var(--admin-text-faint)]">
-                {tx('تظهر في البحث والقوائم العامة', 'Visible in search and public lists')}
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="admin-card p-5 space-y-4">
+            <h3 className="font-semibold text-sm flex items-center gap-2">
+              <Settings2 className="h-4 w-4 text-amber-300" />
+              {tx('خيارات الظهور', 'Visibility options')}
+            </h3>
+            <label className="flex items-center justify-between gap-4 cursor-pointer rounded-lg border border-white/5 p-3">
+              <div>
+                <p className="font-semibold text-sm">{tx('دولة نشطة', 'Active country')}</p>
+                <p className="text-xs text-[var(--admin-text-faint)]">
+                  {tx('تظهر في البحث والقوائم العامة', 'Visible in search and public lists')}
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={form.isActive}
+                onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                className="h-5 w-5 rounded accent-amber-500"
+              />
+            </label>
+            <label className="flex items-center justify-between gap-4 cursor-pointer rounded-lg border border-white/5 p-3">
+              <div>
+                <p className="font-semibold text-sm">{tx('دولة مميزة', 'Featured country')}</p>
+                <p className="text-xs text-[var(--admin-text-faint)]">
+                  {tx('تُبرز في الصفحة الرئيسية', 'Highlighted on the homepage')}
+                </p>
+              </div>
+              <input
+                type="checkbox"
+                checked={form.isFeatured}
+                onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })}
+                className="h-5 w-5 rounded accent-amber-500"
+              />
+            </label>
+            <Field label={tx('ترتيب العرض', 'Display order')} hint={tx('الأصغر يظهر أولاً بين الدول المميزة', 'Lower numbers appear first among featured countries')}>
+              <input
+                type="number"
+                min={0}
+                className="admin-input w-32"
+                value={form.displayOrder}
+                onChange={(e) =>
+                  setForm({ ...form, displayOrder: Math.max(0, Number(e.target.value) || 0) })
+                }
+              />
+            </Field>
+            <Field label={tx('وصف مختصر', 'Short description')}>
+              <textarea
+                className="admin-input min-h-[88px] resize-y"
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                placeholder={tx('نص تسويقي يظهر في بطاقات الدولة...', 'Marketing text for country cards...')}
+                maxLength={280}
+              />
+              <p className="text-[10px] text-[var(--admin-text-faint)] text-end mt-1">
+                {form.description.length}/280
               </p>
+            </Field>
+          </div>
+
+          <div className="admin-card p-5">
+            <p className="text-xs text-[var(--admin-text-faint)] mb-3">{tx('معاينة البطاقة', 'Card preview')}</p>
+            <div className="rounded-xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-transparent p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <CountryFlagBadge flag={form.flag} code={form.code} size="md" />
+                <div className="min-w-0">
+                  <p className="font-bold truncate">{form.name || tx('اسم الدولة', 'Country name')}</p>
+                  <p className="text-xs text-[var(--admin-text-faint)]">{form.code}</p>
+                </div>
+                {form.isFeatured && (
+                  <span className="admin-pill admin-pill-gold ms-auto shrink-0">
+                    <Star className="h-3 w-3 fill-current me-1 inline" />
+                    {tx('مميز', 'Featured')}
+                  </span>
+                )}
+              </div>
+              {form.description ? (
+                <p className="text-sm text-[var(--admin-text-mute)] line-clamp-3">{form.description}</p>
+              ) : (
+                <p className="text-sm text-[var(--admin-text-faint)] italic">
+                  {tx('أضف وصفاً في الحقل بجانب المعاينة', 'Add a description in the field beside this preview')}
+                </p>
+              )}
+              <div className="flex flex-wrap gap-2 mt-4 text-[11px]">
+                {form.currency && (
+                  <span className="rounded-md bg-white/5 px-2 py-1">
+                    {form.currency} {form.currencySymbol}
+                  </span>
+                )}
+                <span className="rounded-md bg-white/5 px-2 py-1">
+                  {regions.length} {tx('منطقة', 'regions')}
+                </span>
+                <span className="rounded-md bg-white/5 px-2 py-1">
+                  {country._count?.properties ?? 0} {tx('عقار', 'listings')}
+                </span>
+              </div>
             </div>
-            <input
-              type="checkbox"
-              checked={form.isActive}
-              onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-              className="h-5 w-5 rounded accent-amber-500"
-            />
-          </label>
-          <label className="flex items-center justify-between gap-4 cursor-pointer">
-            <div>
-              <p className="font-semibold text-sm">{tx('دولة مميزة', 'Featured country')}</p>
-              <p className="text-xs text-[var(--admin-text-faint)]">
-                {tx('تُبرز في الصفحة الرئيسية', 'Highlighted on the homepage')}
-              </p>
-            </div>
-            <input
-              type="checkbox"
-              checked={form.isFeatured}
-              onChange={(e) => setForm({ ...form, isFeatured: e.target.checked })}
-              className="h-5 w-5 rounded accent-amber-500"
-            />
-          </label>
+          </div>
+        </div>
+      )}
+
+      {tab === 'tools' && (
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="admin-card p-5 space-y-3">
+            <h3 className="font-semibold text-sm">{tx('نسخ ومشاركة', 'Copy & share')}</h3>
+            <button
+              type="button"
+              className="admin-icon-btn !w-full !justify-start px-3 gap-2 text-sm"
+              onClick={() => void copyText(countryId, isAr)}
+            >
+              <Copy className="h-4 w-4" />
+              {tx('نسخ معرّف الدولة', 'Copy country ID')}: <code className="text-xs opacity-70">{countryId}</code>
+            </button>
+            <button
+              type="button"
+              className="admin-icon-btn !w-full !justify-start px-3 gap-2 text-sm"
+              onClick={() => void copyText(form.code, isAr)}
+            >
+              <Copy className="h-4 w-4" />
+              {tx('نسخ رمز ISO', 'Copy ISO code')}: <code className="text-xs opacity-70">{form.code}</code>
+            </button>
+            <button type="button" className="admin-btn-premium w-full gap-2" onClick={openCountryProperties}>
+              <ExternalLink className="h-4 w-4" />
+              {tx('عرض عقارات هذه الدولة', 'View properties in this country')}
+            </button>
+          </div>
+
+          <div className="admin-card p-5 space-y-3">
+            <h3 className="font-semibold text-sm">{tx('استعادة وضبط', 'Restore & reset')}</h3>
+            <button
+              type="button"
+              className="admin-icon-btn !w-full !justify-start px-3 gap-2 text-sm"
+              onClick={restoreCatalogDefaults}
+            >
+              <RefreshCw className="h-4 w-4" />
+              {tx('استرجاع بيانات الكتالوج الافتراضية', 'Restore catalog defaults')}
+            </button>
+            <button
+              type="button"
+              className="admin-icon-btn !w-full !justify-start px-3 gap-2 text-sm"
+              onClick={() => void load()}
+            >
+              <RefreshCw className="h-4 w-4" />
+              {tx('إعادة تحميل من الخادم', 'Reload from server')}
+            </button>
+          </div>
+
+          <div className="admin-card p-5 md:col-span-2">
+            <h3 className="font-semibold text-sm mb-3">{tx('معلومات مرجعية', 'Reference info')}</h3>
+            <dl className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-sm">
+              <div className="rounded-lg bg-white/[0.03] px-3 py-2">
+                <dt className="text-[var(--admin-text-faint)] text-xs">{tx('رمز الاتصال', 'Dial code')}</dt>
+                <dd className="font-mono font-semibold">{dialCode ?? '—'}</dd>
+              </div>
+              <div className="rounded-lg bg-white/[0.03] px-3 py-2">
+                <dt className="text-[var(--admin-text-faint)] text-xs">{tx('مصدر البيانات', 'Data source')}</dt>
+                <dd className="font-semibold">{country.dataSource ?? 'firestore'}</dd>
+              </div>
+              <div className="rounded-lg bg-white/[0.03] px-3 py-2">
+                <dt className="text-[var(--admin-text-faint)] text-xs">{tx('إجمالي المناطق', 'Total regions')}</dt>
+                <dd className="font-semibold tabular-nums">{regions.length}</dd>
+              </div>
+              <div className="rounded-lg bg-white/[0.03] px-3 py-2">
+                <dt className="text-[var(--admin-text-faint)] text-xs">{tx('إجمالي المدن', 'Total cities')}</dt>
+                <dd className="font-semibold tabular-nums">{totalCities}</dd>
+              </div>
+            </dl>
+          </div>
         </div>
       )}
     </div>

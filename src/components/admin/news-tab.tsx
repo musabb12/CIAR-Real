@@ -7,6 +7,10 @@ import { useAppStore } from '@/store/app-store';
 import { invalidate } from '@/lib/admin-events';
 import { NEWS_TYPE_OPTIONS, newsTypeLabel } from '@/lib/admin-labels';
 import {
+  NEWS_TICKER_FONT_OPTIONS,
+  resolveNewsTickerFontFamily,
+} from '@/lib/news-ticker-fonts';
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -105,6 +109,12 @@ export function NewsTab({ isAr }: { isAr: boolean }) {
   const clampTickerDim = (value: number, min: number, max: number, fallback: number) => {
     if (!Number.isFinite(value)) return fallback;
     return Math.min(max, Math.max(min, Math.round(value)));
+  };
+
+  const tickerFontFamily = resolveNewsTickerFontFamily(designSettings.newsTickerFontFamily);
+  const tickerTextStyle = {
+    fontSize: designSettings.newsTickerFontSizePx ?? 12,
+    ...(tickerFontFamily ? { fontFamily: tickerFontFamily } : {}),
   };
 
   const fetchNews = useCallback(async (fresh = true): Promise<NewsRow[]> => {
@@ -298,6 +308,7 @@ export function NewsTab({ isAr }: { isAr: boolean }) {
                 newsTickerLabelTextColor: '',
                 newsTickerLabelBackground: '',
                 newsTickerSeparatorColor: '',
+                newsTickerFontFamily: '',
               });
               toast.success(tx(isAr, 'تمت إعادة الشكل للافتراضي', 'Ticker look reset'));
             }}
@@ -340,6 +351,31 @@ export function NewsTab({ isAr }: { isAr: boolean }) {
               />
               <span className="text-sm font-semibold w-12 text-end">{designSettings.newsTickerFontSizePx ?? 12}px</span>
             </div>
+          </Field>
+          <Field label={tx(isAr, 'نوع الخط', 'Font family')}>
+            <select
+              className="admin-input w-full"
+              value={designSettings.newsTickerFontFamily ?? ''}
+              style={
+                tickerFontFamily
+                  ? { fontFamily: tickerFontFamily }
+                  : undefined
+              }
+              onChange={(e) => updateDesignSettings({ newsTickerFontFamily: e.target.value })}
+            >
+              {NEWS_TICKER_FONT_OPTIONS.map((option) => {
+                const optionFont = resolveNewsTickerFontFamily(option.key);
+                return (
+                  <option
+                    key={option.key || 'default'}
+                    value={option.key}
+                    style={optionFont ? { fontFamily: optionFont } : undefined}
+                  >
+                    {isAr ? option.labelAr : option.labelEn}
+                  </option>
+                );
+              })}
+            </select>
           </Field>
           <TickerColorPicker
             isAr={isAr}
@@ -409,7 +445,7 @@ export function NewsTab({ isAr }: { isAr: boolean }) {
               <span
                 className={designSettings.newsTickerLabelTextColor?.trim() ? '' : 'text-primary'}
                 style={{
-                  fontSize: designSettings.newsTickerFontSizePx ?? 12,
+                  ...tickerTextStyle,
                   ...(designSettings.newsTickerLabelTextColor?.trim()
                     ? { color: designSettings.newsTickerLabelTextColor }
                     : {}),
@@ -422,7 +458,7 @@ export function NewsTab({ isAr }: { isAr: boolean }) {
               <span
                 className={designSettings.newsTickerTextColor?.trim() ? '' : 'text-foreground/80'}
                 style={{
-                  fontSize: designSettings.newsTickerFontSizePx ?? 12,
+                  ...tickerTextStyle,
                   ...(designSettings.newsTickerTextColor?.trim()
                     ? { color: designSettings.newsTickerTextColor }
                     : {}),

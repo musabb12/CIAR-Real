@@ -751,7 +751,7 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
       key={refreshKey}
       isAr={isAr}
       subtitle={{ ar: 'أضف أو عدّل أو احذف عقاراً', en: 'Add, edit, or remove a listing' }}
-      endpoint="/api/properties?limit=100"
+      endpoint="/api/properties?admin=1&limit=500"
       parseRows={parseRows}
       columns={columns}
       searchKeys={['title']}
@@ -1251,7 +1251,7 @@ export function FeaturedTab({ isAr }: { isAr: boolean }) {
       isAr={isAr}
       title={{ ar: 'العقارات المميزة', en: 'Featured Properties' }}
       subtitle={{ ar: 'العقارات الفاخرة المعروضة في المقدمة', en: 'Premium properties on the spotlight' }}
-      endpoint="/api/properties?isFeatured=true&limit=100"
+      endpoint="/api/properties?admin=1&isFeatured=true&limit=500"
       parseRows={parseRows}
       columns={columns}
       searchKeys={['title']}

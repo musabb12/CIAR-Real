@@ -1,5 +1,5 @@
 import { DEFAULT_FEATURES } from '@/lib/firestore-defaults';
-import type { Agent, Company, FeatureToggle } from '@/types';
+import type { Agent, Banner, Company, FeatureToggle } from '@/types';
 
 const ISO = new Date().toISOString();
 
@@ -181,4 +181,62 @@ export function getDefaultFeaturesForApi(): FeatureToggle[] {
     createdAt: ISO,
     updatedAt: ISO,
   }));
+}
+
+const DEMO_BANNERS: Banner[] = [
+  {
+    id: 'demo-banner-home-hero',
+    title: 'اكتشف أفضل العقارات العالمية',
+    subtitle: 'شقق وفيلات ومكاتب في أكثر من ٦٨ دولة',
+    image: null,
+    link: '/properties',
+    position: 'home',
+    order: 0,
+    isActive: true,
+    createdAt: ISO,
+    updatedAt: ISO,
+  },
+  {
+    id: 'demo-banner-luxury',
+    title: 'عقارات فاخرة في الخليج وأوروبا',
+    subtitle: 'فلل وقصور مع وكلاء معتمدين',
+    image: null,
+    link: '/properties?listingType=sale',
+    position: 'home',
+    order: 1,
+    isActive: true,
+    createdAt: ISO,
+    updatedAt: ISO,
+  },
+  {
+    id: 'demo-banner-invest',
+    title: 'استثمر بثقة',
+    subtitle: 'فرص عقارية مدروسة للمستثمرين',
+    image: null,
+    link: '/agents',
+    position: 'sidebar',
+    order: 0,
+    isActive: true,
+    createdAt: ISO,
+    updatedAt: ISO,
+  },
+];
+
+export function listDemoBanners(filters?: {
+  position?: string | null;
+  isActive?: string | null;
+}): Banner[] {
+  let rows = DEMO_BANNERS.map((row) => ({ ...row }));
+  if (filters?.position) {
+    rows = rows.filter((banner) => banner.position === filters.position);
+  }
+  if (filters?.isActive !== null && filters?.isActive !== undefined) {
+    rows = rows.filter((banner) => banner.isActive === (filters.isActive === 'true'));
+  }
+  return rows.sort((a, b) => a.order - b.order || (b.createdAt > a.createdAt ? 1 : -1));
+}
+
+export function getDemoBannerById(id: string): Banner | null {
+  const row = DEMO_BANNERS.find((banner) => banner.id === id);
+  return row ? { ...row } : null;
 }

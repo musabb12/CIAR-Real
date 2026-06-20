@@ -148,6 +148,7 @@ export const defaultDesignSettings: SiteDesignSettings = {
   newsTickerLabelTextColor: '',
   newsTickerLabelBackground: '',
   newsTickerSeparatorColor: '',
+  newsTickerFontFamily: '',
 };
 
 export const defaultContentSettings: SiteContentSettings = {
@@ -761,6 +762,8 @@ export async function updateCountryInFirestore(
     currencySymbol: string | null;
     isActive: boolean;
     isFeatured: boolean;
+    description: string | null;
+    displayOrder: number;
   }>
 ) {
   const existing = await getCountryById(id);
@@ -773,6 +776,8 @@ export async function updateCountryInFirestore(
     ...(input.currencySymbol !== undefined ? { currencySymbol: input.currencySymbol } : {}),
     ...(typeof input.isActive === 'boolean' ? { isActive: input.isActive } : {}),
     ...(typeof input.isFeatured === 'boolean' ? { isFeatured: input.isFeatured } : {}),
+    ...(input.description !== undefined ? { description: input.description } : {}),
+    ...(typeof input.displayOrder === 'number' ? { displayOrder: input.displayOrder } : {}),
     updatedAt: nowIso(),
   });
   await countryCollection().doc(id).update(payload);

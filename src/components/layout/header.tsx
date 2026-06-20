@@ -356,21 +356,22 @@ export function Header() {
         dir={rtl ? 'rtl' : 'ltr'}
         className={`estate-nav luxury-nav relative sticky top-0 z-50 w-full transition-all duration-500 ease-out glass-nav ${headerShadow}`}
       >
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-16 max-w-7xl items-center gap-2 px-3 sm:gap-3 sm:px-6 lg:px-8">
           {/* ---- Logo ---- */}
           <button
             onClick={() => handleNavClick('home')}
-            className="group flex items-start transition-opacity hover:opacity-90"
+            className="group flex shrink-0 items-center pe-1 transition-opacity hover:opacity-90 sm:pe-2"
             aria-label="CIAR Real Estate"
           >
             <CiarBrandLockup
-              size="lg"
+              size="sm"
               variant={scrolled ? 'luxury' : isDark ? 'light' : 'luxury'}
+              className="max-w-[6.5rem] sm:max-w-none"
             />
           </button>
 
           {/* ---- Desktop Navigation ---- */}
-          <nav className="hidden items-center gap-0.5 lg:flex">
+          <nav className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 lg:flex">
             {navConfig.map((item) => {
               if (item.showAdmin && currentUser?.role !== 'ADMIN') return null;
               const isActive =
@@ -381,7 +382,7 @@ export function Header() {
                   key={item.page}
                   onClick={() => handleNavClick(item.page)}
                   data-active={isActive}
-                  className={`luxury-nav-link relative flex items-center gap-1.5 rounded-lg px-3.5 py-2 ${
+                  className={`luxury-nav-link relative flex items-center gap-1.5 rounded-lg px-2.5 py-2 xl:px-3.5 ${
                     isActive ? 'opacity-100' : scrolled ? '' : isDark ? 'text-white/80' : navTextColor
                   }`}
                 >
@@ -398,7 +399,7 @@ export function Header() {
           </nav>
 
           {/* ---- Right Side Actions ---- */}
-          <div className="flex items-center gap-1 sm:gap-1.5">
+          <div className="flex shrink-0 items-center gap-1 sm:gap-1.5 ms-auto lg:ms-0">
             {/* Desktop Search */}
             <form onSubmit={handleSearch} className="hidden lg:block">
               <div className="relative">

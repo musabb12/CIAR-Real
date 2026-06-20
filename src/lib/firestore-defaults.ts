@@ -26,6 +26,21 @@ export const DEFAULT_NEWS_ITEMS = [
   },
 ] as const;
 
+/** Static news rows when Firestore is unavailable (Netlify without env, quota, etc.). */
+export function getDefaultNewsForApi() {
+  const now = new Date().toISOString();
+  return DEFAULT_NEWS_ITEMS.map((item, index) => ({
+    id: `demo-news-${index}`,
+    content: item.content,
+    link: null,
+    type: item.type,
+    isActive: true,
+    order: item.order,
+    createdAt: now,
+    updatedAt: now,
+  }));
+}
+
 export const DEFAULT_FEATURES = [
   {
     key: 'ai_valuation',

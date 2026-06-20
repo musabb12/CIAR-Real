@@ -10,24 +10,32 @@ import {
   updateNewsInFirestore,
 } from '@/lib/firestore-platform';
 import { isFirestoreQuotaError } from '@/lib/firestore-read-cache';
+import { getDefaultNewsForApi } from '@/lib/firestore-defaults';
 
 // GET /api/news — Active items by default. Use ?all=1 for admin (includes inactive).
 export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const all = searchParams.get('all') === '1';
+
   if (!isFirebaseAdminConfigured()) {
-    return NextResponse.json([]);
+    const demo = getDefaultNewsForApi();
+    return NextResponse.json(all ? demo : demo.filter((item) => item.isActive));
   }
 
   try {
-    const { searchParams } = new URL(request.url);
-    const all = searchParams.get('all') === '1';
     const fresh = searchParams.get('fresh') === '1';
 
     const news = await listNewsFromFirestore(all, { skipCache: fresh });
+    if (news.length === 0) {
+      const demo = getDefaultNewsForApi();
+      return NextResponse.json(all ? demo : demo.filter((item) => item.isActive));
+    }
     return NextResponse.json(news);
   } catch (error) {
     console.error('Error fetching news:', error);
     if (isFirestoreQuotaError(error)) {
-      return NextResponse.json([]);
+      const demo = getDefaultNewsForApi();
+      return NextResponse.json(all ? demo : demo.filter((item) => item.isActive));
     }
     return NextResponse.json({ error: 'Failed to fetch news' }, { status: 500 });
   }

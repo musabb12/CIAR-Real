@@ -13,13 +13,15 @@ import {
 
 // GET /api/locations - Return nested countries → regions → cities
 export async function GET(request: NextRequest) {
-  if (!isFirebaseAdminConfigured()) {
-    return NextResponse.json([]);
-  }
-
   const { searchParams } = new URL(request.url);
   const includeProperties = searchParams.get('includeProperties') === 'true';
   const includeInactive = searchParams.get('includeInactive') === 'true';
+
+  if (!isFirebaseAdminConfigured()) {
+    return NextResponse.json(getDemoLocationsPayload({ includeProperties }), {
+      headers: { 'X-Data-Source': 'demo' },
+    });
+  }
 
   try {
     const countries = await listLocationsFromFirestore({

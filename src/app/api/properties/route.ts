@@ -18,20 +18,6 @@ export async function GET(request: NextRequest) {
   const page = parseInt(searchParams.get('page') || '1', 10);
   const limit = Math.min(parseInt(searchParams.get('limit') || '12', 10), 30);
 
-  if (!isFirebaseAdminConfigured()) {
-    return NextResponse.json({
-      data: [],
-      pagination: {
-        page,
-        limit,
-        total: 0,
-        totalPages: 1,
-      },
-      backendConfigured: false,
-      backendMessage: getFirebaseAdminConfigError() ?? 'Firebase Admin is not configured',
-    });
-  }
-
   const countryId = searchParams.get('countryId');
   const cityId = searchParams.get('cityId');
   const agentId = searchParams.get('agentId');
@@ -47,25 +33,52 @@ export async function GET(request: NextRequest) {
   const search = searchParams.get('search');
   const sort = searchParams.get('sort') || 'newest';
 
-  try {
-    const out = await listPropertiesFromFirestore({
-      countryId,
-      cityId,
-      agentId,
-      listingType,
-      propertyType,
-      priceMin,
-      priceMax,
-      bedrooms,
-      bathrooms,
-      areaMin,
-      areaMax,
-      isFeatured,
-      search,
-      sort,
-      page,
-      limit,
+  const queryParams = {
+    countryId,
+    cityId,
+    agentId,
+    listingType,
+    propertyType,
+    priceMin,
+    priceMax,
+    bedrooms,
+    bathrooms,
+    areaMin,
+    areaMax,
+    isFeatured,
+    search,
+    sort,
+    page,
+    limit,
+  };
+
+  if (!isFirebaseAdminConfigured()) {
+    const out = listDemoProperties(queryParams);
+    return NextResponse.json({
+      data: out.data,
+      pagination: out.pagination,
+      backendConfigured: false,
+      dataSource: 'demo',
+      backendMessage:
+        getFirebaseAdminConfigError() ?? 'Firebase Admin is not configured — showing demo listings',
     });
+  }
+
+  try {
+    const out = await listPropertiesFromFirestore(queryParams);
+
+    if (out.data.length === 0) {
+      const demo = listDemoProperties(queryParams);
+      if (demo.data.length > 0) {
+        return NextResponse.json({
+          data: demo.data,
+          pagination: demo.pagination,
+          backendConfigured: true,
+          dataSource: 'demo',
+          backendMessage: 'No listings in database — showing demo properties',
+        });
+      }
+    }
 
     return NextResponse.json({
       data: out.data,
@@ -76,18 +89,7 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching properties:', error);
 
     if (isFirebaseQuotaError(error)) {
-      const out = listDemoProperties({
-        countryId,
-        cityId,
-        agentId,
-        listingType,
-        propertyType,
-        isFeatured,
-        search,
-        sort,
-        page,
-        limit,
-      });
+      const out = listDemoProperties(queryParams);
       return NextResponse.json({
         data: out.data,
         pagination: out.pagination,

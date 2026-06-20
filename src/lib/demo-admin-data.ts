@@ -158,6 +158,16 @@ export function listDemoAgents(countryId?: string | null): Array<Agent & { _coun
   return DEMO_AGENTS.map((row) => ({ ...row }));
 }
 
+export function getDemoAgentById(id: string): (Agent & { _count: { properties: number } }) | null {
+  const row = DEMO_AGENTS.find((agent) => agent.id === id);
+  return row ? { ...row } : null;
+}
+
+export function getDemoCompanyById(id: string): (Company & { _count?: { agents: number } }) | null {
+  const row = DEMO_COMPANIES.find((company) => company.id === id);
+  return row ? { ...row } : null;
+}
+
 export function getDefaultFeaturesForApi(): FeatureToggle[] {
   return DEFAULT_FEATURES.map((feature, index) => ({
     id: `demo-feature-${feature.key}`,

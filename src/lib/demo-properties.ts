@@ -334,6 +334,20 @@ export function getDemoCountryById(
   };
 }
 
+/** Country detail payload for admin when Firestore is unavailable. */
+export function getDemoCountryDetailForApi(id: string) {
+  const demo = getDemoCountryById(id, { includeProperties: true });
+  if (!demo) return null;
+  return {
+    ...demo,
+    quotaExceeded: true,
+    dataSource: 'demo' as const,
+    readOnly: true,
+    warning:
+      'Showing demo country catalog. Connect Firebase or wait for quota reset to save changes.',
+  };
+}
+
 export function getDemoLocationsPayload(options?: { includeProperties?: boolean }) {
   return {
     countries: getDemoCountries(options),

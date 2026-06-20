@@ -4,31 +4,43 @@ import {
   getAgentDetailFromFirestore,
   updateAgentInFirestore,
 } from '@/lib/firestore-platform';
+import { isFirebaseAdminConfigured } from '@/lib/firebase-admin';
+import { getDemoAgentById } from '@/lib/demo-admin-data';
+import { isFirestoreQuotaError } from '@/lib/firestore-read-cache';
 
 // GET /api/agents/[id] - Single agent with user info, company, and their properties
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  try {
-    const { id } = await params;
+  const { id } = await params;
 
+  if (!isFirebaseAdminConfigured()) {
+    const demo = getDemoAgentById(id);
+    if (!demo) {
+      return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
+    }
+    return NextResponse.json(demo);
+  }
+
+  try {
     const agent = await getAgentDetailFromFirestore(id);
 
     if (!agent) {
-      return NextResponse.json(
-        { error: 'Agent not found' },
-        { status: 404 }
-      );
+      const demo = getDemoAgentById(id);
+      if (demo) return NextResponse.json(demo);
+      return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
     }
 
     return NextResponse.json(agent);
   } catch (error) {
     console.error('Error fetching agent:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch agent' },
-      { status: 500 }
-    );
+    const demo = getDemoAgentById(id);
+    if (demo) return NextResponse.json(demo);
+    if (isFirestoreQuotaError(error)) {
+      return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Failed to fetch agent' }, { status: 500 });
   }
 }
 

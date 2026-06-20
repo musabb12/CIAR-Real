@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDemoCountryById } from '@/lib/demo-properties';
+import { getDemoCountryDetailForApi } from '@/lib/demo-properties';
+import { isFirebaseAdminConfigured } from '@/lib/firebase-admin';
 import { isFirebaseQuotaError } from '@/lib/firebase-errors';
 import { normalizeFlagStorage } from '@/lib/country-flags';
 import {
@@ -14,32 +15,40 @@ export async function GET(
 ) {
   const { id } = await params;
 
+  if (!isFirebaseAdminConfigured()) {
+    const demo = getDemoCountryDetailForApi(id);
+    if (!demo) {
+      return NextResponse.json({ error: 'Country not found' }, { status: 404 });
+    }
+    return NextResponse.json(demo);
+  }
+
   try {
     const countries = await listLocationsFromFirestore({
       includeProperties: true,
       includeInactive: true,
     });
     const country = countries.find((c) => c.id === id);
-    if (!country) {
-      return NextResponse.json({ error: 'Country not found' }, { status: 404 });
+    if (country) {
+      return NextResponse.json(country);
     }
-    return NextResponse.json(country);
+
+    const demo = getDemoCountryDetailForApi(id);
+    if (demo) {
+      return NextResponse.json(demo);
+    }
+
+    return NextResponse.json({ error: 'Country not found' }, { status: 404 });
   } catch (error) {
     console.error('Error fetching country:', error);
 
+    const demo = getDemoCountryDetailForApi(id);
+    if (demo) {
+      return NextResponse.json(demo);
+    }
+
     if (isFirebaseQuotaError(error)) {
-      const demo = getDemoCountryById(id, { includeProperties: true });
-      if (!demo) {
-        return NextResponse.json({ error: 'Country not found' }, { status: 404 });
-      }
-      return NextResponse.json({
-        ...demo,
-        quotaExceeded: true,
-        dataSource: 'demo',
-        readOnly: true,
-        warning:
-          'Firestore quota exceeded. Showing demo country data; changes cannot be saved until quota resets.',
-      });
+      return NextResponse.json({ error: 'Country not found' }, { status: 404 });
     }
 
     return NextResponse.json({ error: 'Failed to fetch country' }, { status: 500 });

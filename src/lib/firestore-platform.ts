@@ -325,6 +325,8 @@ function agentDocToListItem(
     totalSales: asNumber(raw.totalSales, 0),
     verified: asBoolean(raw.verified, false),
     companyId,
+    countryId: asNullableString(raw.countryId),
+    defaultCommissionPercent: asNullableNumber(raw.defaultCommissionPercent),
     company: company ?? undefined,
     createdAt: toIso(raw.createdAt),
     updatedAt: toIso(raw.updatedAt),
@@ -356,6 +358,8 @@ async function buildAgentResponse(
     totalSales: asNumber(raw.totalSales, 0),
     verified: asBoolean(raw.verified, false),
     companyId: asNullableString(raw.companyId),
+    countryId: asNullableString(raw.countryId),
+    defaultCommissionPercent: asNullableNumber(raw.defaultCommissionPercent),
     company: company ?? undefined,
     createdAt: toIso(raw.createdAt),
     updatedAt: toIso(raw.updatedAt),
@@ -493,17 +497,24 @@ export async function listAgentsFromFirestore(
     let docs = snap.docs;
 
     if (countryId) {
-      const propSnap = await propertyStatsCol()
-        .where('countryId', '==', countryId)
-        .select('agentId')
-        .limit(500)
-        .get();
-      const allowed = new Set(
-        propSnap.docs
-          .map((doc) => asNullableString((doc.data() as Record<string, unknown>).agentId))
-          .filter(Boolean) as string[],
-      );
-      docs = docs.filter((doc) => allowed.has(doc.id));
+      docs = docs.filter((doc) => {
+        const raw = doc.data() as Record<string, unknown>;
+        if (asNullableString(raw.countryId) === countryId) return true;
+        return false;
+      });
+      if (docs.length === 0) {
+        const propSnap = await propertyStatsCol()
+          .where('countryId', '==', countryId)
+          .select('agentId')
+          .limit(500)
+          .get();
+        const allowed = new Set(
+          propSnap.docs
+            .map((doc) => asNullableString((doc.data() as Record<string, unknown>).agentId))
+            .filter(Boolean) as string[],
+        );
+        docs = snap.docs.filter((doc) => allowed.has(doc.id));
+      }
     }
 
     const userIds = [
@@ -571,6 +582,8 @@ export async function updateAgentInFirestore(
     totalSales: number;
     verified: boolean;
     companyId: string | null;
+    countryId: string | null;
+    defaultCommissionPercent: number | null;
     adminPermissions: Record<string, boolean>;
     adminTasks: string[];
   }>
@@ -680,6 +693,8 @@ export async function updateCompanyInFirestore(
     website: string | null;
     address: string | null;
     founded: number | null;
+    countryId: string | null;
+    defaultCommissionPercent: number | null;
     adminPermissions: Record<string, boolean>;
     adminTasks: string[];
   }>
@@ -1810,6 +1825,7 @@ export async function createPartnerProfileForUser(input: {
   role: UserRole;
   name: string;
   phone?: string | null;
+  whatsapp?: string | null;
   companyName?: string | null;
 }): Promise<Agent | null> {
   if (input.role !== 'OWNER' && input.role !== 'COMPANY' && input.role !== 'AGENT') {
@@ -1857,7 +1873,7 @@ export async function createPartnerProfileForUser(input: {
     title,
     license: null,
     phone: input.phone?.trim() || null,
-    whatsapp: null,
+    whatsapp: input.whatsapp?.trim() || input.phone?.trim() || null,
     experience: null,
     rating: 0,
     totalListings: 0,

@@ -12,6 +12,7 @@ import {
   createPartnerProfileForUser,
   getPartnerAgentIdForUser,
 } from '@/lib/firestore-platform';
+import { partnerCanPublishListings } from '@/lib/firestore-subscriptions';
 
 async function requirePartner(request: NextRequest) {
   const user = await getSessionUser(request);
@@ -62,6 +63,18 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    const access = await partnerCanPublishListings(partner.agentId);
+    if (!access.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Active subscription required to publish listings',
+          requiresSubscription: true,
+          code: 'SUBSCRIPTION_REQUIRED',
+        },
+        { status: 402 },
+      );
+    }
+
     const body = await request.json();
     const title = String(body?.title ?? '').trim();
     const countryId = String(body?.countryId ?? '').trim();

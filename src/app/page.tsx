@@ -17,6 +17,8 @@ import { RegisterPage } from '@/components/pages/register-page';
 import { LoginPage } from '@/components/pages/login-page';
 import { CheckoutPage } from '@/components/pages/checkout-page';
 import { CheckoutCompletePage } from '@/components/pages/checkout-complete-page';
+import { PartnerSubscriptionPage } from '@/components/pages/partner-subscription-page';
+import { PartnerSubscriptionCheckoutPage } from '@/components/pages/partner-subscription-checkout-page';
 import { PartnerDashboardPage } from '@/components/pages/partner-dashboard-page';
 import { ScrollProgress } from '@/components/ui/scroll-progress';
 import { AIChatbot } from '@/components/feature/ai-chatbot';
@@ -140,6 +142,10 @@ export default function Home() {
         return <CheckoutCompletePage />;
       case 'partner-dashboard':
         return <PartnerDashboardPage />;
+      case 'partner-subscription':
+        return <PartnerSubscriptionPage />;
+      case 'partner-subscription-checkout':
+        return <PartnerSubscriptionCheckoutPage />;
       default:
         return <HomePage />;
     }
@@ -150,6 +156,8 @@ export default function Home() {
     currentPage === 'admin' ||
     currentPage === 'admin-login' ||
     currentPage === 'partner-dashboard' ||
+    currentPage === 'partner-subscription' ||
+    currentPage === 'partner-subscription-checkout' ||
     currentPage === 'register' ||
     currentPage === 'login' ||
     currentPage === 'checkout-purchase' ||

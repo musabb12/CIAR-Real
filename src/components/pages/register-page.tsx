@@ -8,6 +8,7 @@ import {
   Phone,
   UserPlus,
   Loader2,
+  MessageCircle,
   ArrowLeft,
   Eye,
   EyeOff,
@@ -40,6 +41,7 @@ export function RegisterPage() {
     password: '',
     confirmPassword: '',
     phone: '',
+    whatsapp: '',
     agree: false,
     accountType: 'CLIENT' as AccountType,
     companyName: '',
@@ -84,6 +86,13 @@ export function RegisterPage() {
       setError(tx('يجب الموافقة على الشروط', 'You must accept the terms'));
       return;
     }
+    if (
+      (form.accountType === 'OWNER' || form.accountType === 'COMPANY') &&
+      !form.whatsapp.trim()
+    ) {
+      setError(tx('رقم الواتساب مطلوب للوكلاء والشركات', 'WhatsApp is required for partners'));
+      return;
+    }
 
     setLoading(true);
     try {
@@ -95,6 +104,7 @@ export function RegisterPage() {
           email: form.email.trim().toLowerCase(),
           password: form.password,
           phone: form.phone.trim() || undefined,
+          whatsapp: form.whatsapp.trim() || undefined,
           accountType: form.accountType,
           companyName: form.accountType === 'COMPANY' ? form.companyName.trim() : undefined,
         }),
@@ -306,6 +316,31 @@ export function RegisterPage() {
                   />
                 </div>
               </div>
+
+              {(form.accountType === 'OWNER' || form.accountType === 'COMPANY') && (
+                <div>
+                  <label className="block text-[13px] font-semibold text-white/80 mb-1.5">
+                    {tx('رقم الواتساب', 'WhatsApp number')} *
+                  </label>
+                  <div className="relative">
+                    <MessageCircle className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-400/80" />
+                    <input
+                      type="tel"
+                      required
+                      value={form.whatsapp}
+                      onChange={(e) => setForm({ ...form, whatsapp: e.target.value })}
+                      placeholder="+966 5XX XXX XXX"
+                      className="auth-input h-11 w-full rounded-xl ps-10 pe-4 text-sm"
+                    />
+                  </div>
+                  <p className="text-[11px] text-white/45 mt-1.5">
+                    {tx(
+                      'يظهر للزوار كزر تواصل مباشر على إعلاناتك',
+                      'Shown to visitors as a direct contact button on your listings',
+                    )}
+                  </p>
+                </div>
+              )}
             </div>
 
             <div>

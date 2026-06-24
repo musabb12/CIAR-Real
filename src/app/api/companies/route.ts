@@ -8,21 +8,32 @@ import { listDemoCompanies } from '@/lib/demo-admin-data';
 import { isFirestoreQuotaError } from '@/lib/firestore-read-cache';
 
 /** GET /api/companies — List real-estate companies with agent counts */
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const countryId = new URL(request.url).searchParams.get('countryId');
+
   if (!isFirebaseAdminConfigured()) {
-    return NextResponse.json(listDemoCompanies());
+    return NextResponse.json(listDemoCompanies(countryId));
   }
 
   try {
-    const companies = await listCompaniesFromFirestore();
+    let companies = await listCompaniesFromFirestore();
     if (companies.length === 0) {
-      return NextResponse.json(listDemoCompanies());
+      return NextResponse.json(listDemoCompanies(countryId));
+    }
+    if (countryId) {
+      const demoFiltered = listDemoCompanies(countryId);
+      const demoIds = new Set(demoFiltered.map((c) => c.id));
+      const filtered = companies.filter(
+        (c) => c.countryId === countryId || demoIds.has(c.id),
+      );
+      if (filtered.length > 0) companies = filtered;
+      else if (demoFiltered.length > 0) return NextResponse.json(demoFiltered);
     }
     return NextResponse.json(companies);
   } catch (error) {
     console.error('Error fetching companies:', error);
     if (isFirestoreQuotaError(error)) {
-      return NextResponse.json(listDemoCompanies());
+      return NextResponse.json(listDemoCompanies(countryId));
     }
     return NextResponse.json({ error: 'Failed to fetch companies' }, { status: 500 });
   }

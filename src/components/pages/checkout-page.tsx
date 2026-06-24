@@ -17,6 +17,8 @@ import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
+import { useSiteCurrency } from '@/hooks/use-site-currency';
+import { useLocalizedCountryName } from '@/hooks/use-localized-country-name';
 import type { Property, TransactionType } from '@/types';
 import { toast } from 'sonner';
 import { getPaymentBrand } from '@/components/payment/payment-method-icons';
@@ -232,6 +234,8 @@ function PaymentGrid({
 
 export function CheckoutPage({ mode }: { mode: CheckoutMode }) {
   const { rtl } = useTranslation();
+  const { formatPrice } = useSiteCurrency();
+  const countryLabel = useLocalizedCountryName();
   const {
     selectedPropertyId,
     currentUser,
@@ -275,7 +279,7 @@ export function CheckoutPage({ mode }: { mode: CheckoutMode }) {
       : 'RENT';
 
   const coverImage = property ? propertyCoverUrl(property) : FALLBACK_IMAGE;
-  const currency = property?.country?.currencySymbol ?? '$';
+  const sourceCurrency = property?.country?.currency;
   const nights = nightsBetween(form.checkIn, form.checkOut);
   const isShortTerm = property?.listingType === 'SHORT_TERM';
 
@@ -286,7 +290,9 @@ export function CheckoutPage({ mode }: { mode: CheckoutMode }) {
   }, [property, isPurchase, isShortTerm, nights]);
 
   const locationLine = property
-    ? [property.city?.name, property.country?.name].filter(Boolean).join(', ')
+    ? [property.city?.name, property.country ? countryLabel(property.country) : null]
+        .filter(Boolean)
+        .join(', ')
     : '';
 
   const shellStyle = { ['--auth-image' as string]: `url('${coverImage}')` } as CSSProperties;
@@ -410,7 +416,7 @@ export function CheckoutPage({ mode }: { mode: CheckoutMode }) {
                 <div className="border-t border-white/10 pt-4 space-y-2 text-sm">
                   <SummaryRow
                     label={tx('السعر الأساسي', 'Base price')}
-                    value={`${currency}${property.price.toLocaleString('en-US')}${
+                    value={`${formatPrice(property.price, sourceCurrency)}${
                       !isPurchase
                         ? isShortTerm
                           ? ` ${tx('/ليلة', '/night')}`
@@ -421,12 +427,12 @@ export function CheckoutPage({ mode }: { mode: CheckoutMode }) {
                   {!isPurchase && nights > 0 && isShortTerm && (
                     <SummaryRow
                       label={tx(`${nights} ليلة`, `${nights} nights`)}
-                      value={`${currency}${estimatedTotal.toLocaleString('en-US')}`}
+                      value={formatPrice(estimatedTotal, sourceCurrency)}
                     />
                   )}
                   <SummaryRow
                     label={tx('الإجمالي التقديري', 'Estimated total')}
-                    value={`${currency}${estimatedTotal.toLocaleString('en-US')}`}
+                    value={formatPrice(estimatedTotal, sourceCurrency)}
                     highlight
                   />
                 </div>

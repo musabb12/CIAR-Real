@@ -21,6 +21,8 @@ import { PropertyCard } from '@/components/property/property-card';
 import { getPageBackgroundImages } from '@/lib/page-backgrounds';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
+import { sortCountriesByLabel } from '@/lib/localize-country';
+import { CountryFlagLabel } from '@/components/ui/country-flag-label';
 import type { Property, Country } from '@/types';
 import { normalizeLocationsResponse } from '@/lib/normalize-locations';
 import { navigateToAddListing } from '@/lib/navigate-add-listing';
@@ -80,10 +82,19 @@ function AnimatedCounter({ target, suffix = '' }: { target: number; suffix?: str
 }
 
 // ─── Static data ───────────────────────────────────────────────
-const testimonials = [
-  { name: 'Sarah Mitchell', role: 'Investor', text: 'CIAR made finding luxury properties effortless. The platform is incredibly intuitive and the agents are top-notch.', rating: 5 },
-  { name: 'Ahmed Al-Rashid', role: 'Property Owner', text: 'I listed my properties on CIAR and received quality inquiries within days. Truly a global platform.', rating: 5 },
-  { name: 'Elena Kowalski', role: 'Buyer', text: 'From browsing to closing, CIAR provided a seamless experience. Highly recommended for anyone in real estate.', rating: 5 },
+const featureItems = [
+  { icon: Brain, key: 'aiValuations' as const },
+  { icon: Eye, key: 'virtualTours' as const },
+  { icon: TrendingUp, key: 'marketInsights' as const },
+  { icon: BarChart3, key: 'analytics' as const },
+  { icon: Flame, key: 'hotDeals' as const },
+  { icon: Leaf, key: 'greenHomes' as const },
+  { icon: Wifi, key: 'smartHomes' as const },
+  { icon: Zap, key: 'instantAlerts' as const },
+  { icon: Shield, key: 'verifiedListings' as const },
+  { icon: ShieldAlert, key: 'secureTransactions' as const },
+  { icon: Trophy, key: 'premiumSupport' as const },
+  { icon: Star, key: 'featuredAgent' as const },
 ];
 
 // ─── Hero carousel: 16 elegant property images ──────────────────
@@ -121,28 +132,14 @@ const propertyTypes = [
   { key: 'duplex', icon: Layers },
 ];
 
-const features = [
-  { icon: Brain, label: 'AI Valuations' },
-  { icon: Eye, label: 'Virtual Tours' },
-  { icon: TrendingUp, label: 'Market Insights' },
-  { icon: BarChart3, label: 'Analytics' },
-  { icon: Flame, label: 'Hot Deals' },
-  { icon: Leaf, label: 'Green Homes' },
-  { icon: Wifi, label: 'Smart Homes' },
-  { icon: Zap, label: 'Instant Alerts' },
-  { icon: Shield, label: 'Verified Listings' },
-  { icon: ShieldAlert, label: 'Secure Transactions' },
-  { icon: Trophy, label: 'Premium Support' },
-  { icon: Star, label: 'Featured Agent' },
-];
-
 // ─── Component ─────────────────────────────────────────────────
 export function HomePage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const {
     setCurrentPage,
     setAdminTab,
     setRegisterAccountTypePreset,
+    setPartnerPendingAddListing,
     currentUser,
     setFilters,
     resetFilters,
@@ -160,8 +157,21 @@ export function HomePage() {
     ],
     [t],
   );
+  const testimonials = t.homePage.testimonials;
+  const featureCards = useMemo(
+    () =>
+      featureItems.map((feat) => ({
+        icon: feat.icon,
+        label: t.homePage.features[feat.key],
+      })),
+    [t],
+  );
   const [featured, setFeatured] = useState<Property[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
+  const sortedCountries = useMemo(
+    () => sortCountriesByLabel(countries, locale),
+    [countries, locale],
+  );
   const [loading, setLoading] = useState(true);
   const [searchCountry, setSearchCountry] = useState('');
   const [searchType, setSearchType] = useState('');
@@ -226,7 +236,7 @@ export function HomePage() {
       setActiveTestimonial((prev) => (prev + 1) % testimonials.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [testimonials.length]);
 
   // Auto-rotate hero images (16-image elegant carousel)
   useEffect(() => {
@@ -282,8 +292,9 @@ export function HomePage() {
       setCurrentPage,
       setAdminTab,
       setRegisterAccountTypePreset,
+      setPartnerPendingAddListing,
     });
-  }, [currentUser, setCurrentPage, setAdminTab, setRegisterAccountTypePreset]);
+  }, [currentUser, setCurrentPage, setAdminTab, setRegisterAccountTypePreset, setPartnerPendingAddListing]);
 
   const homeContent = contentSettings.home;
   const customHeroTitle = homeContent.title?.trim();
@@ -354,14 +365,16 @@ export function HomePage() {
           {/* Search Bar */}
           <MotionHeroItem className="w-full max-w-4xl">
           <div className="estate-search-dock w-full flex flex-col sm:flex-row gap-3 p-3 sm:p-4">
-            <Select value={searchCountry} onValueChange={setSearchCountry}>
+            <Select key={`hero-country-${locale}`} value={searchCountry} onValueChange={setSearchCountry}>
               <SelectTrigger className="flex-1 bg-white/10 border-white/20 text-white rounded-xl">
                 <Globe className="h-4 w-4 mr-2 text-gold-light" />
                 <SelectValue placeholder={t.search.allCountries} />
               </SelectTrigger>
               <SelectContent>
-                {countries.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>{c.flag ? `${c.flag} ` : ''}{c.name}</SelectItem>
+                {sortedCountries.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>
+                    <CountryFlagLabel country={c} />
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -526,18 +539,18 @@ export function HomePage() {
       {/* ─── 5. TESTIMONIALS ─── */}
       <section className="estate-band estate-band--dark px-4">
         <div className="max-w-3xl mx-auto text-center">
-          <EstateHeading align="center" kicker="CIAR" title="What Our Clients Say" />
+          <EstateHeading align="center" kicker="CIAR" title={t.homePage.testimonialsTitle} />
           <div className="relative min-h-[220px]">
             {testimonials.map((item, i) => (
               <div
-                key={i}
+                key={item.name}
                 className="absolute inset-0 flex flex-col items-center transition-opacity duration-700 ease-in-out"
                 style={{ opacity: activeTestimonial === i ? 1 : 0, pointerEvents: activeTestimonial === i ? 'auto' : 'none' }}
               >
                 <Quote className="h-8 w-8 text-amber-400 mb-4" />
                 <p className="text-lg text-white/90 italic max-w-xl mb-6">&ldquo;{item.text}&rdquo;</p>
                 <div className="flex gap-0.5 mb-2">
-                  {Array.from({ length: item.rating }).map((_, si) => (
+                  {Array.from({ length: 5 }).map((_, si) => (
                     <Star key={si} className="h-4 w-4 fill-amber-400 text-amber-400" />
                   ))}
                 </div>
@@ -565,11 +578,11 @@ export function HomePage() {
             align="center"
             kicker="CIAR"
             title={t.property.ciarFeatures}
-            subtitle="Discover the tools that set CIAR apart"
+            subtitle={t.homePage.featuresSubtitle}
           />
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-            {features.map((feat, i) => (
-              <div key={i} className="estate-surface p-5 flex flex-col items-center gap-3 cursor-default">
+            {featureCards.map((feat, i) => (
+              <div key={feat.label} className="estate-surface p-5 flex flex-col items-center gap-3 cursor-default">
                 <span className="estate-surface-accent" aria-hidden />
                 <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
                   <feat.icon className="h-6 w-6 text-primary" />

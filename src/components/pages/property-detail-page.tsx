@@ -5,7 +5,7 @@ import {
   ArrowLeft, ArrowRight, Heart, Bed, Bath, Maximize, MapPin, Eye,
   Star, Building2, Phone, Mail, MessageSquare, Share2, CheckCircle,
   Calendar, Home, Layers, Shield, User, ChevronLeft, ChevronRight, X,
-  Check, Zap, ShoppingCart, CalendarCheck,
+  Check, Zap, ShoppingCart, CalendarCheck, MessageCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,14 +15,16 @@ import { Separator } from '@/components/ui/separator';
 import dynamic from 'next/dynamic';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
+import { useSiteCurrency } from '@/hooks/use-site-currency';
+import { useLocalizedCountryName } from '@/hooks/use-localized-country-name';
 import type { Property, PropertyImage, Amenity, PropertyStatus, PropertyType } from '@/types';
 
 const PropertyMap = dynamic(() => import('@/components/map/property-map').then(m => ({ default: m.PropertyMap })), { ssr: false });
-import { toast } from 'sonner';
+import { buildWhatsAppUrl } from '@/lib/whatsapp';
 
 // ─── Helpers ───────────────────────────────────────────────
 
-function formatPrice(num: number): string {
+function formatNumber(num: number): string {
   return num.toLocaleString('en-US');
 }
 
@@ -67,6 +69,8 @@ const propertyTypeKeys: Record<PropertyType, keyof import('@/lib/i18n/translatio
 export function PropertyDetailPage() {
   const { selectedPropertyId, setCurrentPage, setSelectedPropertyId, toggleFavorite, isFavorite, isAuthenticated, currentUser } = useAppStore();
   const { t, rtl } = useTranslation();
+  const { formatPrice } = useSiteCurrency();
+  const countryLabel = useLocalizedCountryName();
 
   const [property, setProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(true);
@@ -104,13 +108,27 @@ export function PropertyDetailPage() {
   const currentImage = images[activeImage] ?? coverImage;
 
   const favorited = selectedPropertyId ? isFavorite(selectedPropertyId) : false;
-  const currency = property?.country?.currencySymbol ?? '$';
   const isRent = property?.listingType === 'RENT' || property?.listingType === 'SHORT_TERM';
-  const location = [property?.city?.name, property?.region?.name, property?.country?.name].filter(Boolean).join(', ');
+  const location = [
+    property?.city?.name,
+    property?.region?.name,
+    property?.country ? countryLabel(property.country) : null,
+  ]
+    .filter(Boolean)
+    .join(', ');
   const amenities =
     property?.amenities
       ?.map((row) => row.amenity)
       .filter((a): a is Amenity => Boolean(a)) ?? [];
+
+  const whatsappUrl = useMemo(() => {
+    if (!property?.agent?.whatsapp) return null;
+    const link = typeof window !== 'undefined' ? window.location.href : '';
+    const message = rtl
+      ? `مرحباً، أنا مهتم بهذا العقار على CIAR:\n${property.title}${link ? `\n${link}` : ''}`
+      : `Hi, I'm interested in this property on CIAR:\n${property.title}${link ? `\n${link}` : ''}`;
+    return buildWhatsAppUrl(property.agent.whatsapp, message);
+  }, [property?.agent?.whatsapp, property?.title, rtl]);
 
   // Handlers
   const goBack = useCallback(() => {
@@ -372,7 +390,7 @@ export function PropertyDetailPage() {
                 </div>
                 <div className="text-right">
                   <div className="text-3xl font-extrabold text-foreground">
-                    {currency}{formatPrice(property.price)}
+                    {formatPrice(property.price, property.country?.currency)}
                   </div>
                   {isRent && (
                     <span className="text-sm text-muted-foreground">{t.property.perMonth}</span>
@@ -406,7 +424,7 @@ export function PropertyDetailPage() {
               {property.area > 0 && (
                 <div className="glass-card rounded-xl p-4 text-center">
                   <Maximize className="h-5 w-5 text-primary mx-auto mb-2" />
-                  <div className="text-xl font-bold">{formatPrice(property.area)}</div>
+                  <div className="text-xl font-bold">{formatNumber(property.area)}</div>
                   <div className="text-xs text-muted-foreground">{t.property.sqm}</div>
                 </div>
               )}
@@ -557,10 +575,15 @@ export function PropertyDetailPage() {
                         <span>{property.agent.phone}</span>
                       </div>
                     )}
-                    {property.agent.whatsapp && (
-                      <a href={`https://wa.me/${property.agent.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium">
-                        <MessageSquare className="h-4 w-4" />
-                        <span>WhatsApp</span>
+                    {property.agent.whatsapp && whatsappUrl && (
+                      <a
+                        href={whatsappUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-emerald-600 hover:text-emerald-700 font-medium"
+                      >
+                        <MessageCircle className="h-4 w-4" />
+                        <span>{property.agent.whatsapp}</span>
                       </a>
                     )}
                     {property.agent.user?.email && (
@@ -608,6 +631,17 @@ export function PropertyDetailPage() {
             {/* Buy / Book */}
             <Card className="glass-card rounded-2xl border-0 overflow-hidden">
               <CardContent className="p-6 space-y-3">
+                {whatsappUrl && (
+                  <Button
+                    asChild
+                    className="w-full rounded-xl bg-[#25D366] py-2.5 font-semibold text-white hover:bg-[#20bd5a] shadow-lg shadow-emerald-500/20"
+                  >
+                    <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      {t.property.contactAdvertiser}
+                    </a>
+                  </Button>
+                )}
                 {property.listingType === 'SALE' ? (
                   <Button
                     onClick={goToCheckout}

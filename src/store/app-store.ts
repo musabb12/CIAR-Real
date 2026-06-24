@@ -13,6 +13,8 @@ import type {
   PageContentEntry,
 } from '@/types';
 import type { Locale } from '@/lib/i18n';
+import type { SiteCurrencyCode } from '@/lib/site-currency';
+import type { PartnerSubscriptionCheckoutState } from '@/types/subscription';
 
 // ============================================================
 // Default values
@@ -88,6 +90,10 @@ interface AppState {
   logout: () => void;
   registerAccountTypePreset: AccountType | null;
   setRegisterAccountTypePreset: (type: AccountType | null) => void;
+  partnerPendingAddListing: boolean;
+  setPartnerPendingAddListing: (pending: boolean) => void;
+  partnerSubscriptionCheckout: PartnerSubscriptionCheckoutState | null;
+  setPartnerSubscriptionCheckout: (state: PartnerSubscriptionCheckoutState | null) => void;
 
   // Filters
   filters: PropertyFilters;
@@ -115,6 +121,10 @@ interface AppState {
   // i18n
   locale: Locale;
   setLocale: (locale: Locale) => void;
+
+  // Display currency (site-wide price conversion)
+  displayCurrency: SiteCurrencyCode;
+  setDisplayCurrency: (currency: SiteCurrencyCode) => void;
 
   // Features
   features: Record<string, boolean>;
@@ -169,6 +179,10 @@ export const useAppStore = create<AppState>()(
   logout: () => set({ currentUser: null, isAuthenticated: false }),
   registerAccountTypePreset: null,
   setRegisterAccountTypePreset: (type) => set({ registerAccountTypePreset: type }),
+  partnerPendingAddListing: false,
+  setPartnerPendingAddListing: (pending) => set({ partnerPendingAddListing: pending }),
+  partnerSubscriptionCheckout: null,
+  setPartnerSubscriptionCheckout: (state) => set({ partnerSubscriptionCheckout: state }),
 
   // ---- Filters ----
   filters: { ...defaultFilters },
@@ -243,6 +257,9 @@ export const useAppStore = create<AppState>()(
   // ---- i18n ----
   locale: 'ar' as Locale,
   setLocale: (locale) => set({ locale }),
+
+  displayCurrency: 'SAR' as SiteCurrencyCode,
+  setDisplayCurrency: (currency) => set({ displayCurrency: currency }),
 
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
@@ -320,6 +337,7 @@ export const useAppStore = create<AppState>()(
         currentUser: state.currentUser,
         isAuthenticated: state.isAuthenticated,
         locale: state.locale,
+        displayCurrency: state.displayCurrency,
         designSettings: state.designSettings,
         contentSettings: state.contentSettings,
         socialSettings: state.socialSettings,

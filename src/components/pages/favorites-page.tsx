@@ -11,12 +11,16 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
+import { useLocalizedCountryName } from '@/hooks/use-localized-country-name';
+import { useSiteCurrency } from '@/hooks/use-site-currency';
 import { PageHero } from '@/components/layout/page-hero';
 import type { Favorite, Property } from '@/types';
 
 // ─── Component ──────────────────────────────────────────────────
 export function FavoritesPage() {
   const { t } = useTranslation();
+  const countryLabel = useLocalizedCountryName();
+  const { formatPrice } = useSiteCurrency();
   const {
     isAuthenticated,
     currentUser,
@@ -150,7 +154,6 @@ export function FavoritesPage() {
 
               const coverUrl = property.images?.[0]?.url;
               const isRemoving = removingId === favorite.id;
-              const currency = property.country?.currencySymbol || '$';
               const isRent = property.listingType === 'RENT' || property.listingType === 'SHORT_TERM';
 
               return (
@@ -181,7 +184,7 @@ export function FavoritesPage() {
                     {/* Price */}
                     <div className="absolute bottom-3 right-3 glass-badge rounded-xl px-3 py-1.5">
                       <span className="text-base font-extrabold text-white">
-                        {currency}{property.price.toLocaleString()}
+                        {formatPrice(property.price, property.country?.currency)}
                       </span>
                       {isRent && (
                         <span className="ml-1 text-[10px] text-white/60">{t.property.perMonth}</span>
@@ -221,7 +224,9 @@ export function FavoritesPage() {
                     <div className="flex items-center gap-1 text-muted-foreground mb-3">
                       <MapPin className="h-3.5 w-3.5 shrink-0 text-primary/60" />
                       <span className="text-xs truncate">
-                        {[property.city?.name, property.country?.name].filter(Boolean).join(', ')}
+                        {[property.city?.name, property.country ? countryLabel(property.country) : null]
+                          .filter(Boolean)
+                          .join(', ')}
                       </span>
                     </div>
 

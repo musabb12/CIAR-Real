@@ -58,6 +58,9 @@ import { AgentSettingsPanel } from '@/components/admin/agent-settings-panel';
 import { CompanySettingsPanel } from '@/components/admin/company-settings-panel';
 import { AdminEntityGrid } from '@/components/admin/admin-entity-grid';
 import { CountryFlagBadge, FlagPicker } from '@/components/admin/flag-picker';
+import { useLocalizedCountryName } from '@/hooks/use-localized-country-name';
+import { sortCountriesByLabel } from '@/lib/localize-country';
+import { sortPropertiesByCountry } from '@/lib/property-sort';
 import { normalizeFlagStorage } from '@/lib/country-flags';
 import {
   expandInquiryReplyTemplate,
@@ -126,6 +129,7 @@ function nextPropertyStatus(cur: string): string {
 type CountryTree = {
   id: string;
   name: string;
+  code?: string;
   regions: Array<{ id: string; name: string; cities: Array<{ id: string; name: string }> }>;
 };
 
@@ -246,8 +250,11 @@ type PropertiesTabRow = {
   status: string;
   views: number;
   isFeatured?: boolean;
+  countryId?: string;
+  agentId?: string | null;
+  commissionPercent?: number | null;
   images?: Array<{ url: string; isCover?: boolean; order?: number }>;
-  country?: { name: string };
+  country?: { name: string; code?: string; id?: string };
   city?: { name: string };
 };
 
@@ -267,9 +274,15 @@ const emptyPropertyForm = () => ({
   address: '',
   latitude: '',
   longitude: '',
+  agentId: '',
+  commissionPercent: '',
 });
 
 export function PropertiesTab({ isAr }: { isAr: boolean }) {
+  const locale = useAppStore((s) => s.locale);
+  const countryLabel = useLocalizedCountryName();
+  const countryFilterId = useAppStore((s) => s.filters.countryId);
+  const setFilters = useAppStore((s) => s.setFilters);
   const [refreshKey, setRefreshKey] = useState(0);
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -283,9 +296,28 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
   const [imageUrlDraft, setImageUrlDraft] = useState('');
   const [uploadingImage, setUploadingImage] = useState(false);
   const [geocodeLoading, setGeocodeLoading] = useState(false);
+  const [agentOptions, setAgentOptions] = useState<Array<{ id: string; label: string }>>([]);
   const [propertiesListMode, setPropertiesListMode] = useState<'unknown' | 'live' | 'stub'>('unknown');
   const [propertiesListStubReason, setPropertiesListStubReason] = useState<string | null>(null);
   const bump = () => setRefreshKey((k) => k + 1);
+
+  const propertiesEndpoint = useMemo(() => {
+    const base = '/api/properties?admin=1&limit=500&sort=country';
+    if (!countryFilterId) return base;
+    return `${base}&countryId=${encodeURIComponent(countryFilterId)}`;
+  }, [countryFilterId]);
+
+  const filteredCountryLabel = useMemo(() => {
+    if (!countryFilterId) return null;
+    const fromTree = locationTree.find((c) => c.id === countryFilterId);
+    if (fromTree) return countryLabel(fromTree);
+    return countryFilterId;
+  }, [countryFilterId, locationTree, countryLabel]);
+
+  const sortedLocationTree = useMemo(
+    () => sortCountriesByLabel(locationTree, locale),
+    [locationTree, locale],
+  );
 
   const regionOptions = useMemo(() => {
     const c = locationTree.find((x) => x.id === form.countryId);
@@ -305,8 +337,40 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
 
   const parseRows = useCallback((d: unknown): PropertiesTabRow[] => {
     const data = d as { data?: PropertiesTabRow[]; properties?: PropertiesTabRow[] };
-    return data.data ?? data.properties ?? [];
-  }, []);
+    const rows = data.data ?? data.properties ?? [];
+    return sortPropertiesByCountry(rows, locale === 'ar' ? 'ar' : 'en');
+  }, [locale]);
+
+  const cardGroups = useMemo(() => {
+    if (cardRows.length === 0) return [];
+
+    if (countryFilterId) {
+      return [
+        {
+          key: countryFilterId,
+          label: filteredCountryLabel ?? countryFilterId,
+          rows: cardRows,
+        },
+      ];
+    }
+
+    const groups = new Map<string, { label: string; rows: PropertiesTabRow[] }>();
+    for (const row of cardRows) {
+      const key = row.countryId || row.country?.id || 'unknown';
+      const label = row.country
+        ? countryLabel(row.country)
+        : tx(isAr, 'دولة غير محددة', 'Unassigned country');
+      const entry = groups.get(key) ?? { label, rows: [] };
+      entry.rows.push(row);
+      groups.set(key, entry);
+    }
+
+    return [...groups.entries()]
+      .sort((a, b) =>
+        a[1].label.localeCompare(b[1].label, locale === 'ar' ? 'ar' : 'en', { sensitivity: 'base' }),
+      )
+      .map(([key, group]) => ({ key, ...group }));
+  }, [cardRows, countryFilterId, filteredCountryLabel, countryLabel, locale, isAr]);
 
   const onPropertiesApiResponse = useCallback((raw: unknown) => {
     const o = raw as { backendConfigured?: boolean; backendMessage?: string; dataSource?: string };
@@ -332,7 +396,7 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
           </div>
           <div className="flex items-center gap-1 text-[11px] text-[var(--admin-text-faint)] mt-0.5">
             <MapPin className="h-2.5 w-2.5" />
-            {r.city?.name ?? '—'}, {r.country?.name ?? '—'}
+            {r.city?.name ?? '—'}, {r.country ? countryLabel(r.country) : '—'}
           </div>
         </div>
       ),
@@ -351,6 +415,15 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
       key: 'price',
       header: { ar: 'السعر', en: 'Price' },
       render: (r) => <span className="font-bold text-[#f5c97b]">${r.price.toLocaleString()}</span>,
+    },
+    {
+      key: 'commission',
+      header: { ar: 'العمولة %', en: 'Commission %' },
+      render: (r) => (
+        <span className="text-[var(--admin-text-mute)] tabular-nums">
+          {r.commissionPercent != null ? `${r.commissionPercent}%` : '—'}
+        </span>
+      ),
     },
     {
       key: 'views',
@@ -392,6 +465,8 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
           address?: string | null;
           latitude?: number | null;
           longitude?: number | null;
+          agentId?: string | null;
+          commissionPercent?: number | null;
           images?: Array<{ url: string; isCover?: boolean }>;
         };
         setForm({
@@ -410,6 +485,8 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
           address: p.address ?? '',
           latitude: p.latitude != null ? String(p.latitude) : '',
           longitude: p.longitude != null ? String(p.longitude) : '',
+          agentId: p.agentId ?? '',
+          commissionPercent: p.commissionPercent != null ? String(p.commissionPercent) : '',
         });
         setImageGallery(
           (p.images ?? []).map((img, i) => ({
@@ -505,9 +582,10 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
       .then((data) => {
         const countries = Array.isArray(data) ? data : data?.countries ?? [];
         const tree: CountryTree[] = countries.map(
-          (country: { id: string; name: string; regions?: CountryTree['regions'] }) => ({
+          (country: { id: string; name: string; code?: string; regions?: CountryTree['regions'] }) => ({
             id: country.id,
             name: country.name,
+            code: country.code,
             regions: (country.regions ?? []).map((region) => ({
               id: region.id,
               name: region.name,
@@ -522,6 +600,25 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!form.countryId) {
+      setAgentOptions([]);
+      return;
+    }
+    fetch(`/api/agents?countryId=${encodeURIComponent(form.countryId)}`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((rows: Array<{ id: string; user?: { name?: string }; title?: string | null }>) => {
+        if (!Array.isArray(rows)) return;
+        setAgentOptions(
+          rows.map((agent) => ({
+            id: agent.id,
+            label: agent.user?.name || agent.title || agent.id,
+          })),
+        );
+      })
+      .catch(() => setAgentOptions([]));
+  }, [form.countryId]);
 
   const submitProperty = async () => {
     if (!form.title.trim() || !form.price || !form.area || !form.countryId || !form.regionId || !form.cityId) {
@@ -546,6 +643,8 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
         description: desc,
         latitude: coords.latitude || null,
         longitude: coords.longitude || null,
+        agentId: form.agentId.trim() || null,
+        commissionPercent: form.commissionPercent.trim() ? Number(form.commissionPercent) : null,
       };
       if (!editingId) body.isFeatured = false;
       if (editingId) {
@@ -747,11 +846,27 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
         </div>
       )}
 
+    {countryFilterId && (
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-400/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-100/90">
+        <p>
+          {tx(isAr, 'عرض عقارات الدولة:', 'Showing listings for:')}{' '}
+          <span className="font-semibold text-amber-200">{filteredCountryLabel}</span>
+        </p>
+        <button
+          type="button"
+          className="admin-icon-btn !w-auto px-3 text-xs"
+          onClick={() => setFilters({ countryId: undefined, page: 1 })}
+        >
+          {tx(isAr, 'إزالة الفلتر', 'Clear filter')}
+        </button>
+      </div>
+    )}
+
     <AdminSection<PropertiesTabRow>
-      key={refreshKey}
+      key={`${refreshKey}-${countryFilterId ?? 'all'}`}
       isAr={isAr}
       subtitle={{ ar: 'أضف أو عدّل أو احذف عقاراً', en: 'Add, edit, or remove a listing' }}
-      endpoint="/api/properties?admin=1&limit=500"
+      endpoint={propertiesEndpoint}
       parseRows={parseRows}
       columns={columns}
       searchKeys={['title']}
@@ -787,9 +902,9 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
       }}
     />
       {cardsView && (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {cardRows.length === 0 ? (
-            <div className="col-span-full admin-card py-14 text-center text-sm text-[var(--admin-text-mute)]">
+        <div className="space-y-8">
+          {cardGroups.length === 0 ? (
+            <div className="admin-card py-14 text-center text-sm text-[var(--admin-text-mute)]">
               {propertiesListMode === 'stub'
                 ? tx(
                     isAr,
@@ -798,8 +913,19 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
                   )
                 : tx(isAr, 'لا توجد عقارات تطابق البحث', 'No properties match your search')}
             </div>
-          ) : null}
-          {cardRows.map((r) => (
+          ) : (
+            cardGroups.map((group) => (
+              <section key={group.key} className="space-y-4">
+                {!countryFilterId ? (
+                  <div className="flex flex-wrap items-center gap-3 border-b border-white/10 pb-3">
+                    <h3 className="text-base font-bold text-[var(--admin-text)]">{group.label}</h3>
+                    <span className="rounded-full border border-[var(--admin-border)] bg-white/[0.04] px-2.5 py-0.5 text-[11px] tabular-nums text-[var(--admin-text-mute)]">
+                      {group.rows.length} {tx(isAr, 'عقار', 'listings')}
+                    </span>
+                  </div>
+                ) : null}
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {group.rows.map((r) => (
             <div
               key={r.id}
               role="button"
@@ -834,7 +960,7 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
                   <div className="min-w-0">
                     <div className="font-semibold text-white line-clamp-1">{r.title}</div>
                     <div className="text-[11px] text-white/80 mt-0.5 line-clamp-1">
-                      {r.city?.name ?? '—'}, {r.country?.name ?? '—'}
+                      {r.city?.name ?? '—'}, {r.country ? countryLabel(r.country) : '—'}
                     </div>
                   </div>
                   {r.isFeatured && <span className="admin-pill admin-pill-gold">{tx(isAr, 'مميز', 'Featured')}</span>}
@@ -852,7 +978,11 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
                 ${r.price.toLocaleString()} · {r.propertyType} · {r.listingType}
               </div>
             </div>
-          ))}
+                  ))}
+                </div>
+              </section>
+            ))
+          )}
         </div>
       )}
       <Dialog
@@ -972,6 +1102,32 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
                   </Field>
                   <Field label={tx(isAr, 'الحمامات', 'Bathrooms')}>
                     <input className="admin-input" type="number" value={form.bathrooms} onChange={(e) => setForm({ ...form, bathrooms: e.target.value })} />
+                  </Field>
+                  <Field label={tx(isAr, 'الوكيل', 'Agent')}>
+                    <select
+                      className="admin-input"
+                      value={form.agentId}
+                      onChange={(e) => setForm({ ...form, agentId: e.target.value })}
+                    >
+                      <option value="">{tx(isAr, '— بدون وكيل —', '— No agent —')}</option>
+                      {agentOptions.map((agent) => (
+                        <option key={agent.id} value={agent.id}>
+                          {agent.label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label={tx(isAr, 'العمولة (%)', 'Commission (%)')}>
+                    <input
+                      className="admin-input"
+                      type="number"
+                      min={0}
+                      max={100}
+                      step={0.01}
+                      value={form.commissionPercent}
+                      onChange={(e) => setForm({ ...form, commissionPercent: e.target.value })}
+                      placeholder="2.5"
+                    />
                   </Field>
                 </div>
 
@@ -1130,9 +1286,9 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
                       }}
                     >
                       <option value="">{tx(isAr, 'اختر الدولة', 'Select country')}</option>
-                      {locationTree.map((c) => (
+                      {sortedLocationTree.map((c) => (
                         <option key={c.id} value={c.id}>
-                          {c.name}
+                          {countryLabel(c)}
                         </option>
                       ))}
                     </select>
@@ -1200,9 +1356,10 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
 
 // ─── Featured Tab ──────────────────────────────
 export function FeaturedTab({ isAr }: { isAr: boolean }) {
+  const countryLabel = useLocalizedCountryName();
   const [refreshKey, setRefreshKey] = useState(0);
   const bump = () => setRefreshKey((k) => k + 1);
-  type Row = { id: string; title: string; price: number; propertyType: string; listingType: string; status: string; views: number; country?: { name: string } };
+  type Row = { id: string; title: string; price: number; propertyType: string; listingType: string; status: string; views: number; country?: { name: string; code?: string; id?: string } };
   const parseRows = useCallback((d: unknown): Row[] => {
     const data = d as { data?: Row[]; properties?: Row[] };
     return data.data ?? data.properties ?? [];
@@ -1218,7 +1375,7 @@ export function FeaturedTab({ isAr }: { isAr: boolean }) {
         </div>
       ),
     },
-    { key: 'country', header: { ar: 'الدولة', en: 'Country' }, render: (r) => r.country?.name ?? '—' },
+    { key: 'country', header: { ar: 'الدولة', en: 'Country' }, render: (r) => (r.country ? countryLabel(r.country) : '—') },
     { key: 'price', header: { ar: 'السعر', en: 'Price' }, render: (r) => <span className="font-bold text-[#f5c97b]">${r.price.toLocaleString()}</span> },
     { key: 'views', header: { ar: 'المشاهدات', en: 'Views' }, render: (r) => r.views?.toLocaleString() ?? 0 },
     { key: 'status', header: { ar: 'الحالة', en: 'Status' }, render: (r) => <span className="admin-pill admin-pill-gold">{r.status}</span> },
@@ -1261,7 +1418,15 @@ export function FeaturedTab({ isAr }: { isAr: boolean }) {
 }
 
 // ─── Locations Tab ─────────────────────────────
-export function LocationsTab({ isAr }: { isAr: boolean }) {
+export function LocationsTab({
+  isAr,
+  onNavigateTab,
+}: {
+  isAr: boolean;
+  onNavigateTab?: (tab: import('./admin-nav').AdminTabId) => void;
+}) {
+  const countryLabel = useLocalizedCountryName();
+  const locale = useAppStore((s) => s.locale);
   const [refreshKey, setRefreshKey] = useState(0);
   const [settingsCountryId, setSettingsCountryId] = useState<string | null>(null);
   const [demoNotice, setDemoNotice] = useState<string | null>(null);
@@ -1384,6 +1549,10 @@ export function LocationsTab({ isAr }: { isAr: boolean }) {
         isAr={isAr}
         onBack={() => setSettingsCountryId(null)}
         onUpdated={bump}
+        onOpenProperties={() => {
+          onNavigateTab?.('properties');
+          setSettingsCountryId(null);
+        }}
       />
     );
   }
@@ -1416,6 +1585,10 @@ export function LocationsTab({ isAr }: { isAr: boolean }) {
         parseItems={parseItems}
         onApiResponse={onLocationsApiResponse}
         searchKeys={['name', 'code']}
+        getSearchText={(r) => `${r.name} ${r.code} ${countryLabel(r)}`}
+        sortItems={(a, b) =>
+          countryLabel(a).localeCompare(countryLabel(b), locale === 'ar' ? 'ar' : locale)
+        }
         onAdd={() => setOpen(true)}
         addLabel={{ ar: 'إضافة دولة', en: 'Add country' }}
         emptyAr="لا توجد دول"
@@ -1426,7 +1599,7 @@ export function LocationsTab({ isAr }: { isAr: boolean }) {
             <div className="flex items-center gap-3 mb-3">
               <CountryFlagBadge flag={r.flag} code={r.code} />
               <div className="min-w-0 flex-1">
-                <div className="font-semibold text-[var(--admin-text)] truncate">{r.name}</div>
+                <div className="font-semibold text-[var(--admin-text)] truncate">{countryLabel(r)}</div>
                 <div className="text-[11px] font-mono text-[var(--admin-text-faint)]">{r.code}</div>
               </div>
             </div>
@@ -2489,6 +2662,7 @@ export function ReviewsTab({ isAr }: { isAr: boolean }) {
 
 // ─── Favorites Tab ────────────────────────
 export function FavoritesTab({ isAr }: { isAr: boolean }) {
+  const countryLabel = useLocalizedCountryName();
   const [refreshKey, setRefreshKey] = useState(0);
   const bump = () => setRefreshKey((k) => k + 1);
   type Row = {
@@ -2498,7 +2672,7 @@ export function FavoritesTab({ isAr }: { isAr: boolean }) {
     property?: {
       title: string;
       price: number;
-      country?: { name: string };
+      country?: { name: string; code?: string; id?: string };
       city?: { name: string };
     };
   };
@@ -2525,7 +2699,7 @@ export function FavoritesTab({ isAr }: { isAr: boolean }) {
           <div className="font-medium">{r.property?.title ?? '—'}</div>
           <div className="flex items-center gap-1 text-[11px] text-[var(--admin-text-faint)] mt-0.5">
             <MapPin className="h-2.5 w-2.5" />
-            {r.property?.city?.name ?? '—'}, {r.property?.country?.name ?? '—'}
+            {r.property?.city?.name ?? '—'}, {r.property?.country ? countryLabel(r.property.country) : '—'}
           </div>
         </div>
       ),

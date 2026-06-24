@@ -6,6 +6,7 @@ type AddListingNav = {
   setCurrentPage: (page: AppPage) => void;
   setAdminTab: (tab: string) => void;
   setRegisterAccountTypePreset: (type: AccountType | null) => void;
+  setPartnerPendingAddListing: (pending: boolean) => void;
 };
 
 /** Route "add your listing" CTA to the right destination for the current user. */
@@ -14,6 +15,7 @@ export function navigateToAddListing({
   setCurrentPage,
   setAdminTab,
   setRegisterAccountTypePreset,
+  setPartnerPendingAddListing,
 }: AddListingNav) {
   if (currentUser && isAdminRole(currentUser.role)) {
     setAdminTab('properties');
@@ -21,7 +23,8 @@ export function navigateToAddListing({
     return;
   }
   if (currentUser && isPartnerRole(currentUser.role)) {
-    setCurrentPage('partner-dashboard');
+    setPartnerPendingAddListing(true);
+    setCurrentPage('partner-subscription');
     return;
   }
   setRegisterAccountTypePreset('OWNER');

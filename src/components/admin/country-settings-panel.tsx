@@ -32,6 +32,7 @@ import {
 } from '@/lib/country-meta';
 import { normalizeFlagStorage } from '@/lib/country-flags';
 import { getSeedCountryById } from '@/lib/seed-countries-catalog';
+import { getLocalizedCountryName } from '@/lib/localize-country';
 import { useAppStore } from '@/store/app-store';
 import { cn } from '@/lib/utils';
 
@@ -138,11 +139,12 @@ interface Props {
   isAr: boolean;
   onBack: () => void;
   onUpdated?: () => void;
+  onOpenProperties: () => void;
 }
 
-export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated }: Props) {
+export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated, onOpenProperties }: Props) {
   const tx = (ar: string, en: string) => (isAr ? ar : en);
-  const setAdminTab = useAppStore((s) => s.setAdminTab);
+  const locale = useAppStore((s) => s.locale);
   const setFilters = useAppStore((s) => s.setFilters);
 
   const [loading, setLoading] = useState(true);
@@ -324,8 +326,7 @@ export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated }: Pro
 
   const openCountryProperties = () => {
     setFilters({ countryId, page: 1 });
-    setAdminTab('properties');
-    onBack();
+    onOpenProperties();
     toast.message(tx('عرض عقارات الدولة', 'Showing country properties'));
   };
 
@@ -484,7 +485,9 @@ export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated }: Pro
         </button>
         <CountryFlagBadge flag={form.flag} code={form.code} size="md" />
         <div className="min-w-0 flex-1">
-          <h2 className="font-heading text-xl font-bold truncate">{country.name}</h2>
+          <h2 className="font-heading text-xl font-bold truncate">
+            {getLocalizedCountryName({ name: country.name, code: form.code || country.code, id: countryId }, locale)}
+          </h2>
           <p className="text-xs text-[var(--admin-text-faint)]">
             {tx('إعدادات الدولة', 'Country settings')} · {form.code} · {country._count?.properties ?? 0}{' '}
             {tx('عقار', 'listings')}
@@ -905,7 +908,11 @@ export function CountrySettingsPanel({ countryId, isAr, onBack, onUpdated }: Pro
               <div className="flex items-center gap-3 mb-3">
                 <CountryFlagBadge flag={form.flag} code={form.code} size="md" />
                 <div className="min-w-0">
-                  <p className="font-bold truncate">{form.name || tx('اسم الدولة', 'Country name')}</p>
+                  <p className="font-bold truncate">
+                    {form.code
+                      ? getLocalizedCountryName({ name: form.name, code: form.code }, locale)
+                      : form.name || tx('اسم الدولة', 'Country name')}
+                  </p>
                   <p className="text-xs text-[var(--admin-text-faint)]">{form.code}</p>
                 </div>
                 {form.isFeatured && (

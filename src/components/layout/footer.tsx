@@ -155,8 +155,8 @@ export function Footer() {
     e.preventDefault();
     if (!email.trim()) return;
     setSubscribed(true);
-    toast.success('Successfully subscribed!', {
-      description: `We'll send updates to ${email}`,
+    toast.success(t.footer.subscribeSuccess, {
+      description: email,
     });
     setEmail('');
   };
@@ -187,20 +187,13 @@ export function Footer() {
     },
   ];
 
-  const topLocations = [
-    { city: 'New York', country: 'United States' },
-    { city: 'London', country: 'United Kingdom' },
-    { city: 'Riyadh', country: 'Saudi Arabia' },
-    { city: 'Paris', country: 'France' },
-    { city: 'Tokyo', country: 'Japan' },
-    { city: 'Dubai', country: 'UAE' },
-  ];
+  const topLocations = t.footer.topLocationsList;
 
   const trustBadges = [
-    { icon: Globe, label: '60+ Countries', sublabel: 'Global Reach' },
-    { icon: Home, label: '10K+ Properties', sublabel: 'Premium Listings' },
-    { icon: Users, label: 'Verified Agents', sublabel: 'Trusted Network' },
-    { icon: Lock, label: 'Secure Payments', sublabel: 'Protected' },
+    { icon: Globe, label: t.footer.countriesBadge, sublabel: t.footer.globalReach },
+    { icon: Home, label: t.footer.propertiesBadge, sublabel: t.footer.premiumListings },
+    { icon: Users, label: t.footer.verifiedAgents, sublabel: t.footer.trustedNetwork },
+    { icon: Lock, label: t.footer.securePayments, sublabel: t.footer.protectedLabel },
   ];
 
   const socialLinks = [
@@ -252,9 +245,7 @@ export function Footer() {
 
               {/* Description */}
               <p className="mt-5 text-sm leading-relaxed text-gray-400">
-                CIAR is your trusted global real estate directory. Discover
-                premium properties across 60+ countries with AI-powered tools,
-                smart analytics, verified agents, and secure transactions.
+                {t.footer.brandDescription}
               </p>
 
               {/* Decorative accent */}
@@ -321,12 +312,11 @@ export function Footer() {
               <div className="mb-2 flex items-center gap-2">
                 <Mail className="h-3.5 w-3.5 text-amber-500/70" />
                 <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-amber-400">
-                  Newsletter
+                  {t.footer.newsletter}
                 </h3>
               </div>
               <p className="mb-5 text-sm leading-relaxed text-gray-400">
-                Stay updated with the latest luxury properties and exclusive
-                offers curated just for you.
+                {t.footer.newsletterBody}
               </p>
 
               {!subscribed ? (
@@ -339,7 +329,7 @@ export function Footer() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
+                    placeholder={t.footer.emailPlaceholder}
                     className="flex-1 bg-transparent px-4 py-3.5 text-sm text-gray-200 placeholder-gray-600 outline-none"
                   />
                   <button
@@ -347,14 +337,14 @@ export function Footer() {
                     className="flex items-center gap-2 bg-gradient-to-r from-amber-600 to-emerald-600 px-5 text-sm font-semibold text-white transition-all duration-300 hover:brightness-110"
                   >
                     <Send className="h-4 w-4" />
-                    Subscribe
+                    {t.footer.subscribe}
                   </button>
                 </form>
               ) : (
                 <div className="flex items-center gap-2">
                   <CheckCircle className="h-5 w-5 text-amber-400" />
                   <span className="text-sm text-amber-200">
-                    Thanks for subscribing!
+                    {t.footer.thanksSubscribe}
                   </span>
                 </div>
               )}
@@ -362,7 +352,7 @@ export function Footer() {
               {/* Trusted line */}
               <div className="mt-4 flex items-center gap-2 text-gray-500">
                 <Shield className="h-3.5 w-3.5" />
-                <span className="text-[11px] tracking-wide">No spam, unsubscribe anytime</span>
+                <span className="text-[11px] tracking-wide">{t.footer.noSpam}</span>
               </div>
             </div>
           </div>

@@ -1,4 +1,10 @@
 import { DEFAULT_FEATURES } from '@/lib/firestore-defaults';
+import {
+  getMarketplaceAgentById,
+  getMarketplaceCompanyById,
+  listMarketplaceAgents,
+  listMarketplaceCompanies,
+} from '@/lib/demo-marketplace';
 import type { Agent, Banner, Company, FeatureToggle } from '@/types';
 
 const ISO = new Date().toISOString();
@@ -149,21 +155,28 @@ const DEMO_AGENTS: Array<Agent & { _count: { properties: number } }> = [
   },
 ];
 
-export function listDemoCompanies(): Array<Company & { _count?: { agents: number } }> {
+export function listDemoCompanies(countryId?: string | null): Array<Company & { _count?: { agents: number } }> {
+  const marketplace = listMarketplaceCompanies(countryId);
+  if (marketplace.length > 0) return marketplace;
   return DEMO_COMPANIES.map((row) => ({ ...row }));
 }
 
 export function listDemoAgents(countryId?: string | null): Array<Agent & { _count: { properties: number } }> {
-  void countryId;
+  const marketplace = listMarketplaceAgents(countryId);
+  if (marketplace.length > 0) return marketplace;
   return DEMO_AGENTS.map((row) => ({ ...row }));
 }
 
 export function getDemoAgentById(id: string): (Agent & { _count: { properties: number } }) | null {
+  const marketplace = getMarketplaceAgentById(id);
+  if (marketplace) return marketplace;
   const row = DEMO_AGENTS.find((agent) => agent.id === id);
   return row ? { ...row } : null;
 }
 
 export function getDemoCompanyById(id: string): (Company & { _count?: { agents: number } }) | null {
+  const marketplace = getMarketplaceCompanyById(id);
+  if (marketplace) return marketplace;
   const row = DEMO_COMPANIES.find((company) => company.id === id);
   return row ? { ...row } : null;
 }

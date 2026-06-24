@@ -68,6 +68,7 @@ export function CompanySettingsPanel({ companyId, isAr, onBack, onUpdated }: Pro
     address: '',
     logo: '',
     founded: '',
+    defaultCommissionPercent: '',
   });
   const [permissions, setPermissions] = useState<AdminPermissionMap>(() =>
     defaultPermissionMap(COMPANY_ADMIN_PERMISSIONS)
@@ -89,6 +90,8 @@ export function CompanySettingsPanel({ companyId, isAr, onBack, onUpdated }: Pro
         address: data.address ?? '',
         logo: data.logo ?? '',
         founded: data.founded != null ? String(data.founded) : '',
+        defaultCommissionPercent:
+          data.defaultCommissionPercent != null ? String(data.defaultCommissionPercent) : '',
       });
       setPermissions(normalizeAdminPermissions(data.adminPermissions, COMPANY_ADMIN_PERMISSIONS));
       setTasks(normalizeAdminTasks(data.adminTasks));
@@ -120,6 +123,9 @@ export function CompanySettingsPanel({ companyId, isAr, onBack, onUpdated }: Pro
           address: form.address || null,
           logo: form.logo || null,
           founded: form.founded ? Number(form.founded) : null,
+          defaultCommissionPercent: form.defaultCommissionPercent.trim()
+            ? Number(form.defaultCommissionPercent)
+            : null,
           adminPermissions: permissions,
           adminTasks: tasks,
         }),
@@ -210,6 +216,18 @@ export function CompanySettingsPanel({ companyId, isAr, onBack, onUpdated }: Pro
                 className="admin-input"
                 value={form.founded}
                 onChange={(e) => setForm({ ...form, founded: e.target.value })}
+              />
+            </Field>
+            <Field label={tx('العمولة الافتراضية (%)', 'Default commission (%)')}>
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step={0.01}
+                className="admin-input"
+                value={form.defaultCommissionPercent}
+                onChange={(e) => setForm({ ...form, defaultCommissionPercent: e.target.value })}
+                placeholder="3.0"
               />
             </Field>
             <Field label={tx('البريد', 'Email')}>

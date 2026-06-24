@@ -35,6 +35,10 @@ export function mapAuthApiError(
     ],
     'Name is required': ['الاسم مطلوب', 'Name is required'],
     'Company name is required': ['اسم الشركة مطلوب', 'Company name is required'],
+    'WhatsApp number is required for partner accounts': [
+      'رقم الواتساب مطلوب للوكلاء والشركات',
+      'WhatsApp number is required for partner accounts',
+    ],
     'Too many login attempts. Please try again later.': [
       'محاولات كثيرة. انتظر قليلًا ثم حاول مجددًا.',
       'Too many login attempts. Please try again later.',

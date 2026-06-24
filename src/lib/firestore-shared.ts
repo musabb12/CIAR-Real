@@ -27,6 +27,8 @@ export const FIRESTORE_COLLECTIONS = {
   properties: process.env.FIRESTORE_PROPERTIES_COLLECTION?.trim() || 'properties',
   propertyReviews: 'propertyReviews',
   siteSettings: 'siteSettings',
+  subscriptionSettings: 'subscriptionSettings',
+  partnerSubscriptions: 'partnerSubscriptions',
   users: 'users',
   transactions: 'transactions',
 } as const;
@@ -171,6 +173,8 @@ export function companyDocToCompany(id: string, raw: Record<string, unknown>): C
     founded: asNullableNumber(raw.founded),
     agentCount: asNumber(raw.agentCount, 0),
     listingCount: asNumber(raw.listingCount, 0),
+    countryId: asNullableString(raw.countryId),
+    defaultCommissionPercent: asNullableNumber(raw.defaultCommissionPercent),
     createdAt: toIso(raw.createdAt),
     updatedAt: toIso(raw.updatedAt),
   };
@@ -371,6 +375,8 @@ export async function getAgentById(id: string): Promise<Agent | null> {
     totalSales: asNumber(raw.totalSales, 0),
     verified: asBoolean(raw.verified, false),
     companyId: asNullableString(raw.companyId),
+    countryId: asNullableString(raw.countryId),
+    defaultCommissionPercent: asNullableNumber(raw.defaultCommissionPercent),
     company: company ?? undefined,
     createdAt: toIso(raw.createdAt),
     updatedAt: toIso(raw.updatedAt),

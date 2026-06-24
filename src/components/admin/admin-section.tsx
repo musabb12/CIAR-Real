@@ -123,6 +123,8 @@ export function AdminSection<T extends { id?: string }>({
     load();
   }, [load]);
 
+  const searchKeysSig = searchKeys?.join('\0') ?? '';
+
   const filtered = useMemo(() => {
     if (!search) return rows;
     const s = search.toLowerCase();
@@ -133,9 +135,14 @@ export function AdminSection<T extends { id?: string }>({
       }
       return JSON.stringify(r).toLowerCase().includes(s);
     });
-  }, [rows, search, searchKeys]);
+  }, [rows, search, searchKeysSig]);
+
+  const lastFilteredSigRef = useRef('');
 
   useEffect(() => {
+    const sig = `${filtered.length}:${filtered.map((row) => row.id ?? '').join('|')}`;
+    if (sig === lastFilteredSigRef.current) return;
+    lastFilteredSigRef.current = sig;
     onFilteredRowsRef.current?.(filtered);
   }, [filtered]);
 

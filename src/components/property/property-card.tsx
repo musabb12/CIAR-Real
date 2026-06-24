@@ -21,13 +21,15 @@ import { Badge } from '@/components/ui/badge';
 import type { Property, ListingType, PropertyStatus } from '@/types';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
+import { useLocalizedCountryName } from '@/hooks/use-localized-country-name';
+import { useSiteCurrency } from '@/hooks/use-site-currency';
 
 // ============================================================
 // Helpers
 // ============================================================
 
 /** Format a number with commas: 12500000 → "12,500,000" */
-function formatPrice(num: number): string {
+function formatNumber(num: number): string {
   return num.toLocaleString('en-US');
 }
 
@@ -94,10 +96,11 @@ export function PropertyCard({ property }: PropertyCardProps) {
   const { setCurrentPage, setSelectedPropertyId, toggleFavorite, isFavorite } =
     useAppStore();
   const { t } = useTranslation();
+  const { formatPrice } = useSiteCurrency();
+  const countryLabel = useLocalizedCountryName();
 
   const coverUrl = getCoverImage(property);
   const favorited = isFavorite(property.id);
-  const currency = property.country?.currencySymbol ?? '$';
   const imageCount = property.images?.length ?? 0;
   const agentName = property.agent?.user?.name ?? null;
   const agentAvatar = property.agent?.user?.avatar ?? null;
@@ -272,8 +275,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             </button>
 
             <div className="estate-property-price">
-              {currency}
-              {formatPrice(property.price)}
+              {formatPrice(property.price, property.country?.currency)}
               {isRent && (
                 <span className="ms-1 text-[11px] font-medium opacity-75">
                   {t.property.perMonth}
@@ -303,7 +305,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             <div className="flex items-center gap-1.5 text-muted-foreground">
               <MapPin className="h-3.5 w-3.5 shrink-0 text-primary/60" />
               <span className="truncate text-xs font-medium">
-                {[property.city?.name, property.region?.name, property.country?.name]
+                {[property.city?.name, property.region?.name, property.country ? countryLabel(property.country) : null]
                   .filter(Boolean)
                   .join(', ')}
               </span>
@@ -330,7 +332,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
                 <div className="flex items-center gap-1.5 rounded-md bg-muted/60 px-2 py-1">
                   <Maximize className="h-3.5 w-3.5 text-primary/70" />
                   <span className="text-xs font-semibold tabular-nums">
-                    {formatPrice(property.area)} {t.property.sqm}
+                    {formatNumber(property.area)} {t.property.sqm}
                   </span>
                 </div>
               )}

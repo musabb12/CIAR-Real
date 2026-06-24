@@ -7,6 +7,7 @@ import {
   Briefcase,
   Building,
   MessageSquare,
+  CreditCard,
   MessageCircle,
   Heart,
   Image as ImageIcon,
@@ -27,6 +28,7 @@ export type AdminTabId =
   | 'users'
   | 'agents'
   | 'companies'
+  | 'subscriptions'
   | 'inquiries'
   | 'reviews'
   | 'favorites'
@@ -57,6 +59,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: 'users', ar: 'المستخدمون', en: 'Users', icon: Users, group: 'people' },
   { id: 'agents', ar: 'الوكلاء', en: 'Agents', icon: Briefcase, group: 'people' },
   { id: 'companies', ar: 'الشركات', en: 'Companies', icon: Building, group: 'people' },
+  { id: 'subscriptions', ar: 'الاشتراكات', en: 'Subscriptions', icon: CreditCard, group: 'people' },
 
   { id: 'inquiries', ar: 'الاستفسارات', en: 'Inquiries', icon: MessageSquare, group: 'engagement' },
   { id: 'reviews', ar: 'التقييمات', en: 'Reviews', icon: MessageCircle, group: 'engagement' },

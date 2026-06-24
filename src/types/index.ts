@@ -75,6 +75,9 @@ export interface Agent {
   totalSales: number;
   verified: boolean;
   companyId: string | null;
+  countryId?: string | null;
+  /** Default commission % applied to new listings for this agent. */
+  defaultCommissionPercent?: number | null;
   company?: Company;
   adminPermissions?: Record<string, boolean>;
   adminTasks?: string[];
@@ -95,6 +98,8 @@ export interface Company {
   founded: number | null;
   agentCount: number;
   listingCount: number;
+  countryId?: string | null;
+  defaultCommissionPercent?: number | null;
   adminPermissions?: Record<string, boolean>;
   adminTasks?: string[];
   createdAt: string;
@@ -153,6 +158,8 @@ export interface Property {
   latitude: number | null;
   longitude: number | null;
   agentId: string | null;
+  /** Sale/rent commission % for this listing (admin-set). */
+  commissionPercent?: number | null;
   createdAt: string;
   updatedAt: string;
   country?: Country;
@@ -275,6 +282,8 @@ export type AppPage =
   | 'admin'
   | 'admin-login'
   | 'partner-dashboard'
+  | 'partner-subscription'
+  | 'partner-subscription-checkout'
   | 'checkout-purchase'
   | 'checkout-rent'
   | 'checkout-complete'

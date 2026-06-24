@@ -17,6 +17,8 @@ import {
   Clock,
   Sparkles,
   ImageIcon,
+  MessageCircle,
+  CreditCard,
   BedDouble,
   Bath,
   Maximize2,
@@ -24,15 +26,19 @@ import {
   X,
   BarChart3,
   Filter,
+  Loader2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
+import { useSiteCurrency } from '@/hooks/use-site-currency';
+import { useLocalizedCountryName } from '@/hooks/use-localized-country-name';
 import { ImageUrlInput } from '@/components/admin/image-url-input';
 import { cn } from '@/lib/utils';
 import { normalizeLocationsResponse } from '@/lib/normalize-locations';
+import { CountryFlagLabel } from '@/components/ui/country-flag-label';
 import type { Country, ListingType, Property, PropertyStatus, PropertyType } from '@/types';
 import { toast } from 'sonner';
 
@@ -137,7 +143,7 @@ function propertyTypeLabel(type: PropertyType, tx: (ar: string, en: string) => s
 
 export function PartnerDashboardPage() {
   const { rtl } = useTranslation();
-  const { currentUser, isAuthenticated, logout, setCurrentPage, setSelectedPropertyId } =
+  const { currentUser, isAuthenticated, logout, setCurrentPage, setSelectedPropertyId, partnerPendingAddListing, setPartnerPendingAddListing } =
     useAppStore();
   const [properties, setProperties] = useState<Property[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
@@ -149,6 +155,12 @@ export function PartnerDashboardPage() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState<PropertyStatus | 'ALL'>('ALL');
   const [filterListing, setFilterListing] = useState<ListingType | 'ALL'>('ALL');
+  const [showProfile, setShowProfile] = useState(false);
+  const [profileWhatsapp, setProfileWhatsapp] = useState('');
+  const [profilePhone, setProfilePhone] = useState('');
+  const [profileTitle, setProfileTitle] = useState('');
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
 
   const isAr = rtl;
   const tx = (ar: string, en: string) => (isAr ? ar : en);
@@ -166,6 +178,10 @@ export function PartnerDashboardPage() {
         'Country, region, and city are required',
       ],
       Unauthorized: ['غير مصرح — سجّل الدخول', 'Unauthorized'],
+      'Active subscription required to publish listings': [
+        'يلزم اشتراك نشط لنشر إعلان',
+        'Active subscription required to publish listings',
+      ],
     };
     const pair = map[message];
     return pair ? tx(pair[0], pair[1]) : message;
@@ -215,6 +231,65 @@ export function PartnerDashboardPage() {
     load();
   }, [isAuthenticated, isPartner, load, setCurrentPage]);
 
+  const loadProfile = useCallback(async () => {
+    setProfileLoading(true);
+    try {
+      const res = await fetch('/api/partner/profile');
+      if (!res.ok) return;
+      const agent = await res.json();
+      setProfileWhatsapp(agent.whatsapp ?? '');
+      setProfilePhone(agent.phone ?? '');
+      setProfileTitle(agent.title ?? '');
+    } finally {
+      setProfileLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated || !isPartner) return;
+    void loadProfile();
+  }, [isAuthenticated, isPartner, loadProfile]);
+
+  const saveProfile = async () => {
+    if (!profileWhatsapp.trim()) {
+      toast.error(tx('رقم الواتساب مطلوب للتواصل مع الزوار', 'WhatsApp number is required for visitor contact'));
+      return;
+    }
+    setProfileSaving(true);
+    try {
+      const res = await fetch('/api/partner/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          whatsapp: profileWhatsapp.trim(),
+          phone: profilePhone.trim() || null,
+          title: profileTitle.trim() || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(typeof data?.error === 'string' ? data.error : 'Failed');
+      }
+      toast.success(tx('تم حفظ بيانات التواصل', 'Contact details saved'));
+      setProfileWhatsapp(data.whatsapp ?? '');
+      setShowProfile(false);
+    } catch (error) {
+      toast.error(tx('فشل الحفظ', 'Save failed'), {
+        description: error instanceof Error ? error.message : '',
+      });
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!partnerPendingAddListing || loading) return;
+    setPartnerPendingAddListing(false);
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+  }, [partnerPendingAddListing, loading, setPartnerPendingAddListing]);
+
   const stats = useMemo(() => {
     const total = properties.length;
     const available = properties.filter((p) => p.status === 'AVAILABLE').length;
@@ -241,7 +316,24 @@ export function PartnerDashboardPage() {
   const selectedRegion = regions.find((r) => r.id === form.regionId);
   const cities = selectedRegion?.cities ?? [];
 
-  const openAddForm = () => {
+  const ensureCanPublish = async (): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/partner/subscription');
+      if (!res.ok) return false;
+      const data = await res.json();
+      return Boolean(data.canPublish);
+    } catch {
+      return false;
+    }
+  };
+
+  const openAddForm = async () => {
+    const canPublish = await ensureCanPublish();
+    if (!canPublish) {
+      setPartnerPendingAddListing(true);
+      setCurrentPage('partner-subscription');
+      return;
+    }
     setEditingId(null);
     setForm(emptyForm);
     setShowForm(true);
@@ -310,6 +402,10 @@ export function PartnerDashboardPage() {
       });
       const data = await res.json();
       if (!res.ok) {
+        if (res.status === 402 || data?.requiresSubscription) {
+          setPartnerPendingAddListing(true);
+          setCurrentPage('partner-subscription');
+        }
         toast.error(apiError(data.error || tx('فشل الحفظ', 'Save failed')));
         return;
       }
@@ -360,8 +456,11 @@ export function PartnerDashboardPage() {
         <nav className="space-y-1 flex-1">
           <button
             type="button"
-            className={cn('partner-nav-item', !showForm && 'is-active')}
-            onClick={() => setShowForm(false)}
+            className={cn('partner-nav-item', !showForm && !showProfile && 'is-active')}
+            onClick={() => {
+              setShowForm(false);
+              setShowProfile(false);
+            }}
           >
             <LayoutGrid className="h-4 w-4" />
             {tx('عقاراتي', 'My listings')}
@@ -369,6 +468,25 @@ export function PartnerDashboardPage() {
           <button type="button" className="partner-nav-item" onClick={openAddForm}>
             <Plus className="h-4 w-4" />
             {tx('إضافة عقار', 'Add property')}
+          </button>
+          <button
+            type="button"
+            className={cn('partner-nav-item', showProfile && 'is-active')}
+            onClick={() => {
+              setShowProfile(true);
+              setShowForm(false);
+            }}
+          >
+            <MessageCircle className="h-4 w-4" />
+            {tx('واتساب التواصل', 'WhatsApp contact')}
+          </button>
+          <button
+            type="button"
+            className="partner-nav-item"
+            onClick={() => setCurrentPage('partner-subscription')}
+          >
+            <CreditCard className="h-4 w-4" />
+            {tx('الاشتراك', 'Subscription')}
           </button>
           <button type="button" className="partner-nav-item" onClick={() => setCurrentPage('home')}>
             <Home className="h-4 w-4" />
@@ -454,6 +572,31 @@ export function PartnerDashboardPage() {
             </div>
           </div>
 
+          {!profileLoading && !profileWhatsapp.trim() && !showForm && !showProfile && (
+            <div className="mb-6 rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="flex items-start gap-3 flex-1">
+                <MessageCircle className="h-5 w-5 text-amber-300 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-amber-100">
+                    {tx('أضف رقم واتساب للتواصل', 'Add your WhatsApp number')}
+                  </p>
+                  <p className="text-sm text-white/55 mt-1">
+                    {tx(
+                      'يظهر زر «تواصل مع المعلن» للزوار على صفحة كل عقار.',
+                      'Visitors will see a “Contact advertiser” button on each listing page.',
+                    )}
+                  </p>
+                </div>
+              </div>
+              <Button
+                className="checkout-pay-btn rounded-xl border-0 text-white shrink-0"
+                onClick={() => setShowProfile(true)}
+              >
+                {tx('إضافة الآن', 'Add now')}
+              </Button>
+            </div>
+          )}
+
           {/* Stats */}
           <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4 mb-8">
             <StatCard
@@ -516,6 +659,85 @@ export function PartnerDashboardPage() {
               listingLabel={listingLabel}
               statusLabel={statusLabel}
             />
+          ) : showProfile ? (
+            <div className="partner-form-card max-w-2xl rounded-2xl p-6 sm:p-8 space-y-6">
+              <div>
+                <h2 className="font-heading text-xl font-bold text-white flex items-center gap-2">
+                  <MessageCircle className="h-5 w-5 text-[#25D366]" />
+                  {tx('بيانات التواصل مع الزوار', 'Visitor contact details')}
+                </h2>
+                <p className="text-sm text-white/50 mt-2">
+                  {tx(
+                    'رقم الواتساب يظهر للزوار كزر «تواصل مع المعلن» على صفحات عقاراتك.',
+                    'Your WhatsApp number powers the “Contact advertiser” button on your listing pages.',
+                  )}
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-white/70 text-sm">
+                    {tx('رقم الواتساب', 'WhatsApp number')} *
+                  </Label>
+                  <input
+                    type="tel"
+                    className="partner-toolbar-input w-full rounded-xl px-4 py-2.5 text-sm"
+                    value={profileWhatsapp}
+                    onChange={(e) => setProfileWhatsapp(e.target.value)}
+                    placeholder="+966 5XX XXX XXX"
+                  />
+                  <p className="text-[11px] text-white/40">
+                    {tx('أدخل الرقم مع رمز الدولة', 'Include country code')}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-white/70 text-sm">
+                    {tx('هاتف إضافي', 'Additional phone')}
+                  </Label>
+                  <input
+                    type="tel"
+                    className="partner-toolbar-input w-full rounded-xl px-4 py-2.5 text-sm"
+                    value={profilePhone}
+                    onChange={(e) => setProfilePhone(e.target.value)}
+                    placeholder="+966..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-white/70 text-sm">
+                    {tx('المسمى الوظيفي', 'Professional title')}
+                  </Label>
+                  <input
+                    type="text"
+                    className="partner-toolbar-input w-full rounded-xl px-4 py-2.5 text-sm"
+                    value={profileTitle}
+                    onChange={(e) => setProfileTitle(e.target.value)}
+                    placeholder={tx('وكيل عقاري', 'Real estate agent')}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  className="checkout-pay-btn rounded-xl border-0 text-white"
+                  onClick={saveProfile}
+                  disabled={profileSaving}
+                >
+                  {profileSaving ? (
+                    <Loader2 className="h-4 w-4 animate-spin me-2" />
+                  ) : (
+                    <MessageCircle className="h-4 w-4 me-2" />
+                  )}
+                  {tx('حفظ', 'Save')}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="rounded-xl border-white/15 text-white"
+                  onClick={() => setShowProfile(false)}
+                >
+                  {tx('إلغاء', 'Cancel')}
+                </Button>
+              </div>
+            </div>
           ) : (
             <>
               {/* Toolbar */}
@@ -706,7 +928,8 @@ function PropertyCard({
   listingLabel: string;
   statusLabel: string;
 }) {
-  const currency = p.country?.currencySymbol ?? '$';
+  const { formatPrice } = useSiteCurrency();
+  const countryLabel = useLocalizedCountryName();
   const statusClass =
     p.status === 'AVAILABLE'
       ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
@@ -740,13 +963,12 @@ function PropertyCard({
           <h3 className="font-semibold text-white line-clamp-1">{p.title}</h3>
           <p className="text-xs text-white/45 flex items-center gap-1 mt-1">
             <MapPin className="h-3 w-3 shrink-0" />
-            {[p.city?.name, p.country?.name].filter(Boolean).join(', ') || '—'}
+            {[p.city?.name, p.country ? countryLabel(p.country) : null].filter(Boolean).join(', ') || '—'}
           </p>
         </div>
         <div className="flex items-center justify-between">
           <p className="text-lg font-bold text-amber-300 tabular-nums">
-            {currency}
-            {p.price.toLocaleString('en-US')}
+            {formatPrice(p.price, p.country?.currency)}
           </p>
           <p className="text-xs text-white/40 flex items-center gap-1">
             <Eye className="h-3 w-3" />
@@ -842,6 +1064,7 @@ function PropertyFormPanel({
   listingLabel: (t: ListingType, tx: (ar: string, en: string) => string) => string;
   statusLabel: (s: PropertyStatus, tx: (ar: string, en: string) => string) => string;
 }) {
+  const countryLabel = useLocalizedCountryName();
   return (
     <div className="auth-card rounded-2xl overflow-hidden max-w-4xl mx-auto">
       <div className="flex items-center justify-between gap-4 p-5 sm:p-6 border-b border-white/10">
@@ -991,7 +1214,7 @@ function PropertyFormPanel({
                 <option value="">{tx('اختر الدولة', 'Select country')}</option>
                 {countries.map((c) => (
                   <option key={c.id} value={c.id}>
-                    {c.flag} {c.name}
+                    {countryLabel(c)}
                   </option>
                 ))}
               </select>

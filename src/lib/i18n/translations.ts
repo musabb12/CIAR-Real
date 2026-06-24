@@ -32,6 +32,26 @@ export interface Translations {
     addProperty: string;
     browseProperties: string;
   };
+  // Home page sections
+  homePage: {
+    testimonialsTitle: string;
+    testimonials: { name: string; role: string; text: string }[];
+    featuresSubtitle: string;
+    features: {
+      aiValuations: string;
+      virtualTours: string;
+      marketInsights: string;
+      analytics: string;
+      hotDeals: string;
+      greenHomes: string;
+      smartHomes: string;
+      instantAlerts: string;
+      verifiedListings: string;
+      secureTransactions: string;
+      premiumSupport: string;
+      featuredAgent: string;
+    };
+  };
   // Property
   property: {
     featured: string;
@@ -49,6 +69,8 @@ export interface Translations {
     amenities: string;
     agentInfo: string;
     contactAgent: string;
+    contactAdvertiser: string;
+    chatOnWhatsApp: string;
     sendMessage: string;
     location: string;
     back: string;
@@ -310,6 +332,17 @@ export interface Translations {
     securePayments: string;
     paymentMethodsSubtitle: string;
     support247: string;
+    brandDescription: string;
+    newsletterBody: string;
+    noSpam: string;
+    thanksSubscribe: string;
+    subscribeSuccess: string;
+    countriesBadge: string;
+    propertiesBadge: string;
+    verifiedAgents: string;
+    trustedNetwork: string;
+    protectedLabel: string;
+    topLocationsList: { city: string; country: string }[];
   };
   // How it works
   howItWorks: {
@@ -412,6 +445,41 @@ export const translations: Record<Locale, Translations> = {
       addProperty: 'Add your property',
       browseProperties: 'Browse listings',
     },
+    homePage: {
+      testimonialsTitle: 'What Our Clients Say',
+      testimonials: [
+        {
+          name: 'Sarah Mitchell',
+          role: 'Investor',
+          text: 'CIAR made finding luxury properties effortless. The platform is incredibly intuitive and the agents are top-notch.',
+        },
+        {
+          name: 'Ahmed Al-Rashid',
+          role: 'Property Owner',
+          text: 'I listed my properties on CIAR and received quality inquiries within days. Truly a global platform.',
+        },
+        {
+          name: 'Elena Kowalski',
+          role: 'Buyer',
+          text: 'From browsing to closing, CIAR provided a seamless experience. Highly recommended for anyone in real estate.',
+        },
+      ],
+      featuresSubtitle: 'Discover the tools that set CIAR apart',
+      features: {
+        aiValuations: 'AI Valuations',
+        virtualTours: 'Virtual Tours',
+        marketInsights: 'Market Insights',
+        analytics: 'Analytics',
+        hotDeals: 'Hot Deals',
+        greenHomes: 'Green Homes',
+        smartHomes: 'Smart Homes',
+        instantAlerts: 'Instant Alerts',
+        verifiedListings: 'Verified Listings',
+        secureTransactions: 'Secure Transactions',
+        premiumSupport: 'Premium Support',
+        featuredAgent: 'Featured Agent',
+      },
+    },
     property: {
       featured: 'Featured',
       forSale: 'For Sale',
@@ -428,6 +496,8 @@ export const translations: Record<Locale, Translations> = {
       amenities: 'Amenities',
       agentInfo: 'Agent Info',
       contactAgent: 'Contact Agent',
+      contactAdvertiser: 'Contact advertiser',
+      chatOnWhatsApp: 'Chat on WhatsApp',
       sendMessage: 'Send Message',
       location: 'Location',
       back: 'Back',
@@ -676,6 +746,26 @@ export const translations: Record<Locale, Translations> = {
       securePayments: 'Secure Payments',
       paymentMethodsSubtitle: 'Eleven trusted payment options for secure bookings and purchases',
       support247: '24/7 Support',
+      brandDescription:
+        'CIAR is your trusted global real estate directory. Discover premium properties across 60+ countries with AI-powered tools, smart analytics, verified agents, and secure transactions.',
+      newsletterBody:
+        'Stay updated with the latest luxury properties and exclusive offers curated just for you.',
+      noSpam: 'No spam, unsubscribe anytime',
+      thanksSubscribe: 'Thanks for subscribing!',
+      subscribeSuccess: 'Successfully subscribed!',
+      countriesBadge: '60+ Countries',
+      propertiesBadge: '10K+ Properties',
+      verifiedAgents: 'Verified Agents',
+      trustedNetwork: 'Trusted Network',
+      protectedLabel: 'Protected',
+      topLocationsList: [
+        { city: 'New York', country: 'United States' },
+        { city: 'London', country: 'United Kingdom' },
+        { city: 'Riyadh', country: 'Saudi Arabia' },
+        { city: 'Paris', country: 'France' },
+        { city: 'Tokyo', country: 'Japan' },
+        { city: 'Dubai', country: 'UAE' },
+      ],
     },
     howItWorks: {
       title: 'Three simple steps',
@@ -773,6 +863,41 @@ export const translations: Record<Locale, Translations> = {
       addProperty: 'أضف عقارك',
       browseProperties: 'تصفّح العقارات',
     },
+    homePage: {
+      testimonialsTitle: 'ماذا يقول عملاؤنا',
+      testimonials: [
+        {
+          name: 'سارة ميتشل',
+          role: 'مستثمرة',
+          text: 'جعل CIAR العثور على العقارات الفاخرة سهلاً للغاية. المنصة بديهية والوكلاء محترفون للغاية.',
+        },
+        {
+          name: 'أحمد الراشد',
+          role: 'مالك عقار',
+          text: 'أدرجت عقاراتي على CIAR وتلقيت استفسارات جادة خلال أيام. منصة عالمية بحق.',
+        },
+        {
+          name: 'إيلينا كوالسكي',
+          role: 'مشتري',
+          text: 'من التصفح حتى الإغلاق، قدم CIAR تجربة سلسة. أنصح به بشدة لكل من يبحث عن عقار.',
+        },
+      ],
+      featuresSubtitle: 'اكتشف الأدوات التي تميّز CIAR',
+      features: {
+        aiValuations: 'تقييم بالذكاء الاصطناعي',
+        virtualTours: 'جولات افتراضية',
+        marketInsights: 'رؤى السوق',
+        analytics: 'تحليلات',
+        hotDeals: 'عروض حصرية',
+        greenHomes: 'منازل خضراء',
+        smartHomes: 'منازل ذكية',
+        instantAlerts: 'تنبيهات فورية',
+        verifiedListings: 'قوائم موثقة',
+        secureTransactions: 'معاملات آمنة',
+        premiumSupport: 'دعم مميز',
+        featuredAgent: 'وكيل مميز',
+      },
+    },
     property: {
       featured: 'مميز',
       forSale: 'للبيع',
@@ -789,6 +914,8 @@ export const translations: Record<Locale, Translations> = {
       amenities: 'المرافق',
       agentInfo: 'معلومات الوكيل',
       contactAgent: 'تواصل مع الوكيل',
+      contactAdvertiser: 'تواصل مع المعلن',
+      chatOnWhatsApp: 'محادثة عبر واتساب',
       sendMessage: 'إرسال الرسالة',
       location: 'الموقع',
       back: 'رجوع',
@@ -1037,6 +1164,25 @@ export const translations: Record<Locale, Translations> = {
       securePayments: 'طرق الدفع المتاحة',
       paymentMethodsSubtitle: '١١ طريقة دفع موثوقة لإتمام الحجوزات والشراء بأمان',
       support247: 'دعم على مدار الساعة',
+      brandDescription:
+        'CIAR هو دليلك العقاري العالمي الموثوق. اكتشف عقارات فاخرة في أكثر من 60 دولة بأدوات الذكاء الاصطناعي والتحليلات الذكية والوكلاء المعتمدين والمعاملات الآمنة.',
+      newsletterBody: 'ابقَ على اطلاع بأحدث العقارات الفاخرة والعروض الحصرية المختارة لك.',
+      noSpam: 'لا رسائل مزعجة — إلغاء الاشتراك في أي وقت',
+      thanksSubscribe: 'شكراً لاشتراكك!',
+      subscribeSuccess: 'تم الاشتراك بنجاح!',
+      countriesBadge: '+60 دولة',
+      propertiesBadge: '+10 آلاف عقار',
+      verifiedAgents: 'وكلاء معتمدون',
+      trustedNetwork: 'شبكة موثوقة',
+      protectedLabel: 'محمي',
+      topLocationsList: [
+        { city: 'نيويورك', country: 'الولايات المتحدة' },
+        { city: 'لندن', country: 'المملكة المتحدة' },
+        { city: 'الرياض', country: 'السعودية' },
+        { city: 'باريس', country: 'فرنسا' },
+        { city: 'طوكيو', country: 'اليابان' },
+        { city: 'دبي', country: 'الإمارات' },
+      ],
     },
     howItWorks: {
       title: 'ثلاث خطوات بسيطة',
@@ -1134,6 +1280,41 @@ export const translations: Record<Locale, Translations> = {
       addProperty: 'Ajouter votre bien',
       browseProperties: 'Parcourir les annonces',
     },
+    homePage: {
+      testimonialsTitle: 'Ce que disent nos clients',
+      testimonials: [
+        {
+          name: 'Sarah Mitchell',
+          role: 'Investisseuse',
+          text: 'CIAR a rendu la recherche de biens de luxe très simple. La plateforme est intuitive et les agents sont excellents.',
+        },
+        {
+          name: 'Ahmed Al-Rashid',
+          role: 'Propriétaire',
+          text: 'J\'ai publié mes biens sur CIAR et reçu des demandes sérieuses en quelques jours. Une vraie plateforme mondiale.',
+        },
+        {
+          name: 'Elena Kowalski',
+          role: 'Acheteuse',
+          text: 'De la recherche à la signature, CIAR a offert une expérience fluide. Je recommande vivement.',
+        },
+      ],
+      featuresSubtitle: 'Découvrez les outils qui distinguent CIAR',
+      features: {
+        aiValuations: 'Évaluations IA',
+        virtualTours: 'Visites virtuelles',
+        marketInsights: 'Analyses du marché',
+        analytics: 'Analytique',
+        hotDeals: 'Offres exclusives',
+        greenHomes: 'Maisons écologiques',
+        smartHomes: 'Maisons intelligentes',
+        instantAlerts: 'Alertes instantanées',
+        verifiedListings: 'Annonces vérifiées',
+        secureTransactions: 'Transactions sécurisées',
+        premiumSupport: 'Support premium',
+        featuredAgent: 'Agent vedette',
+      },
+    },
     property: {
       featured: 'En vedette',
       forSale: 'À vendre',
@@ -1150,6 +1331,8 @@ export const translations: Record<Locale, Translations> = {
       amenities: 'Équipements',
       agentInfo: 'Info agent',
       contactAgent: 'Contacter l\'agent',
+      contactAdvertiser: 'Contacter l\'annonceur',
+      chatOnWhatsApp: 'Discuter sur WhatsApp',
       sendMessage: 'Envoyer',
       location: 'Emplacement',
       back: 'Retour',
@@ -1398,6 +1581,26 @@ export const translations: Record<Locale, Translations> = {
       securePayments: 'Moyens de paiement',
       paymentMethodsSubtitle: '11 options de paiement fiables pour vos réservations',
       support247: 'Support 24/7',
+      brandDescription:
+        'CIAR est votre annuaire immobilier mondial de confiance. Découvrez des biens premium dans plus de 60 pays avec des outils IA, des analyses intelligentes, des agents vérifiés et des transactions sécurisées.',
+      newsletterBody:
+        'Restez informé des dernières propriétés de luxe et des offres exclusives sélectionnées pour vous.',
+      noSpam: 'Pas de spam, désabonnement à tout moment',
+      thanksSubscribe: 'Merci pour votre abonnement !',
+      subscribeSuccess: 'Abonnement réussi !',
+      countriesBadge: '60+ pays',
+      propertiesBadge: '10K+ biens',
+      verifiedAgents: 'Agents vérifiés',
+      trustedNetwork: 'Réseau de confiance',
+      protectedLabel: 'Protégé',
+      topLocationsList: [
+        { city: 'New York', country: 'États-Unis' },
+        { city: 'Londres', country: 'Royaume-Uni' },
+        { city: 'Riyad', country: 'Arabie saoudite' },
+        { city: 'Paris', country: 'France' },
+        { city: 'Tokyo', country: 'Japon' },
+        { city: 'Dubaï', country: 'EAU' },
+      ],
     },
     howItWorks: {
       title: 'Comment ça marche',
@@ -1495,6 +1698,41 @@ export const translations: Record<Locale, Translations> = {
       addProperty: 'Añadir propiedad',
       browseProperties: 'Ver anuncios',
     },
+    homePage: {
+      testimonialsTitle: 'Lo que dicen nuestros clientes',
+      testimonials: [
+        {
+          name: 'Sarah Mitchell',
+          role: 'Inversora',
+          text: 'CIAR hizo que encontrar propiedades de lujo fuera muy fácil. La plataforma es intuitiva y los agentes son excelentes.',
+        },
+        {
+          name: 'Ahmed Al-Rashid',
+          role: 'Propietario',
+          text: 'Publiqué mis propiedades en CIAR y recibí consultas de calidad en pocos días. Una plataforma verdaderamente global.',
+        },
+        {
+          name: 'Elena Kowalski',
+          role: 'Compradora',
+          text: 'Desde la búsqueda hasta el cierre, CIAR ofreció una experiencia fluida. Muy recomendable.',
+        },
+      ],
+      featuresSubtitle: 'Descubre las herramientas que distinguen a CIAR',
+      features: {
+        aiValuations: 'Valoraciones IA',
+        virtualTours: 'Visitas virtuales',
+        marketInsights: 'Perspectivas del mercado',
+        analytics: 'Analítica',
+        hotDeals: 'Ofertas exclusivas',
+        greenHomes: 'Hogares ecológicos',
+        smartHomes: 'Hogares inteligentes',
+        instantAlerts: 'Alertas instantáneas',
+        verifiedListings: 'Anuncios verificados',
+        secureTransactions: 'Transacciones seguras',
+        premiumSupport: 'Soporte premium',
+        featuredAgent: 'Agente destacado',
+      },
+    },
     property: {
       featured: 'Destacado',
       forSale: 'En venta',
@@ -1511,6 +1749,8 @@ export const translations: Record<Locale, Translations> = {
       amenities: 'Comodidades',
       agentInfo: 'Info del agente',
       contactAgent: 'Contactar agente',
+      contactAdvertiser: 'Contactar anunciante',
+      chatOnWhatsApp: 'Chatear en WhatsApp',
       sendMessage: 'Enviar mensaje',
       location: 'Ubicación',
       back: 'Volver',
@@ -1759,6 +1999,26 @@ export const translations: Record<Locale, Translations> = {
       securePayments: 'Métodos de pago',
       paymentMethodsSubtitle: '11 opciones de pago seguras para reservas y compras',
       support247: 'Soporte 24/7',
+      brandDescription:
+        'CIAR es tu directorio inmobiliario global de confianza. Descubre propiedades premium en más de 60 países con herramientas de IA, análisis inteligentes, agentes verificados y transacciones seguras.',
+      newsletterBody:
+        'Mantente al día con las últimas propiedades de lujo y ofertas exclusivas seleccionadas para ti.',
+      noSpam: 'Sin spam, cancela cuando quieras',
+      thanksSubscribe: '¡Gracias por suscribirte!',
+      subscribeSuccess: '¡Suscripción exitosa!',
+      countriesBadge: '60+ países',
+      propertiesBadge: '10K+ propiedades',
+      verifiedAgents: 'Agentes verificados',
+      trustedNetwork: 'Red de confianza',
+      protectedLabel: 'Protegido',
+      topLocationsList: [
+        { city: 'Nueva York', country: 'Estados Unidos' },
+        { city: 'Londres', country: 'Reino Unido' },
+        { city: 'Riad', country: 'Arabia Saudita' },
+        { city: 'París', country: 'Francia' },
+        { city: 'Tokio', country: 'Japón' },
+        { city: 'Dubái', country: 'EAU' },
+      ],
     },
     howItWorks: {
       title: 'Cómo funciona',
@@ -1856,6 +2116,41 @@ export const translations: Record<Locale, Translations> = {
       addProperty: 'Emlak ekle',
       browseProperties: 'İlanlara göz at',
     },
+    homePage: {
+      testimonialsTitle: 'Müşterilerimiz ne diyor',
+      testimonials: [
+        {
+          name: 'Sarah Mitchell',
+          role: 'Yatırımcı',
+          text: 'CIAR lüks mülk bulmayı çok kolaylaştırdı. Platform sezgisel ve danışmanlar birinci sınıf.',
+        },
+        {
+          name: 'Ahmed Al-Rashid',
+          role: 'Mülk Sahibi',
+          text: 'İlanlarımı CIAR\'a ekledim ve günler içinde kaliteli talepler aldım. Gerçekten küresel bir platform.',
+        },
+        {
+          name: 'Elena Kowalski',
+          role: 'Alıcı',
+          text: 'Aramadan kapanışa kadar CIAR sorunsuz bir deneyim sundu. Kesinlikle tavsiye ederim.',
+        },
+      ],
+      featuresSubtitle: 'CIAR\'ı farklı kılan araçları keşfedin',
+      features: {
+        aiValuations: 'Yapay Zeka Değerleme',
+        virtualTours: 'Sanal Turlar',
+        marketInsights: 'Piyasa Analizleri',
+        analytics: 'Analitik',
+        hotDeals: 'Özel Fırsatlar',
+        greenHomes: 'Yeşil Evler',
+        smartHomes: 'Akıllı Evler',
+        instantAlerts: 'Anlık Bildirimler',
+        verifiedListings: 'Doğrulanmış İlanlar',
+        secureTransactions: 'Güvenli İşlemler',
+        premiumSupport: 'Premium Destek',
+        featuredAgent: 'Öne Çıkan Danışman',
+      },
+    },
     property: {
       featured: 'Öne Çıkan',
       forSale: 'Satılık',
@@ -1872,6 +2167,8 @@ export const translations: Record<Locale, Translations> = {
       amenities: 'Olanaklar',
       agentInfo: 'Danışman Bilgisi',
       contactAgent: 'Danışmanla İletişim',
+      contactAdvertiser: 'İlan sahibiyle iletişim',
+      chatOnWhatsApp: 'WhatsApp\'ta yaz',
       sendMessage: 'Mesaj Gönder',
       location: 'Konum',
       back: 'Geri',
@@ -2120,6 +2417,26 @@ export const translations: Record<Locale, Translations> = {
       securePayments: 'Ödeme yöntemleri',
       paymentMethodsSubtitle: 'Rezervasyon ve satın alma için 11 güvenilir ödeme seçeneği',
       support247: '7/24 Destek',
+      brandDescription:
+        'CIAR, güvenilir küresel emlak rehberinizdir. Yapay zeka araçları, akıllı analizler, doğrulanmış danışmanlar ve güvenli işlemlerle 60\'tan fazla ülkede premium mülkler keşfedin.',
+      newsletterBody:
+        'Sizin için seçilmiş en yeni lüks mülkler ve özel tekliflerden haberdar olun.',
+      noSpam: 'Spam yok, istediğiniz zaman abonelikten çıkın',
+      thanksSubscribe: 'Abone olduğunuz için teşekkürler!',
+      subscribeSuccess: 'Başarıyla abone olundu!',
+      countriesBadge: '60+ Ülke',
+      propertiesBadge: '10B+ İlan',
+      verifiedAgents: 'Doğrulanmış Danışmanlar',
+      trustedNetwork: 'Güvenilir Ağ',
+      protectedLabel: 'Korumalı',
+      topLocationsList: [
+        { city: 'New York', country: 'Amerika Birleşik Devletleri' },
+        { city: 'Londra', country: 'Birleşik Krallık' },
+        { city: 'Riyad', country: 'Suudi Arabistan' },
+        { city: 'Paris', country: 'Fransa' },
+        { city: 'Tokyo', country: 'Japonya' },
+        { city: 'Dubai', country: 'BAE' },
+      ],
     },
     howItWorks: {
       title: 'Nasıl Çalışır',

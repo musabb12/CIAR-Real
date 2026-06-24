@@ -1,6 +1,15 @@
 import { ISO_ALPHA2_CODES } from '@/data/iso-alpha2-codes';
+import type { Locale } from '@/lib/i18n';
 
 const FLAG_CDN = 'https://flagcdn.com';
+
+const DISPLAY_LOCALE: Record<Locale, string> = {
+  en: 'en',
+  ar: 'ar',
+  fr: 'fr',
+  es: 'es',
+  tr: 'tr',
+};
 
 /** PNG flag image URL (not emoji). */
 export function flagImageUrl(code: string, width: 20 | 40 | 80 | 160 = 80): string {
@@ -26,10 +35,12 @@ export function isFlagEmoji(value: string | null | undefined): boolean {
   return /\p{Regional_Indicator}/u.test(value) || /[\u{1F1E6}-\u{1F1FF}]/u.test(value);
 }
 
-export function countryDisplayName(code: string, locale: 'ar' | 'en'): string {
-  const upper = code.toUpperCase();
+export function countryDisplayName(code: string, locale: Locale = 'en'): string {
+  const upper = code.trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(upper)) return upper;
+  const tag = DISPLAY_LOCALE[locale] ?? 'en';
   try {
-    const dn = new Intl.DisplayNames([locale], { type: 'region' });
+    const dn = new Intl.DisplayNames([tag], { type: 'region' });
     return dn.of(upper) ?? upper;
   } catch {
     return upper;
@@ -42,7 +53,7 @@ export interface WorldFlagOption {
   imageUrl: string;
 }
 
-export function listWorldFlagOptions(locale: 'ar' | 'en'): WorldFlagOption[] {
+export function listWorldFlagOptions(locale: Locale): WorldFlagOption[] {
   return ISO_ALPHA2_CODES.map((code) => ({
     code,
     name: countryDisplayName(code, locale),

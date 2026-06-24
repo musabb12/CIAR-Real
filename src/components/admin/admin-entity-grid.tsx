@@ -62,6 +62,10 @@ export interface AdminEntityGridProps<T extends { id?: string }> {
   renderCardActions?: (item: T) => ReactNode;
   /** Items added locally (e.g. after create while list fetch is unavailable) */
   localItems?: T[];
+  /** Extra text included when filtering the search box */
+  getSearchText?: (item: T) => string;
+  /** Optional client-side sort (e.g. localized country names) */
+  sortItems?: (a: T, b: T) => number;
   /** If false, whole card is not a single click target */
   cardClickable?: boolean;
 }
@@ -86,6 +90,8 @@ export function AdminEntityGrid<T extends { id?: string }>({
   renderCardActions,
   localItems,
   cardClickable = true,
+  getSearchText,
+  sortItems,
 }: AdminEntityGridProps<T>) {
   const [items, setItems] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
@@ -147,13 +153,21 @@ export function AdminEntityGrid<T extends { id?: string }>({
     if (!search.trim()) return items;
     const q = search.toLowerCase();
     return items.filter((row) => {
+      if (getSearchText) {
+        return getSearchText(row).toLowerCase().includes(q);
+      }
       const obj = row as Record<string, unknown>;
       if (searchKeys?.length) {
         return searchKeys.some((k) => String(obj[k as string] ?? '').toLowerCase().includes(q));
       }
       return JSON.stringify(row).toLowerCase().includes(q);
     });
-  }, [items, search, searchKeys]);
+  }, [items, search, searchKeys, getSearchText]);
+
+  const visibleItems = useMemo(() => {
+    if (!sortItems) return filtered;
+    return [...filtered].sort(sortItems);
+  }, [filtered, sortItems]);
 
   return (
     <div className="space-y-4">
@@ -210,7 +224,7 @@ export function AdminEntityGrid<T extends { id?: string }>({
         <div className="py-16 flex justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-[#f5c97b]" />
         </div>
-      ) : filtered.length === 0 ? (
+      ) : visibleItems.length === 0 ? (
         <div className="admin-card py-16 flex flex-col items-center gap-2 text-center">
           <Inbox className="h-10 w-10 text-[var(--admin-text-faint)]" />
           <p className="text-sm text-[var(--admin-text-mute)]">
@@ -219,7 +233,7 @@ export function AdminEntityGrid<T extends { id?: string }>({
         </div>
       ) : (
         <div className={columnsClassName}>
-          {filtered.map((item, i) => (
+          {visibleItems.map((item, i) => (
             <div
               key={item.id ?? i}
               className="admin-card p-0 overflow-hidden flex flex-col transition-all hover:border-amber-400/35 hover:shadow-lg hover:shadow-amber-500/10"

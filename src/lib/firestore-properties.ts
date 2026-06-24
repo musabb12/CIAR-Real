@@ -18,6 +18,7 @@ import {
   sortByCreatedDesc,
   toIso,
 } from '@/lib/firestore-shared';
+import { sortPropertiesByCountry } from '@/lib/property-sort';
 import type {
   Agent,
   Country,
@@ -194,6 +195,7 @@ export function firestoreDocToProperty(id: string, data: Record<string, unknown>
     latitude: asNullableNumber(data.latitude),
     longitude: asNullableNumber(data.longitude),
     agentId: asNullableString(data.agentId),
+    commissionPercent: asNullableNumber(data.commissionPercent),
     createdAt: toIso(data.createdAt),
     updatedAt: toIso(data.updatedAt),
     country,
@@ -291,8 +293,9 @@ export async function listPropertiesFromFirestore(
     });
   }
 
-  if (q.sort === 'price_asc') rows = [...rows].sort((a, b) => a.price - b.price);
-  else if (q.sort === 'price_desc') rows = [...rows].sort((a, b) => b.price - a.price);
+  if (q.sort === 'price_asc' || q.sort === 'price-asc') rows = [...rows].sort((a, b) => a.price - b.price);
+  else if (q.sort === 'price_desc' || q.sort === 'price-desc') rows = [...rows].sort((a, b) => b.price - a.price);
+  else if (q.sort === 'country') rows = sortPropertiesByCountry(rows);
   else rows = sortByCreatedDesc(rows);
 
   const total = rows.length;
@@ -346,6 +349,7 @@ type PropertyWriteInput = {
   latitude?: number | string | null;
   longitude?: number | string | null;
   agentId?: string | null;
+  commissionPercent?: number | string | null;
   images?: Array<{ id?: string; url: string; alt?: string | null; isCover?: boolean; order?: number }>;
   amenityIds?: string[];
   slug?: string;
@@ -428,6 +432,9 @@ async function buildStoredProperty(
     latitude: asNullableNumber(input.latitude),
     longitude: asNullableNumber(input.longitude),
     agentId: input.agentId ?? null,
+    commissionPercent: asNullableNumber(
+      input.commissionPercent !== undefined ? input.commissionPercent : existing?.commissionPercent
+    ),
     createdAt,
     updatedAt: nowIso(),
     country: location.country,
@@ -493,6 +500,7 @@ export async function updatePropertyInFirestore(
     latitude: input.latitude ?? existing.latitude,
     longitude: input.longitude ?? existing.longitude,
     agentId: input.agentId ?? existing.agentId,
+    commissionPercent: input.commissionPercent ?? existing.commissionPercent,
     images: input.images ?? existing.images,
     amenityIds: input.amenityIds,
     slug: input.slug ?? existing.slug,

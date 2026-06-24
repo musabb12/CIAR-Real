@@ -47,6 +47,7 @@ async function registerWithFirestore(input: {
   phone?: string | null;
   role: ReturnType<typeof accountTypeToRole>;
   companyName?: string;
+  whatsapp?: string | null;
 }) {
   const existingUser = await getUserByEmail(input.email.toLowerCase());
   if (existingUser) {
@@ -69,6 +70,7 @@ async function registerWithFirestore(input: {
       role: input.role,
       name: input.name,
       phone: input.phone,
+      whatsapp: input.whatsapp,
       companyName: input.companyName ?? null,
     });
   }
@@ -84,7 +86,7 @@ async function registerWithFirestore(input: {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, password, phone, accountType, companyName } = body;
+    const { name, email, password, phone, whatsapp, accountType, companyName } = body;
 
     if (email && typeof email === 'string') {
       const rate = checkRegisterRateLimit(request, email);
@@ -133,9 +135,21 @@ export async function POST(request: NextRequest) {
       email: normalizedEmail,
       password,
       phone: typeof phone === 'string' && phone.trim().length > 0 ? phone.trim() : null,
+      whatsapp:
+        typeof whatsapp === 'string' && whatsapp.trim().length > 0 ? whatsapp.trim() : null,
       role,
       companyName: typeof companyName === 'string' ? companyName.trim() : undefined,
     };
+
+    if (
+      (normalizedAccountType === 'OWNER' || normalizedAccountType === 'COMPANY') &&
+      !payload.whatsapp
+    ) {
+      return NextResponse.json(
+        { error: 'WhatsApp number is required for partner accounts' },
+        { status: 400 },
+      );
+    }
 
     const useLocalOnly = !isFirebaseAdminConfigured();
     let result: Awaited<ReturnType<typeof registerWithFirestore>> | null = null;

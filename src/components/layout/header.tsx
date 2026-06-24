@@ -36,6 +36,7 @@ import { useTranslation } from '@/lib/i18n/use-translation';
 import { locales, type Locale } from '@/lib/i18n';
 import { mapAuthApiError } from '@/lib/auth-errors';
 import { navigateToAddListing } from '@/lib/navigate-add-listing';
+import { CurrencySwitcher } from '@/components/layout/currency-switcher';
 
 // ============================================================
 // Navigation Configuration
@@ -125,6 +126,7 @@ export function Header() {
     setCurrentPage,
     setAdminTab,
     setRegisterAccountTypePreset,
+    setPartnerPendingAddListing,
     currentUser,
     isAuthenticated,
     login,
@@ -292,6 +294,7 @@ export function Header() {
       setCurrentPage,
       setAdminTab,
       setRegisterAccountTypePreset,
+      setPartnerPendingAddListing,
     });
     setMobileMenuOpen(false);
     setUserMenuOpen(false);
@@ -448,6 +451,17 @@ export function Header() {
                 </span>
               )}
             </Button>
+
+            <CurrencySwitcher
+              variant="site"
+              buttonClassName={
+                scrolled
+                  ? ''
+                  : isDark
+                    ? '[&_svg]:text-white/70 [&_span]:text-white/70'
+                    : '[&_svg]:text-gray-500 [&_span]:text-gray-600'
+              }
+            />
 
             {/* ---- Language Switcher ---- */}
             <div className="relative">
@@ -667,6 +681,20 @@ export function Header() {
                 />
               </div>
             </form>
+          </div>
+
+          {/* Mobile lang + currency */}
+          <div className="flex items-center gap-2 px-4 pt-4 sm:px-6">
+            <CurrencySwitcher variant="site" showCode className="flex-1" />
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1 rounded-xl"
+              onClick={() => setLocale(locale === 'ar' ? 'en' : 'ar')}
+            >
+              <Globe className="h-3.5 w-3.5 me-1.5" />
+              {locale === 'ar' ? 'English' : 'العربية'}
+            </Button>
           </div>
 
           {/* Mobile Nav Items */}

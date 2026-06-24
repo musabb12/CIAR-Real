@@ -13,8 +13,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
+import { useLocalizedCountryName } from '@/hooks/use-localized-country-name';
+import { useSiteCurrency } from '@/hooks/use-site-currency';
 import { PageHero } from '@/components/layout/page-hero';
 import type { Agent, Property } from '@/types';
+import { buildWhatsAppUrl } from '@/lib/whatsapp';
 
 // ─── Component ──────────────────────────────────────────────────
 export function AgentsPage() {
@@ -231,10 +234,16 @@ export function AgentsPage() {
                 </div>
               )}
               {selectedAgent.whatsapp && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <MessageCircle className="h-4 w-4 text-emerald-500" />
-                  WhatsApp
-                </div>
+                <Button asChild className="rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white">
+                  <a
+                    href={buildWhatsAppUrl(selectedAgent.whatsapp) ?? '#'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <MessageCircle className="h-4 w-4 me-2" />
+                    {t.property.contactAdvertiser}
+                  </a>
+                </Button>
               )}
               {selectedAgent.license && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -394,6 +403,8 @@ function AgentPropertyCard({
   onClick: (property: Property) => void;
 }) {
   const { t } = useTranslation();
+  const { formatPrice } = useSiteCurrency();
+  const countryLabel = useLocalizedCountryName();
   const coverUrl = property.images?.[0]?.url;
 
   return (
@@ -416,7 +427,7 @@ function AgentPropertyCard({
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
         <div className="absolute bottom-2 right-2 glass-badge rounded-lg px-2 py-1">
           <span className="text-xs font-bold text-white">
-            ${property.price.toLocaleString()}
+            {formatPrice(property.price, property.country?.currency)}
           </span>
         </div>
       </div>
@@ -425,7 +436,9 @@ function AgentPropertyCard({
         <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
           <MapPin className="h-3 w-3 shrink-0" />
           <span className="truncate">
-            {[property.city?.name, property.country?.name].filter(Boolean).join(', ')}
+            {[property.city?.name, property.country ? countryLabel(property.country) : null]
+              .filter(Boolean)
+              .join(', ')}
           </span>
         </div>
         <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground">

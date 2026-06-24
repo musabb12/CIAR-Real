@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Search, SlidersHorizontal, X, ChevronLeft, ChevronRight,
   Building2, MapPin, Bed, Bath, Maximize, ArrowUpDown,
@@ -23,6 +23,8 @@ import { PropertyCard } from '@/components/property/property-card';
 import { PageHero } from '@/components/layout/page-hero';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
+import { sortCountriesByLabel } from '@/lib/localize-country';
+import { CountryFlagLabel } from '@/components/ui/country-flag-label';
 import type { Property, Country, PaginatedResponse, PropertyFilters } from '@/types';
 import { normalizeLocationsResponse } from '@/lib/normalize-locations';
 
@@ -42,11 +44,15 @@ const propertyTypeIcons: Record<string, React.ElementType> = {
 
 // ─── Component ──────────────────────────────────────────────────
 export function SearchPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const { filters, setFilters, resetFilters, setCurrentPage } = useAppStore();
 
   const [properties, setProperties] = useState<Property[]>([]);
   const [countries, setCountries] = useState<Country[]>([]);
+  const sortedCountries = useMemo(
+    () => sortCountriesByLabel(countries, locale),
+    [countries, locale],
+  );
   const [loading, setLoading] = useState(true);
   const [totalResults, setTotalResults] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
@@ -198,6 +204,7 @@ export function SearchPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
               {/* Country */}
               <Select
+                key={`search-country-${locale}`}
                 value={filters.countryId || ''}
                 onValueChange={(v) => setFilters({ countryId: v || undefined, page: 1 })}
               >
@@ -206,9 +213,9 @@ export function SearchPage() {
                   <SelectValue placeholder={t.search.allCountries} />
                 </SelectTrigger>
                 <SelectContent>
-                  {countries.map((c) => (
+                  {sortedCountries.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
-                      {c.flag ? `${c.flag} ` : ''}{c.name}
+                      <CountryFlagLabel country={c} />
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -2,6 +2,7 @@
 
 import { Menu, Globe, Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { CurrencySwitcher } from '@/components/layout/currency-switcher';
 
 interface Props {
   isAr: boolean;
@@ -45,6 +46,8 @@ export function AdminTopbar({
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0">
+          <CurrencySwitcher variant="admin" showCode />
+
           <button
             type="button"
             className="admin-icon-btn"

@@ -67,6 +67,7 @@ export function AgentSettingsPanel({ agentId, isAr, onBack, onUpdated }: Props) 
     whatsapp: '',
     experience: '',
     verified: false,
+    defaultCommissionPercent: '',
   });
   const [permissions, setPermissions] = useState<AdminPermissionMap>(() =>
     defaultPermissionMap(AGENT_ADMIN_PERMISSIONS)
@@ -87,6 +88,8 @@ export function AgentSettingsPanel({ agentId, isAr, onBack, onUpdated }: Props) 
         whatsapp: data.whatsapp ?? '',
         experience: data.experience != null ? String(data.experience) : '',
         verified: Boolean(data.verified),
+        defaultCommissionPercent:
+          data.defaultCommissionPercent != null ? String(data.defaultCommissionPercent) : '',
       });
       setPermissions(normalizeAdminPermissions(data.adminPermissions, AGENT_ADMIN_PERMISSIONS));
       setTasks(normalizeAdminTasks(data.adminTasks));
@@ -117,6 +120,9 @@ export function AgentSettingsPanel({ agentId, isAr, onBack, onUpdated }: Props) 
           whatsapp: form.whatsapp || null,
           experience: form.experience ? Number(form.experience) : null,
           verified: form.verified,
+          defaultCommissionPercent: form.defaultCommissionPercent.trim()
+            ? Number(form.defaultCommissionPercent)
+            : null,
           adminPermissions: permissions,
           adminTasks: tasks,
         }),
@@ -243,6 +249,18 @@ export function AgentSettingsPanel({ agentId, isAr, onBack, onUpdated }: Props) 
                   className="admin-input"
                   value={form.experience}
                   onChange={(e) => setForm({ ...form, experience: e.target.value })}
+                />
+              </Field>
+              <Field label={tx('العمولة الافتراضية (%)', 'Default commission (%)')}>
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={0.01}
+                  className="admin-input"
+                  value={form.defaultCommissionPercent}
+                  onChange={(e) => setForm({ ...form, defaultCommissionPercent: e.target.value })}
+                  placeholder="2.5"
                 />
               </Field>
             </div>

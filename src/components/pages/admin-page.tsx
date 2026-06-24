@@ -12,6 +12,7 @@ import { AdminSidebar } from '@/components/admin/admin-sidebar';
 import { AdminTopbar } from '@/components/admin/admin-topbar';
 import { AdminDashboard } from '@/components/admin/admin-dashboard';
 import { ADMIN_NAV, type AdminTabId } from '@/components/admin/admin-nav';
+import { SubscriptionsTab } from '@/components/admin/subscriptions-tab';
 import {
   PropertiesTab,
   FeaturedTab,
@@ -52,8 +53,8 @@ interface AdminStats {
 
 export function AdminPage() {
   const router = useRouter();
-  const { rtl } = useTranslation();
-  const { currentUser, isAuthenticated, logout, setCurrentPage, locale, setLocale } = useAppStore();
+  const { rtl, locale, setLocale } = useTranslation();
+  const { currentUser, isAuthenticated, logout, setCurrentPage } = useAppStore();
 
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [activeTab, setActiveTab] = useState<AdminTabId>('dashboard');
@@ -77,7 +78,7 @@ export function AdminPage() {
     [navigateTab, setContentManagerTargetPage],
   );
 
-  const isAr = rtl;
+  const isAr = locale === 'ar';
   const tx = (ar: string, en: string) => (isAr ? ar : en);
   const isAdmin = isAuthenticated && currentUser?.role === 'ADMIN';
 
@@ -117,6 +118,7 @@ export function AdminPage() {
       users: { ar: 'حسابات المستخدمين', en: 'User accounts' },
       agents: { ar: 'الوكلاء', en: 'Agents' },
       companies: { ar: 'الشركات', en: 'Companies' },
+      subscriptions: { ar: 'اشتراكات الشركاء', en: 'Partner subscriptions' },
       inquiries: { ar: 'رسائل العملاء', en: 'Messages' },
       reviews: { ar: 'التقييمات', en: 'Reviews' },
       favorites: { ar: 'المفضلة', en: 'Favorites' },
@@ -197,13 +199,15 @@ export function AdminPage() {
       case 'featured':
         return <FeaturedTab isAr={isAr} />;
       case 'locations':
-        return <LocationsTab isAr={isAr} />;
+        return <LocationsTab isAr={isAr} onNavigateTab={navigateTab} />;
       case 'users':
         return <UsersTab isAr={isAr} />;
       case 'agents':
         return <AgentsTab isAr={isAr} />;
       case 'companies':
         return <CompaniesTab isAr={isAr} />;
+      case 'subscriptions':
+        return <SubscriptionsTab isAr={isAr} />;
       case 'inquiries':
         return <InquiriesTab isAr={isAr} />;
       case 'reviews':

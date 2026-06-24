@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
   const areaMax = searchParams.get('areaMax');
   const isFeatured = searchParams.get('isFeatured');
   const search = searchParams.get('search');
-  const sort = searchParams.get('sort') || 'newest';
+  const sort = searchParams.get('sort') || (isAdmin ? 'country' : 'newest');
 
   const queryParams = {
     countryId,
@@ -144,6 +144,7 @@ export async function POST(request: NextRequest) {
       latitude: body.latitude,
       longitude: body.longitude,
       agentId: body.agentId,
+      commissionPercent: body.commissionPercent,
       images: body.images,
       amenityIds: body.amenityIds,
     });

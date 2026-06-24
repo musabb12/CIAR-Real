@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
+import { useSiteCurrency } from '@/hooks/use-site-currency';
 import type { AppPage, Transaction } from '@/types';
 import { toast } from 'sonner';
 
@@ -29,6 +30,7 @@ function transactionCover(txn: Transaction): string {
 
 export function CheckoutCompletePage() {
   const { rtl } = useTranslation();
+  const { formatPrice } = useSiteCurrency();
   const { checkoutTransactionId, setCurrentPage, setCheckoutTransactionId } = useAppStore();
   const [txn, setTxn] = useState<Transaction | null>(null);
   const [loading, setLoading] = useState(true);
@@ -47,9 +49,9 @@ export function CheckoutCompletePage() {
       .finally(() => setLoading(false));
   }, [checkoutTransactionId]);
 
-  const currency = txn?.currencySymbol ?? txn?.property?.country?.currencySymbol ?? '$';
   const coverImage = txn ? transactionCover(txn) : FALLBACK_IMAGE;
   const shellStyle = { ['--auth-image' as string]: `url('${coverImage}')` };
+  const sourceCurrency = txn?.property?.country?.currency;
 
   const copyId = () => {
     if (!txn?.id) return;
@@ -71,7 +73,8 @@ export function CheckoutCompletePage() {
         tx={tx}
         loading={loading}
         txn={txn}
-        currency={currency}
+        formatPrice={formatPrice}
+        sourceCurrency={sourceCurrency}
         copyId={copyId}
         setCurrentPage={setCurrentPage}
         setCheckoutTransactionId={setCheckoutTransactionId}
@@ -85,7 +88,8 @@ function CompleteContent({
   tx,
   loading,
   txn,
-  currency,
+  formatPrice,
+  sourceCurrency,
   copyId,
   setCurrentPage,
   setCheckoutTransactionId,
@@ -94,7 +98,8 @@ function CompleteContent({
   tx: (ar: string, en: string) => string;
   loading: boolean;
   txn: Transaction | null;
-  currency: string;
+  formatPrice: (amount: number, sourceCurrency?: string | null) => string;
+  sourceCurrency?: string | null;
   copyId: () => void;
   setCurrentPage: (page: AppPage) => void;
   setCheckoutTransactionId: (id: string | null) => void;
@@ -158,7 +163,7 @@ function CompleteContent({
             <ReceiptRow label={tx('العقار', 'Property')} value={txn.property?.title ?? '—'} />
             <ReceiptRow
               label={tx('المبلغ المدفوع', 'Amount paid')}
-              value={`${currency}${txn.amount.toLocaleString('en-US')}`}
+              value={txn.amount != null ? formatPrice(txn.amount, sourceCurrency) : '—'}
               highlight
             />
             <ReceiptRow

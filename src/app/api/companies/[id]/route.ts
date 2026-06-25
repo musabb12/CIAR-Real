@@ -4,8 +4,29 @@ import {
   updateCompanyInFirestore,
 } from '@/lib/firestore-platform';
 import { isFirebaseAdminConfigured } from '@/lib/firebase-admin';
-import { getDemoCompanyById } from '@/lib/demo-admin-data';
+import { getDemoCompanyById, listDemoAgents } from '@/lib/demo-admin-data';
+import { listDemoProperties } from '@/lib/demo-properties';
+import { listMarketplacePropertiesForCompany } from '@/lib/demo-marketplace';
 import { isFirestoreQuotaError } from '@/lib/firestore-read-cache';
+
+function enrichDemoCompany(id: string) {
+  const company = getDemoCompanyById(id);
+  if (!company) return null;
+  const agents = listDemoAgents(company.countryId ?? null).filter((a) => a.companyId === id);
+  const marketplaceProps = listMarketplacePropertiesForCompany(id);
+  const properties =
+    marketplaceProps.length > 0
+      ? marketplaceProps
+      : listDemoProperties({
+          countryId: company.countryId ?? null,
+          admin: true,
+          limit: 500,
+        }).data.filter((p) => {
+          const suffix = id.split('-').pop() ?? '';
+          return p.id.includes(`-company-${suffix}-`);
+        });
+  return { ...company, agents, properties, listingCount: properties.length, agentCount: agents.length };
+}
 
 export async function GET(
   _request: NextRequest,
@@ -14,7 +35,7 @@ export async function GET(
   const { id } = await params;
 
   if (!isFirebaseAdminConfigured()) {
-    const demo = getDemoCompanyById(id);
+    const demo = enrichDemoCompany(id);
     if (!demo) {
       return NextResponse.json({ error: 'Company not found' }, { status: 404 });
     }
@@ -24,14 +45,14 @@ export async function GET(
   try {
     const company = await getCompanyDetailFromFirestore(id);
     if (!company) {
-      const demo = getDemoCompanyById(id);
+      const demo = enrichDemoCompany(id);
       if (demo) return NextResponse.json(demo);
       return NextResponse.json({ error: 'Company not found' }, { status: 404 });
     }
     return NextResponse.json(company);
   } catch (error) {
     console.error('Error fetching company:', error);
-    const demo = getDemoCompanyById(id);
+    const demo = enrichDemoCompany(id);
     if (demo) return NextResponse.json(demo);
     if (isFirestoreQuotaError(error)) {
       return NextResponse.json({ error: 'Company not found' }, { status: 404 });

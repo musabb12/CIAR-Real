@@ -14,9 +14,9 @@ const DEMO_COMPANIES: Array<
 > = [
   {
     id: 'demo-company-global',
-    name: 'Global Realty Partners',
+    name: 'شركة الشركاء العقاريون العالمية',
     logo: null,
-    description: 'Leading international real estate firm across 30 countries.',
+    description: 'شركة عقارية دولية رائدة تعمل في أكثر من 30 دولة حول العالم.',
     phone: '+1-800-555-0101',
     email: 'info@globalrealty.com',
     website: 'https://globalrealty.com',
@@ -30,9 +30,9 @@ const DEMO_COMPANIES: Array<
   },
   {
     id: 'demo-company-prestige',
-    name: 'Prestige Homes International',
+    name: 'شركة بريستيج للعقارات الدولية',
     logo: null,
-    description: 'Premium villas and waterfront properties in the Gulf and Europe.',
+    description: 'فلل فاخرة وعقارات على الواجهة البحرية في الخليج وأوروبا.',
     phone: '+44-20-7946-0958',
     email: 'contact@prestigehomes.com',
     website: 'https://prestigehomes.com',
@@ -46,9 +46,9 @@ const DEMO_COMPANIES: Array<
   },
   {
     id: 'demo-company-arabian',
-    name: 'Arabian Estates',
+    name: 'شركة العقارات العربية',
     logo: null,
-    description: 'Trusted residential and commercial agency across the Arab world.',
+    description: 'وكالة موثوقة للعقارات السكنية والتجارية في جميع أنحاء العالم العربي.',
     phone: '+971-4-555-0202',
     email: 'sales@arabianestates.ae',
     website: 'https://arabianestates.ae',
@@ -69,7 +69,7 @@ const DEMO_AGENTS: Array<Agent & { _count: { properties: number } }> = [
     user: {
       id: 'demo-user-sarah',
       email: 'sarah.johnson@globalrealty.com',
-      name: 'Sarah Johnson',
+      name: 'سارة جونسون',
       phone: '+1-555-0101',
       avatar: null,
       role: 'AGENT',
@@ -77,8 +77,8 @@ const DEMO_AGENTS: Array<Agent & { _count: { properties: number } }> = [
       createdAt: ISO,
       updatedAt: ISO,
     },
-    bio: 'Luxury residential specialist across North America and Europe.',
-    title: 'Senior Real Estate Agent',
+    bio: 'متخصصة في العقارات السكنية الفاخرة في أمريكا الشمالية وأوروبا.',
+    title: 'وكيلة عقارات أولى',
     license: 'REA-2010-4521',
     phone: '+1-555-0101',
     whatsapp: '+1-555-0101',
@@ -99,7 +99,7 @@ const DEMO_AGENTS: Array<Agent & { _count: { properties: number } }> = [
     user: {
       id: 'demo-user-ahmed',
       email: 'ahmed.hassan@arabianestates.ae',
-      name: 'Ahmed Hassan',
+      name: 'أحمد حسن',
       phone: '+971-555-0202',
       avatar: null,
       role: 'AGENT',
@@ -107,8 +107,8 @@ const DEMO_AGENTS: Array<Agent & { _count: { properties: number } }> = [
       createdAt: ISO,
       updatedAt: ISO,
     },
-    bio: 'Gulf region expert in luxury villas and penthouses.',
-    title: 'Luxury Property Specialist',
+    bio: 'خبير في منطقة الخليج — فلل فاخرة وشقق بنتهاوس.',
+    title: 'متخصص العقارات الفاخرة',
     license: 'DRE-2015-7832',
     phone: '+971-555-0202',
     whatsapp: '+971-555-0202',
@@ -129,7 +129,7 @@ const DEMO_AGENTS: Array<Agent & { _count: { properties: number } }> = [
     user: {
       id: 'demo-user-kenji',
       email: 'kenji.tanaka@horizonproperty.sg',
-      name: 'Kenji Tanaka',
+      name: 'كينجي تاناكا',
       phone: '+65-555-0404',
       avatar: null,
       role: 'AGENT',
@@ -137,8 +137,8 @@ const DEMO_AGENTS: Array<Agent & { _count: { properties: number } }> = [
       createdAt: ISO,
       updatedAt: ISO,
     },
-    bio: 'Asia-Pacific market expert for premium investment properties.',
-    title: 'Asia-Pacific Market Expert',
+    bio: 'خبير في سوق آسيا والمحيط الهادئ للعقارات الاستثمارية المميزة.',
+    title: 'خبير سوق آسيا والمحيط الهادئ',
     license: 'SG-REA-2016-9012',
     phone: '+65-555-0404',
     whatsapp: '+65-555-0404',
@@ -165,6 +165,56 @@ export function listDemoAgents(countryId?: string | null): Array<Agent & { _coun
   const marketplace = listMarketplaceAgents(countryId);
   if (marketplace.length > 0) return marketplace;
   return DEMO_AGENTS.map((row) => ({ ...row }));
+}
+
+/** Merge Firestore agents with marketplace demo agents (10 per country, Arabic). */
+export function mergeMarketplaceAgents(
+  live: Array<Agent & { _count: { properties: number } }>,
+  countryId?: string | null,
+): Array<Agent & { _count: { properties: number } }> {
+  const demo = listDemoAgents(countryId);
+  if (live.length === 0) return demo;
+
+  const byId = new Map<string, Agent & { _count: { properties: number } }>();
+  for (const agent of demo) byId.set(agent.id, agent);
+  for (const agent of live) {
+    if (!byId.has(agent.id)) byId.set(agent.id, agent);
+  }
+
+  return Array.from(byId.values()).sort((a, b) => {
+    const aDemo = a.id.startsWith('mp-ag-') ? 0 : 1;
+    const bDemo = b.id.startsWith('mp-ag-') ? 0 : 1;
+    if (aDemo !== bDemo) return aDemo - bDemo;
+    const ac = a.countryId ?? '';
+    const bc = b.countryId ?? '';
+    if (ac !== bc) return ac.localeCompare(bc);
+    return (a.user?.name ?? '').localeCompare(b.user?.name ?? '', 'ar');
+  });
+}
+
+/** Merge Firestore companies with marketplace demo companies (10 per country, Arabic). */
+export function mergeMarketplaceCompanies(
+  live: Array<Company & { _count?: { agents: number } }>,
+  countryId?: string | null,
+): Array<Company & { _count?: { agents: number } }> {
+  const demo = listDemoCompanies(countryId);
+  if (live.length === 0) return demo;
+
+  const byId = new Map<string, Company & { _count?: { agents: number } }>();
+  for (const company of demo) byId.set(company.id, company);
+  for (const company of live) {
+    if (!byId.has(company.id)) byId.set(company.id, company);
+  }
+
+  return Array.from(byId.values()).sort((a, b) => {
+    const aDemo = a.id.startsWith('mp-co-') ? 0 : 1;
+    const bDemo = b.id.startsWith('mp-co-') ? 0 : 1;
+    if (aDemo !== bDemo) return aDemo - bDemo;
+    const ac = a.countryId ?? '';
+    const bc = b.countryId ?? '';
+    if (ac !== bc) return ac.localeCompare(bc);
+    return (a.name ?? '').localeCompare(b.name ?? '', 'ar');
+  });
 }
 
 export function getDemoAgentById(id: string): (Agent & { _count: { properties: number } }) | null {

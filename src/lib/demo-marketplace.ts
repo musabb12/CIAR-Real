@@ -1,4 +1,4 @@
-import { normalizeFlagStorage } from '@/lib/country-flags';
+import { countryDisplayName, normalizeFlagStorage } from '@/lib/country-flags';
 import { getSeedCountriesCatalog, type CatalogCountry } from '@/lib/seed-countries-catalog';
 import type { Agent, City, Company, Country, ListingType, Property, PropertyType, Region } from '@/types';
 
@@ -19,9 +19,10 @@ const DEMO_IMAGE_POOL = [
   'https://images.unsplash.com/photo-1605276374104-dee2a0ed3cd6?w=1200&q=80',
 ];
 
-const AGENT_FIRST = ['Sarah', 'Ahmed', 'Kenji', 'Maria', 'Omar', 'Elena', 'James', 'Fatima', 'Lucas', 'Aisha'];
-const AGENT_LAST = ['Johnson', 'Hassan', 'Tanaka', 'Garcia', 'Al-Rashid', 'Petrova', 'Smith', 'Khan', 'Müller', 'Silva'];
-const COMPANY_SUFFIX = ['Realty', 'Estates', 'Properties', 'Homes', 'Landmarks', 'Living', 'Capital', 'Premier', 'Global', 'Partners'];
+const AGENT_FIRST = ['سارة', 'أحمد', 'محمد', 'مريم', 'عمر', 'ليلى', 'خالد', 'فاطمة', 'يوسف', 'عائشة'];
+const AGENT_LAST = ['العتيبي', 'الحسن', 'الغامدي', 'الشمري', 'الراشد', 'الزهراني', 'القحطاني', 'الخالد', 'السيد', 'النجار'];
+const AGENT_TITLES = ['وكيل عقاري', 'مستشار عقارات', 'وكيل أول', 'خبير عقاري', 'مدير مبيعات عقارية'];
+const COMPANY_SUFFIX = ['العقارية', 'للعقارات', 'الأملاك', 'للاستثمار', 'الرائدة', 'المتميزة', 'العالمية', 'الفاخرة', 'الذهبية', 'الشركاء'];
 
 const TYPE_AR: Record<PropertyType, string> = {
   APARTMENT: 'شقة',
@@ -39,6 +40,10 @@ const TYPE_AR: Record<PropertyType, string> = {
 const AR_COUNTRY_CODES = new Set([
   'SA', 'AE', 'EG', 'KW', 'QA', 'BH', 'OM', 'JO', 'LB', 'IQ', 'SY', 'PS', 'LY', 'TN', 'DZ', 'MA', 'SD', 'YE', 'MR', 'SO', 'DJ', 'KM',
 ]);
+
+function localizedCountryName(country: CatalogCountry): string {
+  return countryDisplayName(country.code, 'ar');
+}
 
 type LocationPick = { region: Region & { cities?: City[] }; city: City };
 
@@ -112,11 +117,17 @@ function demoListingTitle(
   propertyType: PropertyType,
   listingType: ListingType,
 ): string {
-  if (AR_COUNTRY_CODES.has(country.code.toUpperCase())) {
-    const lt = listingType === 'RENT' ? 'للإيجار' : listingType === 'SHORT_TERM' ? 'إيجار قصير' : 'للبيع';
-    return `${TYPE_AR[propertyType]} ${lt} — ${city.name}`;
-  }
-  return `${propertyType.replace('_', ' ')} ${listingType} — ${city.name}, ${country.name}`;
+  const lt = listingType === 'RENT' ? 'للإيجار' : listingType === 'SHORT_TERM' ? 'إيجار قصير' : 'للبيع';
+  return `${TYPE_AR[propertyType]} ${lt} — ${city.name}`;
+}
+
+function demoListingDescription(
+  country: CatalogCountry,
+  city: City,
+  propertyType: PropertyType,
+): string {
+  const typeAr = TYPE_AR[propertyType];
+  return `${typeAr} مميز في ${city.name}، ${localizedCountryName(country)}. تشطيبات عالية الجودة وموقع استراتيجي قريب من الخدمات.`;
 }
 
 function buildProperty(
@@ -141,7 +152,7 @@ function buildProperty(
     id,
     title: demoListingTitle(country, location.city, propertyType, listingType),
     slug: `mp-${country.id}-${owner.kind}-${seq}`,
-    description: `Premium ${propertyType.toLowerCase()} in ${location.city.name}, ${country.name}.`,
+    description: demoListingDescription(country, location.city, propertyType),
     price,
     listingType,
     propertyType,
@@ -180,6 +191,7 @@ function buildBundleForCountry(country: CatalogCountry): MarketplaceBundle {
   const companies: Array<Company & { _count?: { agents: number } }> = [];
   const agents: Array<Agent & { _count: { properties: number } }> = [];
   const properties: Property[] = [];
+  const countryNameAr = localizedCountryName(country);
 
   for (let i = 0; i < MARKETPLACE_COMPANIES_PER_COUNTRY; i += 1) {
     const idx = i + 1;
@@ -187,13 +199,13 @@ function buildBundleForCountry(country: CatalogCountry): MarketplaceBundle {
     const defaultCommissionPercent = Number((2.5 + (i % 5) * 0.4).toFixed(2));
     companies.push({
       id,
-      name: `${country.name} ${COMPANY_SUFFIX[i % COMPANY_SUFFIX.length]} ${idx}`,
+      name: `شركة ${COMPANY_SUFFIX[i % COMPANY_SUFFIX.length]} ${countryNameAr} ${idx}`,
       logo: null,
-      description: `Trusted real estate company serving ${country.name}.`,
+      description: `شركة عقارية موثوقة تخدم سوق ${countryNameAr} في البيع والإيجار والاستثمار.`,
       phone: `+${1000 + i}-${country.code}-${idx}${idx}`,
       email: `contact${idx}@${country.id}-realty.demo`,
       website: `https://${country.id}-realty-${idx}.demo`,
-      address: `${country.name}`,
+      address: countryNameAr,
       founded: 2005 + (i % 15),
       agentCount: 1,
       listingCount: MARKETPLACE_PROPERTIES_PER_PARTNER,
@@ -228,8 +240,8 @@ function buildBundleForCountry(country: CatalogCountry): MarketplaceBundle {
         createdAt: ISO,
         updatedAt: ISO,
       },
-      bio: `Licensed agent specializing in ${country.name} residential and commercial markets.`,
-      title: i % 3 === 0 ? 'Senior Agent' : 'Property Consultant',
+      bio: `وكيل مرخّص متخصص في السوق العقاري في ${countryNameAr}.`,
+      title: AGENT_TITLES[i % AGENT_TITLES.length],
       license: `${country.code.toUpperCase()}-${2010 + i}-${1000 + idx}`,
       phone: `+${2000 + i}-${country.code}-${idx}`,
       whatsapp: `+${2000 + i}${country.code}${idx}`,
@@ -264,20 +276,21 @@ function buildBundleForCountry(country: CatalogCountry): MarketplaceBundle {
     const base = MARKETPLACE_AGENTS_PER_COUNTRY * MARKETPLACE_PROPERTIES_PER_PARTNER;
     for (let p = 0; p < MARKETPLACE_PROPERTIES_PER_PARTNER; p += 1) {
       const loc = locations[base + i * MARKETPLACE_PROPERTIES_PER_PARTNER + p];
-      const prop = buildProperty(country, loc, p + 10, {
-        kind: 'company',
-        id: company.id,
-        commission: company.defaultCommissionPercent ?? 2.5,
-      });
-      prop.agentId = agents[i]?.id ?? null;
-      properties.push(prop);
+      properties.push(
+        buildProperty(country, loc, p + 10, {
+          kind: 'company',
+          id: company.id,
+          commission: company.defaultCommissionPercent ?? 2.5,
+        }),
+      );
     }
-    company.listingCount = MARKETPLACE_PROPERTIES_PER_PARTNER * 2;
+    company.listingCount = MARKETPLACE_PROPERTIES_PER_PARTNER;
   }
 
   for (const agent of agents) {
-    agent.totalListings = properties.filter((p) => p.agentId === agent.id).length;
-    agent._count.properties = agent.totalListings;
+    const count = properties.filter((p) => p.agentId === agent.id && p.id.includes('-agent-')).length;
+    agent.totalListings = count;
+    agent._count.properties = count;
   }
 
   return { companies, agents, properties };
@@ -354,6 +367,23 @@ export function getMarketplaceCompanyById(id: string): (Company & { _count?: { a
   const bundle = getBundle(countryId);
   const row = bundle?.companies.find((company) => company.id === id);
   return row ? { ...row } : null;
+}
+
+export function listMarketplacePropertiesForCompany(companyId: string): Property[] {
+  if (!companyId.startsWith('mp-co-')) return [];
+  const countryId = companyId.split('-')[2];
+  const suffix = companyId.split('-').pop() ?? '';
+  const bundle = getBundle(countryId);
+  if (!bundle) return [];
+  return bundle.properties.filter((p) => p.id.includes(`-company-${suffix}-`));
+}
+
+export function listMarketplacePropertiesForAgent(agentId: string): Property[] {
+  if (!agentId.startsWith('mp-ag-')) return [];
+  const countryId = agentId.split('-')[2];
+  const bundle = getBundle(countryId);
+  if (!bundle) return [];
+  return bundle.properties.filter((p) => p.agentId === agentId && p.id.includes('-agent-'));
 }
 
 export function getMarketplacePropertyById(id: string): Property | null {

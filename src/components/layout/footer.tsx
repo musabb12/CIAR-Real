@@ -1,13 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Building2,
   Mail,
-  Phone,
   MapPin,
   Globe,
-  MessageCircle,
   ArrowRight,
   ArrowUp,
   Shield,
@@ -21,15 +19,14 @@ import {
   Crown,
   TrendingUp,
   Lock,
-  Instagram,
-  Facebook,
-  Linkedin,
-  Youtube,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAppStore } from '@/store/app-store';
 import { CiarBrandLockup } from '@/components/brand/ciar-wordmark';
 import { useTranslation } from '@/lib/i18n/use-translation';
+import { SocialLinksBar } from '@/components/layout/social-links-bar';
+import { buildSocialLinkItems } from '@/lib/social-links';
+import { mergeSocialSettings } from '@/lib/default-social-settings';
 
 /* ------------------------------------------------------------------ */
 /*  Quick-link item with slide-in arrow                               */
@@ -128,8 +125,10 @@ function GoldDivider() {
 /*  Footer                                                            */
 /* ------------------------------------------------------------------ */
 export function Footer() {
-  const { setCurrentPage, socialSettings } = useAppStore();
-  const { t } = useTranslation();
+  const { setCurrentPage, socialSettings: rawSocialSettings } = useAppStore();
+  const socialSettings = useMemo(() => mergeSocialSettings(rawSocialSettings), [rawSocialSettings]);
+  const { t, rtl } = useTranslation();
+  const isAr = rtl;
 
   // Newsletter state
   const [email, setEmail] = useState('');
@@ -196,16 +195,7 @@ export function Footer() {
     { icon: Lock, label: t.footer.securePayments, sublabel: t.footer.protectedLabel },
   ];
 
-  const socialLinks = [
-    { icon: Globe, label: 'Website', href: socialSettings.website },
-    { icon: Mail, label: 'Email', href: socialSettings.email ? `mailto:${socialSettings.email}` : '' },
-    { icon: Phone, label: 'Phone', href: socialSettings.phone ? `tel:${socialSettings.phone}` : '' },
-    { icon: MessageCircle, label: 'WhatsApp', href: socialSettings.whatsapp ? `https://wa.me/${socialSettings.whatsapp.replace(/[^\d]/g, '')}` : '' },
-    { icon: Instagram, label: 'Instagram', href: socialSettings.instagram },
-    { icon: Facebook, label: 'Facebook', href: socialSettings.facebook },
-    { icon: Linkedin, label: 'LinkedIn', href: socialSettings.linkedin },
-    { icon: Youtube, label: 'YouTube', href: socialSettings.youtube },
-  ].filter((item) => Boolean(item.href));
+  const socialLinks = buildSocialLinkItems(socialSettings);
 
   return (
     <footer className="luxury-footer mt-auto relative">
@@ -252,19 +242,8 @@ export function Footer() {
               <div className="mt-6 h-px w-16 bg-gradient-to-r from-amber-500/50 to-transparent" />
 
               {/* Social / Contact icons */}
-              <div className="mt-6 flex items-center gap-3">
-                {socialLinks.map((s) => (
-                  <a
-                    key={s.label}
-                    aria-label={s.label}
-                    href={s.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-gray-400 transition-all duration-300 hover:bg-amber-500/10 hover:text-amber-400"
-                  >
-                    <s.icon className="h-4 w-4" />
-                  </a>
-                ))}
+              <div className="mt-6">
+                <SocialLinksBar items={socialLinks} isAr={isAr} variant="footer" />
               </div>
             </div>
 

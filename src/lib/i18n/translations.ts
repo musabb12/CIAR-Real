@@ -401,6 +401,10 @@ export interface Translations {
     workHours: string;
     workHoursText: string;
     socialMedia: string;
+    socialFollow: string;
+    noSocialLinks: string;
+    supportTitle: string;
+    supportDesc: string;
     faq: string;
     faqSubtitle: string;
     faq1q: string;
@@ -820,6 +824,10 @@ export const translations: Record<Locale, Translations> = {
       workHours: 'Working Hours',
       workHoursText: 'Sun - Thu: 9:00 AM - 6:00 PM',
       socialMedia: 'Social Media',
+      socialFollow: 'Follow us on',
+      noSocialLinks: 'Social links can be configured from the admin panel.',
+      supportTitle: '24/7 Support',
+      supportDesc: 'We are always here to help',
       faq: 'Frequently Asked Questions',
       faqSubtitle: 'Find quick answers to common questions',
       faq1q: 'How do I list my property on CIAR?',
@@ -1237,6 +1245,10 @@ export const translations: Record<Locale, Translations> = {
       workHours: 'ساعات العمل',
       workHoursText: 'الأحد - الخميس: 9:00 ص - 6:00 م',
       socialMedia: 'وسائل التواصل الاجتماعي',
+      socialFollow: 'تابعنا على',
+      noSocialLinks: 'يمكن إضافة روابط التواصل من لوحة الأدمن ← الإعدادات.',
+      supportTitle: 'دعم على مدار الساعة',
+      supportDesc: 'نحن هنا لمساعدتك دائماً',
       faq: 'الأسئلة الشائعة',
       faqSubtitle: 'اعثر على إجابات سريعة للأسئلة المتكررة',
       faq1q: 'كيف أضيف عقاري على CIAR؟',
@@ -1655,6 +1667,10 @@ export const translations: Record<Locale, Translations> = {
       workHours: 'Heures d\'Ouverture',
       workHoursText: 'Dim - Jeu: 9h00 - 18h00',
       socialMedia: 'Réseaux Sociaux',
+      socialFollow: 'Suivez-nous sur',
+      noSocialLinks: 'Les liens sociaux se configurent dans le panneau admin.',
+      supportTitle: 'Assistance 24/7',
+      supportDesc: 'Nous sommes toujours là pour vous aider',
       faq: 'Questions Fréquentes',
       faqSubtitle: 'Trouvez des réponses rapides aux questions courantes',
       faq1q: 'Comment lister ma propriété sur CIAR?',
@@ -2073,6 +2089,10 @@ export const translations: Record<Locale, Translations> = {
       workHours: 'Horario de Atención',
       workHoursText: 'Dom - Jue: 9:00 AM - 6:00 PM',
       socialMedia: 'Redes Sociales',
+      socialFollow: 'Síguenos en',
+      noSocialLinks: 'Los enlaces sociales se configuran en el panel de administración.',
+      supportTitle: 'Soporte 24/7',
+      supportDesc: 'Siempre estamos aquí para ayudarte',
       faq: 'Preguntas Frecuentes',
       faqSubtitle: 'Encuentre respuestas rápidas a preguntas comunes',
       faq1q: '¿Cómo publico mi propiedad en CIAR?',
@@ -2491,6 +2511,10 @@ export const translations: Record<Locale, Translations> = {
       workHours: 'Calisma Saatleri',
       workHoursText: 'Paz - Per: 09:00 - 18:00',
       socialMedia: 'Sosyal Medya',
+      socialFollow: 'Bizi takip edin',
+      noSocialLinks: 'Sosyal baglantilar yonetici panelinden ayarlanir.',
+      supportTitle: '7/24 Destek',
+      supportDesc: 'Size yardimci olmak icin her zaman buradayiz',
       faq: 'Sikca Sorulan Sorular',
       faqSubtitle: 'Yaygin sorulara hizli cevaplar bulun',
       faq1q: 'Mulkumu CIAR\'a nasil eklerim?',

@@ -118,7 +118,7 @@ export function PartnerSubscriptionPage() {
       toast.error(tx('اختر باقة الاشتراك', 'Select a subscription plan'));
       return;
     }
-    setPartnerSubscriptionCheckout({ planId: selectedPlan, paymentMethod: 'card' });
+    setPartnerSubscriptionCheckout({ planId: selectedPlan, paymentMethod: 'visa' });
     setCurrentPage('partner-subscription-checkout');
   };
 

@@ -6,11 +6,14 @@ import {
 import {
   defaultContentSettings,
   defaultDesignSettings,
-  defaultSocialSettings,
   readOrCreateSiteSettingsFromFirestore,
   saveSiteSettingsToFirestore,
   type SiteSettingsPayload,
 } from '@/lib/firestore-platform';
+import {
+  DEFAULT_SOCIAL_SETTINGS,
+  mergeSocialSettings,
+} from '@/lib/default-social-settings';
 import type { SiteContentSettings, SiteDesignSettings, SiteSocialSettings } from '@/types';
 
 function normalizePayload(input: unknown): SiteSettingsPayload {
@@ -24,10 +27,7 @@ function normalizePayload(input: unknown): SiteSettingsPayload {
       ...defaultContentSettings,
       ...(value.contentSettings ?? {}),
     },
-    socialSettings: {
-      ...defaultSocialSettings,
-      ...(value.socialSettings ?? {}),
-    },
+    socialSettings: mergeSocialSettings(value.socialSettings),
   };
 }
 
@@ -36,7 +36,7 @@ export async function GET() {
     return NextResponse.json({
       designSettings: defaultDesignSettings,
       contentSettings: defaultContentSettings,
-      socialSettings: defaultSocialSettings,
+      socialSettings: DEFAULT_SOCIAL_SETTINGS,
     });
   }
 

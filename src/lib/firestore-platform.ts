@@ -1,4 +1,5 @@
 import { expandInquiryReplyTemplate } from '@/lib/inquiry-replies';
+import { normalizeNewsInput, type NewsContentByLocale } from '@/lib/news-locales';
 import type { Query as FirestoreQuery } from 'firebase-admin/firestore';
 import {
   getCachedRead,
@@ -162,19 +163,10 @@ export const defaultContentSettings: SiteContentSettings = {
   'admin-login': {},
 };
 
-export const defaultSocialSettings: SiteSocialSettings = {
-  website: '',
-  email: '',
-  phone: '',
-  whatsapp: '',
-  telegram: '',
-  facebook: '',
-  instagram: '',
-  x: '',
-  youtube: '',
-  linkedin: '',
-  tiktok: '',
-};
+import {
+  DEFAULT_SOCIAL_SETTINGS,
+  mergeSocialSettings,
+} from '@/lib/default-social-settings';
 
 export type SiteSettingsPayload = {
   designSettings: SiteDesignSettings;
@@ -185,6 +177,7 @@ export type SiteSettingsPayload = {
 type NewsItem = {
   id: string;
   content: string;
+  contentByLocale?: NewsContentByLocale;
   link: string | null;
   type: string;
   isActive: boolean;
@@ -380,10 +373,7 @@ function normalizeSiteSettings(input: unknown): SiteSettingsPayload {
       ...defaultContentSettings,
       ...(value.contentSettings ?? {}),
     },
-    socialSettings: {
-      ...defaultSocialSettings,
-      ...(value.socialSettings ?? {}),
-    },
+    socialSettings: mergeSocialSettings(value.socialSettings),
   };
 }
 
@@ -561,7 +551,7 @@ export async function getAgentDetailFromFirestore(id: string) {
   const agent = await buildAgentResponse(id, raw);
   const properties = (await listAllPropertiesFromFirestore())
     .filter((property) => property.agentId === id)
-    .slice(0, 10);
+    .slice(0, 80);
   return {
     ...agent,
     properties,
@@ -676,6 +666,7 @@ export async function getCompanyDetailFromFirestore(id: string) {
     adminPermissions: normalizeAdminPermissions(raw.adminPermissions, COMPANY_ADMIN_PERMISSIONS),
     adminTasks: normalizeAdminTasks(raw.adminTasks),
     agents: agents.slice(0, 24),
+    properties: properties.slice(0, 80),
     listingCount: properties.length,
     agentCount: agents.length,
     _count: { agents: agents.length },
@@ -1435,9 +1426,18 @@ export async function deleteBannerInFirestore(id: string) {
 }
 
 function newsDocToNews(id: string, raw: Record<string, unknown>): NewsItem {
+  const contentByLocale =
+    raw.contentByLocale && typeof raw.contentByLocale === 'object'
+      ? (raw.contentByLocale as NewsContentByLocale)
+      : undefined;
+  const normalized = normalizeNewsInput({
+    content: asString(raw.content, ''),
+    contentByLocale,
+  });
   return {
     id,
-    content: asString(raw.content),
+    content: normalized.content,
+    contentByLocale: normalized.contentByLocale,
     link: asNullableString(raw.link),
     type: asString(raw.type, 'info'),
     isActive: asBoolean(raw.isActive, true),
@@ -1515,14 +1515,17 @@ export async function listNewsFromFirestore(all = false, options?: { skipCache?:
 
 export async function createNewsInFirestore(input: {
   content: string;
+  contentByLocale?: NewsContentByLocale | null;
   link?: string | null;
   type?: string;
   order?: number;
   isActive?: boolean;
 }) {
   const id = makeId('news');
+  const normalized = normalizeNewsInput(input);
   const payload = {
-    content: input.content.trim(),
+    content: normalized.content,
+    contentByLocale: normalized.contentByLocale,
     link: input.link ?? null,
     type: input.type || 'info',
     order: input.order ?? 0,
@@ -1540,6 +1543,7 @@ export async function updateNewsInFirestore(
   id: string,
   input: Partial<{
     content: string;
+    contentByLocale: NewsContentByLocale | null;
     link: string | null;
     type: string;
     order: number;
@@ -1549,9 +1553,22 @@ export async function updateNewsInFirestore(
   const ref = newsCollection().doc(id);
   const snap = await ref.get();
   if (!snap.exists) return null;
+  const existing = snap.data() as Record<string, unknown>;
+  const normalized =
+    input.content !== undefined || input.contentByLocale !== undefined
+      ? normalizeNewsInput({
+          content: input.content ?? asString(existing.content, ''),
+          contentByLocale:
+            input.contentByLocale !== undefined
+              ? (input.contentByLocale ?? undefined)
+              : (existing.contentByLocale as NewsContentByLocale | undefined),
+        })
+      : null;
   await ref.update(
     cleanUndefined({
-      ...(input.content !== undefined ? { content: input.content.trim() } : {}),
+      ...(normalized
+        ? { content: normalized.content, contentByLocale: normalized.contentByLocale }
+        : {}),
       ...(input.link !== undefined ? { link: input.link } : {}),
       ...(input.type !== undefined ? { type: input.type } : {}),
       ...(input.order !== undefined ? { order: input.order } : {}),

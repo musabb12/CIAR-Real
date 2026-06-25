@@ -6,7 +6,17 @@ import {
 } from '@/lib/firestore-platform';
 import { isFirebaseAdminConfigured } from '@/lib/firebase-admin';
 import { getDemoAgentById } from '@/lib/demo-admin-data';
+import { listDemoProperties } from '@/lib/demo-properties';
+import { listMarketplacePropertiesForAgent } from '@/lib/demo-marketplace';
 import { isFirestoreQuotaError } from '@/lib/firestore-read-cache';
+
+function demoAgentProperties(id: string) {
+  const marketplaceProps = listMarketplacePropertiesForAgent(id);
+  if (marketplaceProps.length > 0) return marketplaceProps;
+  return listDemoProperties({ agentId: id, admin: true, limit: 80 }).data.filter((p) =>
+    p.id.includes('-agent-'),
+  );
+}
 
 // GET /api/agents/[id] - Single agent with user info, company, and their properties
 export async function GET(
@@ -20,7 +30,7 @@ export async function GET(
     if (!demo) {
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
     }
-    return NextResponse.json(demo);
+    return NextResponse.json({ ...demo, properties: demoAgentProperties(id) });
   }
 
   try {
@@ -28,7 +38,9 @@ export async function GET(
 
     if (!agent) {
       const demo = getDemoAgentById(id);
-      if (demo) return NextResponse.json(demo);
+      if (demo) {
+        return NextResponse.json({ ...demo, properties: demoAgentProperties(id) });
+      }
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
     }
 
@@ -36,7 +48,9 @@ export async function GET(
   } catch (error) {
     console.error('Error fetching agent:', error);
     const demo = getDemoAgentById(id);
-    if (demo) return NextResponse.json(demo);
+    if (demo) {
+      return NextResponse.json({ ...demo, properties: demoAgentProperties(id) });
+    }
     if (isFirestoreQuotaError(error)) {
       return NextResponse.json({ error: 'Agent not found' }, { status: 404 });
     }

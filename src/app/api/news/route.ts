@@ -9,6 +9,7 @@ import {
   listNewsFromFirestore,
   updateNewsInFirestore,
 } from '@/lib/firestore-platform';
+import { hasAnyNewsLocale, normalizeNewsInput } from '@/lib/news-locales';
 import { isFirestoreQuotaError } from '@/lib/firestore-read-cache';
 import { getDefaultNewsForApi } from '@/lib/firestore-defaults';
 
@@ -52,14 +53,15 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { content, link, type, order, isActive } = body;
-
-    if (!content || typeof content !== 'string' || content.trim().length === 0) {
-      return NextResponse.json({ error: 'Content is required' }, { status: 400 });
+    const { content, contentByLocale, link, type, order, isActive } = body;
+    const normalized = normalizeNewsInput({ content, contentByLocale });
+    if (!normalized.content) {
+      return NextResponse.json({ error: 'Content is required (at least Arabic)' }, { status: 400 });
     }
 
     const news = await createNewsInFirestore({
-      content: content.trim(),
+      content: normalized.content,
+      contentByLocale: normalized.contentByLocale,
       link: link || null,
       type: type || 'info',
       order: order ?? 0,
@@ -84,13 +86,21 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { id, ...data } = body;
+    const { id, content, contentByLocale, ...rest } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 });
     }
 
-    const news = await updateNewsInFirestore(id, data);
+    const patch =
+      content !== undefined || contentByLocale !== undefined
+        ? normalizeNewsInput({ content, contentByLocale })
+        : null;
+
+    const news = await updateNewsInFirestore(id, {
+      ...rest,
+      ...(patch ? { content: patch.content, contentByLocale: patch.contentByLocale } : {}),
+    });
 
     if (!news) {
       return NextResponse.json({ error: 'News item not found' }, { status: 404 });

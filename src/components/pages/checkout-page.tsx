@@ -5,7 +5,6 @@ import {
   ArrowLeft,
   Building2,
   CreditCard,
-  Landmark,
   Loader2,
   Lock,
   MapPin,
@@ -22,18 +21,17 @@ import { useLocalizedCountryName } from '@/hooks/use-localized-country-name';
 import type { Property, TransactionType } from '@/types';
 import { toast } from 'sonner';
 import { getPaymentBrand } from '@/components/payment/payment-method-icons';
+import {
+  DEFAULT_SUBSCRIPTION_PAYMENT_METHODS,
+  paymentBrandId,
+} from '@/lib/payment-method-config';
 
 type CheckoutMode = 'purchase' | 'rent';
 
 const FALLBACK_IMAGE =
   'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=2400&q=85&auto=format&fit=crop';
 
-const PAYMENT_METHODS = [
-  { id: 'card', icon: CreditCard, ar: 'بطاقة بنكية', en: 'Credit / debit card' },
-  { id: 'bank', icon: Landmark, ar: 'تحويل بنكي', en: 'Bank transfer' },
-  { id: 'whish', ar: 'Whish Money — ويش موني', en: 'Whish Money' },
-  { id: 'ciar-prepaid', ar: 'بطاقة CIAR المسبقة الدفع', en: 'CIAR Prepaid Card' },
-] as const;
+const PAYMENT_METHODS = DEFAULT_SUBSCRIPTION_PAYMENT_METHODS;
 
 function propertyCoverUrl(property: Property): string {
   const cover = property.images?.find((i) => i.isCover)?.url ?? property.images?.[0]?.url;
@@ -197,11 +195,10 @@ function PaymentGrid({
   tx: (ar: string, en: string) => string;
 }) {
   return (
-    <div className="grid sm:grid-cols-2 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
       {PAYMENT_METHODS.map((pm) => {
-        const brand = getPaymentBrand(pm.id);
+        const brand = getPaymentBrand(paymentBrandId(pm.id));
         const BrandIcon = brand?.Icon;
-        const LucideIcon = 'icon' in pm ? pm.icon : undefined;
         return (
           <label
             key={pm.id}
@@ -220,11 +217,11 @@ function PaymentGrid({
             <div className="flex h-10 min-w-10 items-center justify-center rounded-xl bg-white/8 border border-white/10 px-1.5 overflow-hidden">
               {BrandIcon ? (
                 <BrandIcon className="!h-7 !w-auto max-w-[3.5rem]" />
-              ) : LucideIcon ? (
-                <LucideIcon className="h-5 w-5 text-amber-300 shrink-0" />
-              ) : null}
+              ) : (
+                <CreditCard className="h-5 w-5 text-amber-300 shrink-0" />
+              )}
             </div>
-            <span className="text-sm font-medium text-white">{tx(pm.ar, pm.en)}</span>
+            <span className="text-sm font-medium text-white">{tx(pm.labelAr, pm.labelEn)}</span>
           </label>
         );
       })}
@@ -254,7 +251,7 @@ export function CheckoutPage({ mode }: { mode: CheckoutMode }) {
     checkIn: '',
     checkOut: '',
     notes: '',
-    paymentMethod: 'card',
+    paymentMethod: 'visa',
   });
 
   const isAr = rtl;

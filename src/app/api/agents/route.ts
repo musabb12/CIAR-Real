@@ -5,7 +5,7 @@ import {
   listAgentsFromFirestore,
 } from '@/lib/firestore-platform';
 import { isFirebaseAdminConfigured } from '@/lib/firebase-admin';
-import { listDemoAgents } from '@/lib/demo-admin-data';
+import { listDemoAgents, mergeMarketplaceAgents } from '@/lib/demo-admin-data';
 import { isFirestoreQuotaError } from '@/lib/firestore-read-cache';
 
 export async function GET(request: NextRequest) {
@@ -19,14 +19,11 @@ export async function GET(request: NextRequest) {
 
   try {
     const agents = await listAgentsFromFirestore(countryId, { skipCache: fresh });
-    if (agents.length === 0) {
-      return NextResponse.json(listDemoAgents(countryId));
-    }
-    return NextResponse.json(agents);
+    return NextResponse.json(mergeMarketplaceAgents(agents, countryId));
   } catch (error) {
     console.error('Error fetching agents:', error);
     if (isFirestoreQuotaError(error)) {
-      return NextResponse.json(listDemoAgents(countryId));
+      return NextResponse.json(mergeMarketplaceAgents([], countryId));
     }
     return NextResponse.json({ error: 'Failed to fetch agents' }, { status: 500 });
   }

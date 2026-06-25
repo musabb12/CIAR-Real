@@ -1,26 +1,56 @@
 export const DEFAULT_NEWS_ITEMS = [
   {
-    content: 'CIAR launches new AI-powered property valuation tool across 60 countries',
+    contentByLocale: {
+      ar: 'أطلقت CIAR أداة تقييم عقاري بالذكاء الاصطناعي في أكثر من 60 دولة',
+      en: 'CIAR launches new AI-powered property valuation tool across 60 countries',
+      fr: "CIAR lance un outil d'évaluation immobilière par IA dans plus de 60 pays",
+      es: 'CIAR lanza herramienta de valoración inmobiliaria con IA en más de 60 países',
+      tr: "CIAR, 60'tan fazla ülkede yapay zekâ destekli değerleme aracını başlattı",
+    },
     type: 'promo',
     order: 0,
   },
   {
-    content: 'Dubai real estate market records 15% growth in Q1 2025',
+    contentByLocale: {
+      ar: 'سوق دبي العقاري يسجّل نمواً بنسبة 15% في الربع الأول من 2025',
+      en: 'Dubai real estate market records 15% growth in Q1 2025',
+      fr: 'Le marché immobilier de Dubaï enregistre une croissance de 15 % au T1 2025',
+      es: 'El mercado inmobiliario de Dubái registra un crecimiento del 15 % en el primer trimestre de 2025',
+      tr: "Dubai gayrimenkul piyasası 2025'in ilk çeyreğinde %15 büyüme kaydetti",
+    },
     type: 'info',
     order: 1,
   },
   {
-    content: 'New luxury villa listings available in Riyadh and Jeddah',
+    contentByLocale: {
+      ar: 'فلل فاخرة جديدة متاحة في الرياض وجدة',
+      en: 'New luxury villa listings available in Riyadh and Jeddah',
+      fr: 'Nouvelles villas de luxe disponibles à Riyad et Djeddah',
+      es: 'Nuevas villas de lujo disponibles en Riad y Yeda',
+      tr: "Riyad ve Cidde'de yeni lüks villa ilanları",
+    },
     type: 'info',
     order: 2,
   },
   {
-    content: 'CIAR now supports secure online payments via multiple methods',
+    contentByLocale: {
+      ar: 'CIAR تدعم الآن الدفع الآمن عبر عدة طرق',
+      en: 'CIAR now supports secure online payments via multiple methods',
+      fr: 'CIAR prend désormais en charge les paiements en ligne sécurisés',
+      es: 'CIAR ahora admite pagos en línea seguros con varios métodos',
+      tr: 'CIAR artık birden fazla yöntemle güvenli çevrimiçi ödemeyi destekliyor',
+    },
     type: 'promo',
     order: 3,
   },
   {
-    content: 'Morocco emerging as top investment destination for 2025',
+    contentByLocale: {
+      ar: 'المغرب وجهة استثمارية رائدة لعام 2025',
+      en: 'Morocco emerging as top investment destination for 2025',
+      fr: "Le Maroc devient une destination d'investissement de premier plan en 2025",
+      es: 'Marruecos emerge como principal destino de inversión en 2025',
+      tr: 'Fas, 2025 için önde gelen yatırım destinasyonu olarak öne çıkıyor',
+    },
     type: 'info',
     order: 4,
   },
@@ -31,7 +61,8 @@ export function getDefaultNewsForApi() {
   const now = new Date().toISOString();
   return DEFAULT_NEWS_ITEMS.map((item, index) => ({
     id: `demo-news-${index}`,
-    content: item.content,
+    content: item.contentByLocale.ar,
+    contentByLocale: item.contentByLocale,
     link: null,
     type: item.type,
     isActive: true,

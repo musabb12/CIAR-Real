@@ -179,17 +179,13 @@ export const DEFAULT_SUBSCRIPTION_PLANS: SubscriptionPlanConfig[] = [
   },
 ];
 
-export const DEFAULT_SUBSCRIPTION_PAYMENT_METHODS = [
-  { id: 'card', labelAr: 'بطاقة بنكية', labelEn: 'Credit / debit card', enabled: true },
-  { id: 'bank', labelAr: 'تحويل بنكي', labelEn: 'Bank transfer', enabled: true },
-  { id: 'whish', labelAr: 'Whish Money — ويش موني', labelEn: 'Whish Money', enabled: true },
-  {
-    id: 'ciar-prepaid',
-    labelAr: 'بطاقة CIAR المسبقة الدفع',
-    labelEn: 'CIAR Prepaid Card',
-    enabled: true,
-  },
-];
+import type { SubscriptionPaymentMethod } from '@/types/subscription';
+import {
+  DEFAULT_SUBSCRIPTION_PAYMENT_METHODS,
+  mergePaymentMethods,
+} from '@/lib/payment-method-config';
+
+export { DEFAULT_SUBSCRIPTION_PAYMENT_METHODS, mergePaymentMethods };
 
 export const DEFAULT_PARTNER_SUBSCRIPTION_SETTINGS: PartnerSubscriptionSettings = {
   enabled: true,
@@ -243,11 +239,13 @@ export function normalizeSubscriptionSettings(
     (value.paymentMethods ?? []).map((method) => [method.id, method]),
   );
 
-  const paymentMethods = DEFAULT_SUBSCRIPTION_PAYMENT_METHODS.map((defaults) => ({
-    ...defaults,
-    ...(methodMap.get(defaults.id) ?? {}),
-    id: defaults.id,
-  }));
+  const paymentMethods = DEFAULT_SUBSCRIPTION_PAYMENT_METHODS.map((defaults) => {
+    const override =
+      methodMap.get(defaults.id) ??
+      (defaults.id === 'bank-transfer' ? methodMap.get('bank') : undefined) ??
+      (defaults.id === 'visa' ? methodMap.get('card') : undefined);
+    return { ...defaults, ...(override ?? {}), id: defaults.id };
+  });
 
   return {
     enabled: value.enabled ?? DEFAULT_PARTNER_SUBSCRIPTION_SETTINGS.enabled,

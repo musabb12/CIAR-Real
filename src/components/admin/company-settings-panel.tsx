@@ -11,9 +11,13 @@ import {
   Phone,
   Globe,
   Users,
+  MapPin,
+  Building2,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Agent, Company } from '@/types';
+import type { Agent, Company, Property } from '@/types';
+import { countryDisplayName } from '@/lib/country-flags';
+import { getSeedCountryById } from '@/lib/seed-countries-catalog';
 import {
   COMPANY_ADMIN_PERMISSIONS,
   defaultPermissionMap,
@@ -43,6 +47,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 type CompanyDetail = Company & {
   agents?: Agent[];
+  properties?: Property[];
   _count?: { agents: number };
 };
 
@@ -57,7 +62,7 @@ export function CompanySettingsPanel({ companyId, isAr, onBack, onUpdated }: Pro
   const tx = (ar: string, en: string) => (isAr ? ar : en);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState<'profile' | 'permissions' | 'tasks' | 'team'>('profile');
+  const [tab, setTab] = useState<'profile' | 'permissions' | 'tasks' | 'team' | 'listings'>('profile');
   const [company, setCompany] = useState<CompanyDetail | null>(null);
   const [form, setForm] = useState({
     name: '',
@@ -143,10 +148,18 @@ export function CompanySettingsPanel({ companyId, isAr, onBack, onUpdated }: Pro
 
   const tabs = [
     { id: 'profile' as const, label: tx('الملف', 'Profile'), icon: Building },
+    { id: 'listings' as const, label: tx('العقارات', 'Listings'), icon: Building2 },
     { id: 'permissions' as const, label: tx('الصلاحيات', 'Permissions'), icon: KeyRound },
     { id: 'tasks' as const, label: tx('المهام', 'Tasks'), icon: ListChecks },
     { id: 'team' as const, label: tx('الفريق', 'Team'), icon: Users },
   ];
+
+  const countryLabel = company?.countryId
+    ? (() => {
+        const seed = getSeedCountryById(company.countryId!);
+        return seed ? countryDisplayName(seed.code, isAr ? 'ar' : 'en') : company.countryId;
+      })()
+    : null;
 
   if (loading) {
     return (
@@ -181,7 +194,13 @@ export function CompanySettingsPanel({ companyId, isAr, onBack, onUpdated }: Pro
           </h2>
           <p className="text-xs text-[var(--admin-text-mute)]">
             {company._count?.agents ?? company.agentCount ?? 0} {tx('وكيل', 'agents')} ·{' '}
-            {company.listingCount ?? 0} {tx('إعلان', 'listings')}
+            {company.listingCount ?? company.properties?.length ?? 0} {tx('إعلان', 'listings')}
+            {countryLabel ? (
+              <>
+                {' '}
+                · <MapPin className="inline h-3 w-3" /> {countryLabel}
+              </>
+            ) : null}
           </p>
         </div>
       </div>
@@ -339,6 +358,32 @@ export function CompanySettingsPanel({ companyId, isAr, onBack, onUpdated }: Pro
                 {tx('إضافة', 'Add')}
               </button>
             </div>
+          </div>
+        )}
+
+        {tab === 'listings' && (
+          <div className="space-y-3">
+            <p className="text-xs text-[var(--admin-text-mute)]">
+              {company.properties?.length ?? 0} {tx('عقار للشركة', 'company listings')}
+            </p>
+            {company.properties && company.properties.length > 0 ? (
+              <ul className="divide-y divide-white/10 max-h-96 overflow-y-auto admin-scrollbar">
+                {company.properties.map((p) => (
+                  <li key={p.id} className="py-2.5 flex flex-wrap justify-between gap-2 text-sm">
+                    <div className="min-w-0">
+                      <div className="font-medium line-clamp-1">{p.title}</div>
+                      <div className="text-[11px] text-[var(--admin-text-faint)]">
+                        {p.city?.name ?? '—'} · {p.propertyType}
+                        {p.commissionPercent != null ? ` · ${p.commissionPercent}%` : ''}
+                      </div>
+                    </div>
+                    <span className="text-amber-200/90 tabular-nums">${p.price.toLocaleString()}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-[var(--admin-text-faint)]">{tx('لا توجد عقارات', 'No listings')}</p>
+            )}
           </div>
         )}
 

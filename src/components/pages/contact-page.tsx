@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import {
   Send,
   Mail,
@@ -18,11 +18,19 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import { useAppStore } from '@/store/app-store';
 import { PageHero } from '@/components/layout/page-hero';
+import { SocialLinksBar } from '@/components/layout/social-links-bar';
+import { buildSocialLinkItems, buildSocialMediaLinkItems } from '@/lib/social-links';
+import { mergeSocialSettings } from '@/lib/default-social-settings';
 
 export function ContactPage() {
   const { t, rtl } = useTranslation();
-  const locale = useAppStore((s) => s.locale);
+  const isAr = rtl;
+  const rawSocialSettings = useAppStore((s) => s.socialSettings);
+  const socialSettings = useMemo(() => mergeSocialSettings(rawSocialSettings), [rawSocialSettings]);
   const cp = t.contactPage;
+
+  const socialLinks = useMemo(() => buildSocialMediaLinkItems(socialSettings), [socialSettings]);
+  const allContactLinks = useMemo(() => buildSocialLinkItems(socialSettings), [socialSettings]);
 
   const [form, setForm] = useState({
     name: '',
@@ -63,8 +71,18 @@ export function ContactPage() {
 
   const contactInfo = [
     { icon: MapPin, label: cp.address, value: cp.addressText },
-    { icon: Mail, label: cp.emailLabel, value: cp.emailText },
-    { icon: Phone, label: cp.phoneLabel, value: cp.phoneText },
+    {
+      icon: Mail,
+      label: cp.emailLabel,
+      value: socialSettings.email?.trim() || cp.emailText,
+      href: socialSettings.email?.trim() ? `mailto:${socialSettings.email.trim()}` : undefined,
+    },
+    {
+      icon: Phone,
+      label: cp.phoneLabel,
+      value: socialSettings.phone?.trim() || cp.phoneText,
+      href: socialSettings.phone?.trim() ? `tel:${socialSettings.phone.trim().replace(/\s/g, '')}` : undefined,
+    },
     { icon: Clock, label: cp.workHours, value: cp.workHoursText },
   ];
 
@@ -247,7 +265,13 @@ export function ContactPage() {
                             {item.label}
                           </p>
                           <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400 break-words">
-                            {item.value}
+                            {item.href ? (
+                              <a href={item.href} className="hover:text-amber-600 dark:hover:text-amber-400 transition-colors">
+                                {item.value}
+                              </a>
+                            ) : (
+                              item.value
+                            )}
                           </p>
                         </div>
                       </div>
@@ -259,25 +283,26 @@ export function ContactPage() {
               {/* Social Media Card */}
               <Card className="glass-card border-0">
                 <CardContent className="p-6">
-                  <div className="mb-4 flex items-center gap-2">
-                    <Globe className="h-4 w-4 text-amber-500" />
-                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                      {cp.socialMedia}
-                    </h3>
+                  <div className="mb-4">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Globe className="h-4 w-4 text-amber-500" />
+                      <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                        {cp.socialMedia}
+                      </h3>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{cp.socialFollow}</p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    {['Twitter', 'LinkedIn', 'Instagram', 'Facebook'].map((social) => (
-                      <Button
-                        key={social}
-                        variant="outline"
-                        size="icon"
-                        className="h-9 w-9 rounded-lg"
-                        aria-label={social}
-                      >
-                        <Globe className="h-4 w-4" />
-                      </Button>
-                    ))}
-                  </div>
+                  <SocialLinksBar
+                    items={socialLinks}
+                    isAr={isAr}
+                    variant="contact"
+                    emptyMessage={cp.noSocialLinks}
+                  />
+                  {allContactLinks.length > socialLinks.length && (
+                    <p className="mt-4 text-[11px] text-gray-500 dark:text-gray-400">
+                      {isAr ? 'الموقع والبريد والهاتف متاحون أعلاه في معلومات المكتب.' : 'Website, email, and phone are shown above in office info.'}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
 
@@ -288,10 +313,16 @@ export function ContactPage() {
                     <Phone className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-900 dark:text-white">24/7 Support</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      We are always here to help
-                    </p>
+                    <p className="text-sm font-bold text-gray-900 dark:text-white">{cp.supportTitle}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{cp.supportDesc}</p>
+                    {socialSettings.phone?.trim() && (
+                      <a
+                        href={`tel:${socialSettings.phone.trim().replace(/\s/g, '')}`}
+                        className="mt-1 inline-block text-xs font-semibold text-amber-600 dark:text-amber-400 hover:underline"
+                      >
+                        {socialSettings.phone}
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>

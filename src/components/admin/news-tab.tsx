@@ -5,6 +5,13 @@ import { Bell, Inbox, Link2, Loader2, Palette, Pencil, Plus, Search, Trash2 } fr
 import { toast } from 'sonner';
 import { useAppStore } from '@/store/app-store';
 import { invalidate } from '@/lib/admin-events';
+import {
+  NEWS_LOCALE_FIELDS,
+  emptyNewsContentByLocale,
+  hasAnyNewsLocale,
+  resolveNewsContent,
+  type NewsContentByLocale,
+} from '@/lib/news-locales';
 import { NEWS_TYPE_OPTIONS, newsTypeLabel } from '@/lib/admin-labels';
 import {
   NEWS_TICKER_FONT_OPTIONS,
@@ -24,6 +31,7 @@ const tx = (isAr: boolean, ar: string, en: string) => (isAr ? ar : en);
 type NewsRow = {
   id: string;
   content: string;
+  contentByLocale?: NewsContentByLocale | null;
   type: string;
   isActive: boolean;
   order: number;
@@ -31,7 +39,25 @@ type NewsRow = {
   link?: string | null;
 };
 
-const EMPTY_FORM = { content: '', type: 'info', link: '', order: 0, isActive: true };
+type NewsForm = {
+  contentByLocale: NewsContentByLocale;
+  type: string;
+  link: string;
+  order: number;
+  isActive: boolean;
+};
+
+const EMPTY_FORM: NewsForm = {
+  contentByLocale: emptyNewsContentByLocale(),
+  type: 'info',
+  link: '',
+  order: 0,
+  isActive: true,
+};
+
+function newsDisplayText(row: NewsRow): string {
+  return resolveNewsContent(row, 'ar') || row.content;
+}
 
 function sortNews(rows: NewsRow[]): NewsRow[] {
   return [...rows].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
@@ -162,13 +188,19 @@ export function NewsTab({ isAr }: { isAr: boolean }) {
   const filtered = useMemo(() => {
     if (!search.trim()) return items;
     const q = search.toLowerCase();
-    return items.filter((row) => row.content.toLowerCase().includes(q));
+    return items.filter((row) => {
+      const texts = [
+        row.content,
+        ...NEWS_LOCALE_FIELDS.map(({ code }) => row.contentByLocale?.[code] ?? ''),
+      ];
+      return texts.some((text) => text.toLowerCase().includes(q));
+    });
   }, [items, search]);
 
   const previewText = useMemo(() => {
     const active = items.filter((row) => row.isActive);
-    if (active.length > 0) return active[0].content;
-    if (items.length > 0) return items[0].content;
+    if (active.length > 0) return newsDisplayText(active[0]);
+    if (items.length > 0) return newsDisplayText(items[0]);
     return tx(isAr, 'مثال: عروض جديدة على العقارات في دبي…', 'Sample: New listings in Dubai…');
   }, [items, isAr]);
 
@@ -186,8 +218,12 @@ export function NewsTab({ isAr }: { isAr: boolean }) {
 
   const openEdit = (row: NewsRow) => {
     setEditingId(row.id);
+    const contentByLocale = emptyNewsContentByLocale();
+    for (const { code } of NEWS_LOCALE_FIELDS) {
+      contentByLocale[code] = row.contentByLocale?.[code] ?? (code === 'ar' ? row.content : '') ?? '';
+    }
     setForm({
-      content: row.content,
+      contentByLocale,
       type: row.type,
       link: row.link ?? '',
       order: row.order,
@@ -205,14 +241,18 @@ export function NewsTab({ isAr }: { isAr: boolean }) {
   };
 
   const submit = async () => {
-    if (!form.content.trim()) {
-      toast.error(tx(isAr, 'نص الخبر مطلوب', 'News text is required'));
+    if (!hasAnyNewsLocale(form.contentByLocale)) {
+      toast.error(tx(isAr, 'أدخل نص الخبر بلغة واحدة على الأقل', 'Enter news text in at least one language'));
+      return;
+    }
+    if (!form.contentByLocale.ar?.trim()) {
+      toast.error(tx(isAr, 'النص العربي مطلوب', 'Arabic text is required'));
       return;
     }
     setSubmitting(true);
     try {
       const payload = {
-        content: form.content.trim(),
+        contentByLocale: form.contentByLocale,
         link: form.link.trim() || null,
         type: form.type,
         order: form.order,
@@ -546,7 +586,13 @@ export function NewsTab({ isAr }: { isAr: boolean }) {
                       {tx(isAr, 'الترتيب', 'Order')}: {row.order}
                     </span>
                   </div>
-                  <p className="text-sm font-medium leading-relaxed">{row.content}</p>
+                  <p className="text-sm font-medium leading-relaxed">{newsDisplayText(row)}</p>
+                  {row.contentByLocale && hasAnyNewsLocale(row.contentByLocale) && (
+                    <p className="text-[10px] text-[var(--admin-text-faint)] mt-1">
+                      {NEWS_LOCALE_FIELDS.filter(({ code }) => row.contentByLocale?.[code]?.trim()).length}{' '}
+                      {tx(isAr, 'لغات', 'languages')}
+                    </p>
+                  )}
                   {row.link?.trim() && (
                     <p className="text-[11px] text-amber-200/70 mt-2 truncate flex items-center gap-1">
                       <Link2 className="h-3 w-3 shrink-0" />
@@ -587,24 +633,49 @@ export function NewsTab({ isAr }: { isAr: boolean }) {
           }
         }}
       >
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingId ? tx(isAr, 'تعديل الخبر', 'Edit news') : tx(isAr, 'إضافة خبر للشريط', 'Add ticker news')}
             </DialogTitle>
             <DialogDescription>
-              {tx(isAr, 'يظهر مباشرة في الشريط أعلى صفحات الموقع', 'Appears immediately in the top news bar')}
+              {tx(
+                isAr,
+                'أدخل نص الخبر بكل اللغات المدعومة — يظهر للزائر حسب لغة الموقع',
+                'Enter news text in all supported languages — visitors see it in their site language',
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-3">
-            <Field label={tx(isAr, 'نص الخبر', 'News text')}>
-              <textarea
-                className="admin-input min-h-[80px]"
-                placeholder={tx(isAr, 'مثال: خصم 10% على الإيجار هذا الشهر', 'e.g. 10% off rentals this month')}
-                value={form.content}
-                onChange={(e) => setForm({ ...form, content: e.target.value })}
-              />
-            </Field>
+            {NEWS_LOCALE_FIELDS.map(({ code, labelAr, labelEn }) => (
+              <Field
+                key={code}
+                label={
+                  code === 'ar'
+                    ? `${isAr ? labelAr : labelEn} *`
+                    : isAr
+                      ? labelAr
+                      : labelEn
+                }
+              >
+                <textarea
+                  className="admin-input min-h-[64px]"
+                  dir={code === 'ar' ? 'rtl' : 'ltr'}
+                  placeholder={
+                    code === 'ar'
+                      ? tx(isAr, 'مثال: خصم 10% على الإيجار هذا الشهر', 'e.g. 10% off rentals this month')
+                      : tx(isAr, `نص الخبر بـ${labelAr}…`, `${labelEn} news text…`)
+                  }
+                  value={form.contentByLocale[code] ?? ''}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      contentByLocale: { ...form.contentByLocale, [code]: e.target.value },
+                    })
+                  }
+                />
+              </Field>
+            ))}
             <Field label={tx(isAr, 'رابط (اختياري)', 'Link (optional)')}>
               <input
                 className="admin-input"

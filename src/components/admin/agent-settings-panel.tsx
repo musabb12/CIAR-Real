@@ -11,9 +11,13 @@ import {
   ListChecks,
   KeyRound,
   Trash2,
+  MapPin,
+  Building2,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Agent } from '@/types';
+import type { Agent, Property } from '@/types';
+import { countryDisplayName } from '@/lib/country-flags';
+import { getSeedCountryById } from '@/lib/seed-countries-catalog';
 import {
   AGENT_ADMIN_PERMISSIONS,
   defaultPermissionMap,
@@ -43,7 +47,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 type AgentDetail = Agent & {
   _count?: { properties: number };
-  properties?: Array<{ id: string; title: string }>;
+  properties?: Property[];
 };
 
 interface Props {
@@ -57,7 +61,7 @@ export function AgentSettingsPanel({ agentId, isAr, onBack, onUpdated }: Props) 
   const tx = (ar: string, en: string) => (isAr ? ar : en);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState<'profile' | 'permissions' | 'tasks'>('profile');
+  const [tab, setTab] = useState<'profile' | 'listings' | 'permissions' | 'tasks'>('profile');
   const [agent, setAgent] = useState<AgentDetail | null>(null);
   const [form, setForm] = useState({
     title: '',
@@ -153,9 +157,17 @@ export function AgentSettingsPanel({ agentId, isAr, onBack, onUpdated }: Props) 
 
   const tabs = [
     { id: 'profile' as const, label: tx('الملف', 'Profile'), icon: User },
+    { id: 'listings' as const, label: tx('العقارات', 'Listings'), icon: Building2 },
     { id: 'permissions' as const, label: tx('الصلاحيات', 'Permissions'), icon: KeyRound },
     { id: 'tasks' as const, label: tx('المهام', 'Tasks'), icon: ListChecks },
   ];
+
+  const countryLabel = agent?.countryId
+    ? (() => {
+        const seed = getSeedCountryById(agent.countryId!);
+        return seed ? countryDisplayName(seed.code, isAr ? 'ar' : 'en') : agent.countryId;
+      })()
+    : null;
 
   if (loading) {
     return (
@@ -230,6 +242,12 @@ export function AgentSettingsPanel({ agentId, isAr, onBack, onUpdated }: Props) 
                 {tx('الشركة', 'Company')}: <span className="text-[#f5c97b]">{agent.company.name}</span>
               </p>
             )}
+            {countryLabel && (
+              <p className="text-sm text-[var(--admin-text-mute)] flex items-center gap-1">
+                <MapPin className="h-3.5 w-3.5" />
+                {tx('الدولة', 'Country')}: <span className="text-amber-200/90">{countryLabel}</span>
+              </p>
+            )}
             <div className="grid sm:grid-cols-2 gap-3">
               <Field label={tx('المسمى', 'Title')}>
                 <input className="admin-input" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
@@ -271,11 +289,11 @@ export function AgentSettingsPanel({ agentId, isAr, onBack, onUpdated }: Props) 
               <input type="checkbox" checked={form.verified} onChange={(e) => setForm({ ...form, verified: e.target.checked })} />
               {tx('وكيل موثّق', 'Verified agent')}
             </label>
-            {agent.properties && agent.properties.length > 0 && (
+            {agent.properties && agent.properties.length > 0 && tab === 'profile' && (
               <div>
                 <p className="text-xs font-semibold text-white/70 mb-2">{tx('أحدث العقارات', 'Recent listings')}</p>
                 <ul className="text-sm space-y-1 text-[var(--admin-text-mute)]">
-                  {agent.properties.map((p) => (
+                  {agent.properties.slice(0, 5).map((p) => (
                     <li key={p.id} className="line-clamp-1">
                       · {p.title}
                     </li>
@@ -284,6 +302,32 @@ export function AgentSettingsPanel({ agentId, isAr, onBack, onUpdated }: Props) 
               </div>
             )}
           </>
+        )}
+
+        {tab === 'listings' && (
+          <div className="space-y-3">
+            <p className="text-xs text-[var(--admin-text-mute)]">
+              {agent.properties?.length ?? 0} {tx('عقار مرتبط بهذا الوكيل', 'listings linked to this agent')}
+            </p>
+            {agent.properties && agent.properties.length > 0 ? (
+              <ul className="divide-y divide-white/10 max-h-96 overflow-y-auto admin-scrollbar">
+                {agent.properties.map((p) => (
+                  <li key={p.id} className="py-2.5 flex flex-wrap justify-between gap-2 text-sm">
+                    <div className="min-w-0">
+                      <div className="font-medium line-clamp-1">{p.title}</div>
+                      <div className="text-[11px] text-[var(--admin-text-faint)]">
+                        {p.city?.name ?? '—'} · {p.propertyType} · {p.status}
+                        {p.commissionPercent != null ? ` · ${p.commissionPercent}%` : ''}
+                      </div>
+                    </div>
+                    <span className="text-amber-200/90 tabular-nums">${p.price.toLocaleString()}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-[var(--admin-text-faint)]">{tx('لا توجد عقارات', 'No listings')}</p>
+            )}
+          </div>
         )}
 
         {tab === 'permissions' && (

@@ -141,7 +141,7 @@ const HANDCRAFTED_DEMO_PROPERTIES: Property[] = [
   },
   {
     id: 'ciar-demo-london-5',
-    title: 'Townhouse — لندن',
+    title: 'تاون هاوس — لندن',
     slug: 'townhouse-london-demo-5',
     description: 'منزل عائلي أنيق في حي هادئ قريب من المترو.',
     price: 1250000,

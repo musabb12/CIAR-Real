@@ -5,6 +5,7 @@ import { Bell } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import { onInvalidate } from '@/lib/admin-events';
 import { useAppStore } from '@/store/app-store';
+import { resolveNewsContent } from '@/lib/news-locales';
 import { resolveNewsTickerFontFamily } from '@/lib/news-ticker-fonts';
 
 interface NewsItem {
@@ -31,11 +32,11 @@ const typeLabels: Record<string, string> = {
 };
 
 const fallbackNews: NewsItem[] = [
-  { id: '1', type: 'info', text: 'CIAR platform now available in 60+ countries worldwide. Find your dream property today!' },
-  { id: '2', type: 'promo', text: 'New listings added daily. Over 30,000+ verified properties across the globe.' },
-  { id: '3', type: 'info', text: 'Verified agents in every major city. Connect with trusted professionals.' },
-  { id: '4', type: 'warning', text: 'Market update: Prime real estate prices trending upward in top destinations.' },
-  { id: '5', type: 'promo', text: 'Smart AI valuation tools now available on every property listing.' },
+  { id: '1', type: 'info', text: 'منصة CIAR متاحة الآن في أكثر من 60 دولة حول العالم. اعثر على عقارك المثالي اليوم!' },
+  { id: '2', type: 'promo', text: 'إعلانات جديدة يومياً — أكثر من 30,000 عقار موثّق حول العالم.' },
+  { id: '3', type: 'info', text: 'وكلاء معتمدون في كل مدينة رئيسية. تواصل مع محترفين موثوقين.' },
+  { id: '4', type: 'warning', text: 'تحديث السوق: أسعار العقارات الفاخرة في تصاعد في أبرز الوجهات.' },
+  { id: '5', type: 'promo', text: 'أدوات تقييم عقاري بالذكاء الاصطناعي متاحة على كل إعلان.' },
 ];
 
 export function NewsTicker() {
@@ -70,22 +71,29 @@ export function NewsTicker() {
       .then((data) => {
         if (Array.isArray(data) && data.length > 0) {
           setNews(
-            (data as Array<{ id: string; type: NewsItem['type']; content: string; link?: string | null }>).map(
-              (item) => ({
+            (data as Array<{
+              id: string;
+              type: NewsItem['type'];
+              content: string;
+              contentByLocale?: Record<string, string>;
+              link?: string | null;
+            }>).map((item) => {
+              const text = resolveNewsContent(item, locale);
+              return {
                 id: item.id,
                 type: item.type,
-                text: item.content,
-                content: item.content,
+                text,
+                content: text,
                 link: item.link ?? null,
-              }),
-            ),
+              };
+            }),
           );
         }
       })
       .catch(() => {
         // Use fallback news items
       });
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     loadNews();

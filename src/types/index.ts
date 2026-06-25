@@ -373,6 +373,9 @@ export interface SiteSocialSettings {
   youtube: string;
   linkedin: string;
   tiktok: string;
+  snapchat: string;
+  threads: string;
+  pinterest: string;
 }
 
 export type ManagedPageKey =

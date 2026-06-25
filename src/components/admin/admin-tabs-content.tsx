@@ -55,13 +55,14 @@ import {
 } from '@/components/ui/dialog';
 import { CountrySettingsPanel } from '@/components/admin/country-settings-panel';
 import { AgentSettingsPanel } from '@/components/admin/agent-settings-panel';
+import { UserSettingsPanel } from '@/components/admin/user-settings-panel';
 import { CompanySettingsPanel } from '@/components/admin/company-settings-panel';
 import { AdminEntityGrid } from '@/components/admin/admin-entity-grid';
 import { CountryFlagBadge, FlagPicker } from '@/components/admin/flag-picker';
 import { useLocalizedCountryName } from '@/hooks/use-localized-country-name';
 import { sortCountriesByLabel } from '@/lib/localize-country';
 import { sortPropertiesByCountry } from '@/lib/property-sort';
-import { normalizeFlagStorage } from '@/lib/country-flags';
+import { normalizeFlagStorage, countryDisplayName } from '@/lib/country-flags';
 import {
   expandInquiryReplyTemplate,
   buildInquiryMailtoLink,
@@ -1688,6 +1689,7 @@ export function LocationsTab({
 // ─── Users Tab ────────────────────────────────
 export function UsersTab({ isAr }: { isAr: boolean }) {
   const [refreshKey, setRefreshKey] = useState(0);
+  const [settingsUserId, setSettingsUserId] = useState<string | null>(null);
   const bump = () => setRefreshKey((k) => k + 1);
   type Row = { id: string; name: string | null; email: string; phone: string | null; role: string; isActive: boolean; createdAt: string };
   const parseItems = useCallback((d: unknown): Row[] => (Array.isArray(d) ? (d as Row[]) : []), []);
@@ -1698,6 +1700,17 @@ export function UsersTab({ isAr }: { isAr: boolean }) {
     if (role === 'COMPANY') return '#fb923c';
     return '#2dd4bf';
   };
+
+  if (settingsUserId) {
+    return (
+      <UserSettingsPanel
+        userId={settingsUserId}
+        isAr={isAr}
+        onBack={() => setSettingsUserId(null)}
+        onUpdated={bump}
+      />
+    );
+  }
 
   return (
     <AdminEntityGrid<Row>
@@ -1713,8 +1726,8 @@ export function UsersTab({ isAr }: { isAr: boolean }) {
       searchPlaceholder={{ ar: 'بحث بالاسم أو البريد…', en: 'Search by name or email…' }}
       emptyAr="لا يوجد مستخدمون"
       emptyEn="No users"
-      cardClickable={false}
-      onItemClick={() => {}}
+      cardClickable
+      onItemClick={(r) => setSettingsUserId(r.id)}
       renderCard={(r) => (
         <div className="p-4 w-full">
           <div className="flex items-center gap-3 mb-3">
@@ -1831,8 +1844,21 @@ export function AgentsTab({ isAr }: { isAr: boolean }) {
     companyId: '',
   });
   const bump = () => setRefreshKey((k) => k + 1);
-  type Row = { id: string; rating: number; verified: boolean; totalListings: number; user?: { name?: string; email?: string }; company?: { name?: string }; _count?: { properties: number } };
+  type Row = {
+    id: string;
+    rating: number;
+    verified: boolean;
+    totalListings: number;
+    countryId?: string | null;
+    user?: { name?: string; email?: string };
+    company?: { name?: string };
+    _count?: { properties: number };
+  };
   const parseItems = useCallback((d: unknown): Row[] => (Array.isArray(d) ? (d as Row[]) : []), []);
+  const agentCountryLabel = useCallback(
+    (countryId?: string | null) => (countryId ? countryDisplayName(countryId, isAr ? 'ar' : 'en') : ''),
+    [isAr],
+  );
 
   useEffect(() => {
     if (!addOpen) return;
@@ -1904,13 +1930,14 @@ export function AgentsTab({ isAr }: { isAr: boolean }) {
         isAr={isAr}
         refreshKey={refreshKey}
         subtitle={{
-          ar: 'اضغط على بطاقة الوكيل لفتح الإعدادات، أو أضف وكيلاً جديداً',
-          en: 'Click an agent card for settings, or add a new agent',
+          ar: '10 وكلاء في كل دولة (أسماء عربية، 8 عقارات لكل وكيل) — اضغط البطاقة للتفاصيل',
+          en: '10 agents per country (Arabic names, 8 listings each) — click a card for details',
         }}
-        endpoint="/api/agents"
+        endpoint="/api/agents?fresh=1"
         parseItems={parseItems}
         searchKeys={['name', 'email']}
-        searchPlaceholder={{ ar: 'بحث بالاسم…', en: 'Search by name…' }}
+        getSearchText={(r) => `${r.user?.name ?? ''} ${r.user?.email ?? ''} ${agentCountryLabel(r.countryId)}`}
+        searchPlaceholder={{ ar: 'بحث بالاسم أو الدولة…', en: 'Search by name or country…' }}
         emptyAr="لا يوجد وكلاء — أضف أول وكيل"
         emptyEn="No agents — add your first agent"
         onAdd={() => setAddOpen(true)}
@@ -1942,6 +1969,12 @@ export function AgentsTab({ isAr }: { isAr: boolean }) {
                 {r._count?.properties ?? r.totalListings ?? 0} {tx(isAr, 'عقار', 'listings')}
               </span>
             </div>
+            {r.countryId && (
+              <p className="mt-2 text-[11px] text-[var(--admin-text-faint)] flex items-center gap-1">
+                <MapPin className="h-3 w-3 shrink-0" />
+                {agentCountryLabel(r.countryId)}
+              </p>
+            )}
             <p className="mt-3 text-[10px] text-amber-200/70">{tx(isAr, 'اضغط للإعدادات', 'Tap for settings')}</p>
           </div>
         )}
@@ -2769,11 +2802,16 @@ export function CompaniesTab({ isAr }: { isAr: boolean }) {
     email?: string | null;
     phone?: string | null;
     website?: string | null;
+    countryId?: string | null;
     listingCount: number;
     agentCount: number;
     _count?: { agents: number };
   };
   const parseItems = useCallback((d: unknown): Row[] => (Array.isArray(d) ? (d as Row[]) : []), []);
+  const companyCountryLabel = useCallback(
+    (countryId?: string | null) => (countryId ? countryDisplayName(countryId, isAr ? 'ar' : 'en') : ''),
+    [isAr],
+  );
 
   const submitCompany = async () => {
     if (!form.name.trim()) {
@@ -2824,13 +2862,14 @@ export function CompaniesTab({ isAr }: { isAr: boolean }) {
         isAr={isAr}
         refreshKey={refreshKey}
         subtitle={{
-          ar: 'اضغط على بطاقة الشركة للإعدادات، أو أضف شركة جديدة',
-          en: 'Click a company card for settings, or add a new company',
+          ar: '10 شركات في كل دولة (أسماء عربية، 8 عقارات لكل شركة) — اضغط البطاقة للتفاصيل',
+          en: '10 companies per country (Arabic names, 8 listings each) — click a card for details',
         }}
         endpoint="/api/companies"
         parseItems={parseItems}
         searchKeys={['name', 'email', 'phone']}
-        searchPlaceholder={{ ar: 'بحث باسم الشركة…', en: 'Search companies…' }}
+        getSearchText={(r) => `${r.name} ${r.email ?? ''} ${companyCountryLabel(r.countryId)}`}
+        searchPlaceholder={{ ar: 'بحث باسم الشركة أو الدولة…', en: 'Search company or country…' }}
         emptyAr="لا توجد شركات — أضف أول شركة"
         emptyEn="No companies — add your first company"
         onAdd={() => setAddOpen(true)}
@@ -2864,6 +2903,12 @@ export function CompaniesTab({ isAr }: { isAr: boolean }) {
                 {r.listingCount ?? 0} {tx(isAr, 'إعلان', 'listings')}
               </span>
             </div>
+            {r.countryId && (
+              <p className="mt-2 text-[11px] text-[var(--admin-text-faint)] flex items-center gap-1">
+                <MapPin className="h-3 w-3 shrink-0" />
+                {companyCountryLabel(r.countryId)}
+              </p>
+            )}
             <p className="mt-3 text-[10px] text-amber-200/70">{tx(isAr, 'اضغط للإعدادات', 'Tap for settings')}</p>
           </div>
         )}
@@ -3427,42 +3472,51 @@ export function SettingsTab({
         <div>
           <h3 className="font-heading font-bold">{tx(isAr, 'روابط التواصل', 'Social Links')}</h3>
           <p className="text-[12px] text-[var(--admin-text-mute)]">
-            {tx(isAr, 'تظهر في الفوتر مباشرة', 'Displayed directly in footer')}
+            {tx(isAr, 'تظهر في صفحة «تواصل معنا» والفوتر — اترك الحقل فارغاً لإخفاء الرابط', 'Shown on Contact page and footer — leave empty to hide a link')}
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <Field label="Website">
+          <Field label={tx(isAr, 'الموقع الإلكتروني', 'Website')}>
             <input className="admin-input" value={socialSettings.website} onChange={(e) => updateSocialSettings({ website: e.target.value })} placeholder="https://example.com" />
           </Field>
-          <Field label="Email">
+          <Field label={tx(isAr, 'البريد الإلكتروني', 'Email')}>
             <input className="admin-input" value={socialSettings.email} onChange={(e) => updateSocialSettings({ email: e.target.value })} placeholder="info@example.com" />
           </Field>
-          <Field label="Phone">
+          <Field label={tx(isAr, 'الهاتف', 'Phone')}>
             <input className="admin-input" value={socialSettings.phone} onChange={(e) => updateSocialSettings({ phone: e.target.value })} placeholder="+966..." />
           </Field>
-          <Field label="WhatsApp">
+          <Field label={tx(isAr, 'واتساب', 'WhatsApp')}>
             <input className="admin-input" value={socialSettings.whatsapp} onChange={(e) => updateSocialSettings({ whatsapp: e.target.value })} placeholder="+966..." />
           </Field>
-          <Field label="Telegram">
+          <Field label={tx(isAr, 'تيليجرام', 'Telegram')}>
             <input className="admin-input" value={socialSettings.telegram} onChange={(e) => updateSocialSettings({ telegram: e.target.value })} placeholder="https://t.me/username" />
           </Field>
-          <Field label="Facebook">
+          <Field label={tx(isAr, 'فيسبوك', 'Facebook')}>
             <input className="admin-input" value={socialSettings.facebook} onChange={(e) => updateSocialSettings({ facebook: e.target.value })} placeholder="https://facebook.com/..." />
           </Field>
-          <Field label="Instagram">
+          <Field label={tx(isAr, 'إنستغرام', 'Instagram')}>
             <input className="admin-input" value={socialSettings.instagram} onChange={(e) => updateSocialSettings({ instagram: e.target.value })} placeholder="https://instagram.com/..." />
           </Field>
-          <Field label="X (Twitter)">
+          <Field label={tx(isAr, 'إكس (تويتر)', 'X (Twitter)')}>
             <input className="admin-input" value={socialSettings.x} onChange={(e) => updateSocialSettings({ x: e.target.value })} placeholder="https://x.com/..." />
           </Field>
-          <Field label="YouTube">
+          <Field label={tx(isAr, 'يوتيوب', 'YouTube')}>
             <input className="admin-input" value={socialSettings.youtube} onChange={(e) => updateSocialSettings({ youtube: e.target.value })} placeholder="https://youtube.com/..." />
           </Field>
-          <Field label="LinkedIn">
+          <Field label={tx(isAr, 'لينكدإن', 'LinkedIn')}>
             <input className="admin-input" value={socialSettings.linkedin} onChange={(e) => updateSocialSettings({ linkedin: e.target.value })} placeholder="https://linkedin.com/..." />
           </Field>
-          <Field label="TikTok">
+          <Field label={tx(isAr, 'تيك توك', 'TikTok')}>
             <input className="admin-input" value={socialSettings.tiktok} onChange={(e) => updateSocialSettings({ tiktok: e.target.value })} placeholder="https://tiktok.com/..." />
+          </Field>
+          <Field label={tx(isAr, 'سناب شات', 'Snapchat')}>
+            <input className="admin-input" value={socialSettings.snapchat} onChange={(e) => updateSocialSettings({ snapchat: e.target.value })} placeholder="https://snapchat.com/add/..." />
+          </Field>
+          <Field label={tx(isAr, 'ثريدز', 'Threads')}>
+            <input className="admin-input" value={socialSettings.threads} onChange={(e) => updateSocialSettings({ threads: e.target.value })} placeholder="https://threads.net/@..." />
+          </Field>
+          <Field label={tx(isAr, 'بنترست', 'Pinterest')}>
+            <input className="admin-input" value={socialSettings.pinterest} onChange={(e) => updateSocialSettings({ pinterest: e.target.value })} placeholder="https://pinterest.com/..." />
           </Field>
         </div>
         <div className="flex justify-end">

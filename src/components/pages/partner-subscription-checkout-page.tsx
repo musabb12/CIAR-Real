@@ -14,10 +14,15 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import { useSiteCurrency } from '@/hooks/use-site-currency';
+import { CurrencySwitcher } from '@/components/layout/currency-switcher';
+import {
+  SubscriptionPaymentFields,
+  emptySubscriptionPaymentForm,
+  validateSubscriptionPayment,
+} from '@/components/payment/subscription-payment-fields';
 import { isPartnerRole } from '@/lib/auth-roles';
 import { getPaymentBrand } from '@/components/payment/payment-method-icons';
 import {
@@ -26,6 +31,11 @@ import {
   getPlanDescription,
   getPlanFeatures,
 } from '@/lib/subscription-plans';
+import {
+  normalizePaymentMethodId,
+  paymentBrandId,
+  resolveCheckoutPaymentMethods,
+} from '@/lib/payment-method-config';
 import type {
   PartnerSubscriptionSettings,
   SubscriptionPlanConfig,
@@ -53,12 +63,15 @@ export function PartnerSubscriptionCheckoutPage() {
     DEFAULT_PARTNER_SUBSCRIPTION_SETTINGS,
   );
   const [paymentMethod, setPaymentMethod] = useState(
-    partnerSubscriptionCheckout?.paymentMethod ?? 'card',
+    normalizePaymentMethodId(partnerSubscriptionCheckout?.paymentMethod ?? 'visa'),
   );
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCvc, setCardCvc] = useState('');
-  const [cardName, setCardName] = useState(currentUser?.name ?? '');
+  const [paymentForm, setPaymentForm] = useState(emptySubscriptionPaymentForm);
+
+  useEffect(() => {
+    if (currentUser?.name) {
+      setPaymentForm((f) => ({ ...f, cardName: f.cardName || currentUser.name || '' }));
+    }
+  }, [currentUser?.name]);
 
   const isPartner = currentUser && isPartnerRole(currentUser.role);
   const planId = partnerSubscriptionCheckout?.planId;
@@ -98,8 +111,8 @@ export function PartnerSubscriptionCheckoutPage() {
     [settings.plans, planId],
   );
 
-  const enabledPayments = useMemo(
-    () => settings.paymentMethods.filter((method) => method.enabled),
+  const paymentMethods = useMemo(
+    () => resolveCheckoutPaymentMethods(settings.paymentMethods),
     [settings.paymentMethods],
   );
 
@@ -119,11 +132,10 @@ export function PartnerSubscriptionCheckoutPage() {
     e.preventDefault();
     if (!plan || !paymentMethod) return;
 
-    if (paymentMethod === 'card') {
-      if (!cardName.trim() || cardNumber.replace(/\s/g, '').length < 12) {
-        toast.error(tx('أكمل بيانات البطاقة', 'Complete card details'));
-        return;
-      }
+    const validationError = validateSubscriptionPayment(paymentMethod, paymentForm, tx);
+    if (validationError) {
+      toast.error(validationError);
+      return;
     }
 
     setSubmitting(true);
@@ -215,9 +227,12 @@ export function PartnerSubscriptionCheckoutPage() {
                       </span>
                     )}
                   </div>
+                <div className="flex items-center justify-between gap-3">
                   <p className="text-2xl font-bold text-amber-300 tabular-nums shrink-0">
                     {formatPrice(plan.price, settings.currency)}
                   </p>
+                  <CurrencySwitcher showCode variant="site" buttonClassName="!h-9" />
+                </div>
                 </div>
                 <p className="text-sm text-white/55 mt-3 leading-relaxed">{description}</p>
               </div>
@@ -251,16 +266,19 @@ export function PartnerSubscriptionCheckoutPage() {
           </aside>
 
           <div className="lg:col-span-3 order-1 lg:order-2 auth-card rounded-2xl p-6 sm:p-8 lg:p-10">
-            <div className="mb-8">
-              <h1 className="font-heading text-2xl sm:text-3xl font-bold text-white">
-                <span className="text-gradient-gold">{tx('إتمام الدفع', 'Complete payment')}</span>
-              </h1>
-              <p className="mt-2 text-sm text-white/55">
-                {tx(
-                  'محاكاة دفع آمنة — أكمل بياناتك واختر طريقة الدفع.',
-                  'Secure payment simulation — complete your details and choose a method.',
-                )}
-              </p>
+            <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <h1 className="font-heading text-2xl sm:text-3xl font-bold text-white">
+                  <span className="text-gradient-gold">{tx('إتمام الدفع', 'Complete payment')}</span>
+                </h1>
+                <p className="mt-2 text-sm text-white/55">
+                  {tx(
+                    'محاكاة دفع آمنة — اختر طريقة الدفع وأكمل جميع الحقول المطلوبة.',
+                    'Secure payment simulation — pick a method and complete all required fields.',
+                  )}
+                </p>
+              </div>
+              <CurrencySwitcher showCode variant="site" />
             </div>
 
             <form onSubmit={handlePay} className="space-y-6">
@@ -268,8 +286,8 @@ export function PartnerSubscriptionCheckoutPage() {
                 <legend className="text-xs font-semibold uppercase tracking-wider text-amber-300/90 mb-3">
                   {tx('طريقة الدفع', 'Payment method')}
                 </legend>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {enabledPayments.map((method) => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {paymentMethods.map((method) => (
                     <PaymentOption
                       key={method.id}
                       method={method}
@@ -281,83 +299,12 @@ export function PartnerSubscriptionCheckoutPage() {
                 </div>
               </fieldset>
 
-              {paymentMethod === 'card' && (
-                <fieldset className="space-y-4">
-                  <legend className="text-xs font-semibold uppercase tracking-wider text-amber-300/90 mb-1">
-                    {tx('بيانات البطاقة', 'Card details')}
-                  </legend>
-                  <div className="space-y-2">
-                    <Label htmlFor="sub-card-name" className="text-white/70 text-sm">
-                      {tx('اسم حامل البطاقة', 'Cardholder name')}
-                    </Label>
-                    <input
-                      id="sub-card-name"
-                      className="auth-input w-full rounded-xl px-4 py-2.5 text-sm"
-                      value={cardName}
-                      onChange={(e) => setCardName(e.target.value)}
-                      placeholder={tx('الاسم كما على البطاقة', 'Name on card')}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="sub-card-num" className="text-white/70 text-sm">
-                      {tx('رقم البطاقة', 'Card number')}
-                    </Label>
-                    <input
-                      id="sub-card-num"
-                      className="auth-input w-full rounded-xl px-4 py-2.5 text-sm tabular-nums"
-                      value={cardNumber}
-                      onChange={(e) => setCardNumber(e.target.value)}
-                      placeholder="4242 4242 4242 4242"
-                      inputMode="numeric"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="sub-exp" className="text-white/70 text-sm">
-                        {tx('انتهاء الصلاحية', 'Expiry')}
-                      </Label>
-                      <input
-                        id="sub-exp"
-                        className="auth-input w-full rounded-xl px-4 py-2.5 text-sm"
-                        value={cardExpiry}
-                        onChange={(e) => setCardExpiry(e.target.value)}
-                        placeholder="MM/YY"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="sub-cvc" className="text-white/70 text-sm">
-                        CVC
-                      </Label>
-                      <input
-                        id="sub-cvc"
-                        className="auth-input w-full rounded-xl px-4 py-2.5 text-sm"
-                        value={cardCvc}
-                        onChange={(e) => setCardCvc(e.target.value)}
-                        placeholder="123"
-                        inputMode="numeric"
-                      />
-                    </div>
-                  </div>
-                </fieldset>
-              )}
-
-              {paymentMethod === 'bank' && (
-                <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/65 leading-relaxed">
-                  {tx(
-                    'سيتم عرض تفاصيل الحساب البنكي بعد التأكيد. هذه محاكاة — سيتم تفعيل اشتراكك فوراً.',
-                    'Bank transfer details will appear after confirmation. This is a simulation — your subscription activates immediately.',
-                  )}
-                </div>
-              )}
-
-              {(paymentMethod === 'whish' || paymentMethod === 'ciar-prepaid') && (
-                <div className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/65">
-                  {tx(
-                    'سيتم توجيهك لإتمام الدفع عبر المحفظة المختارة. (محاكاة)',
-                    'You will complete payment via the selected wallet. (Simulation)',
-                  )}
-                </div>
-              )}
+              <SubscriptionPaymentFields
+                method={paymentMethod}
+                form={paymentForm}
+                onChange={(patch) => setPaymentForm((prev) => ({ ...prev, ...patch }))}
+                tx={tx}
+              />
 
               <div className="flex flex-wrap gap-3 pt-2">
                 {[
@@ -432,7 +379,7 @@ function PaymentOption({
   onSelect: () => void;
   tx: (ar: string, en: string) => string;
 }) {
-  const brand = getPaymentBrand(method.id);
+  const brand = getPaymentBrand(paymentBrandId(method.id));
   const BrandIcon = brand?.Icon;
 
   return (
@@ -451,7 +398,7 @@ function PaymentOption({
       <div className="flex h-10 min-w-10 items-center justify-center rounded-xl bg-white/8 border border-white/10 px-1.5">
         {BrandIcon ? (
           <BrandIcon className="!h-7 !w-auto max-w-[3.5rem]" />
-        ) : method.id === 'bank' ? (
+        ) : method.id === 'bank-transfer' ? (
           <Landmark className="h-5 w-5 text-amber-300" />
         ) : (
           <CreditCard className="h-5 w-5 text-amber-300" />

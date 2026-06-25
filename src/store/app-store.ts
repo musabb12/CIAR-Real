@@ -52,19 +52,10 @@ const defaultContentSettings: SiteContentSettings = {
   'admin-login': {},
 };
 
-const defaultSocialSettings: SiteSocialSettings = {
-  website: '',
-  email: '',
-  phone: '',
-  whatsapp: '',
-  telegram: '',
-  facebook: '',
-  instagram: '',
-  x: '',
-  youtube: '',
-  linkedin: '',
-  tiktok: '',
-};
+import {
+  DEFAULT_SOCIAL_SETTINGS,
+  mergeSocialSettings,
+} from '@/lib/default-social-settings';
 
 // ============================================================
 // Store interface
@@ -304,14 +295,14 @@ export const useAppStore = create<AppState>()(
               }
             : { ...defaultContentSettings },
         })),
-      socialSettings: { ...defaultSocialSettings },
+      socialSettings: { ...DEFAULT_SOCIAL_SETTINGS },
       updateSocialSettings: (partial) =>
         set((state) => ({
-          socialSettings: { ...state.socialSettings, ...partial },
+          socialSettings: mergeSocialSettings(state.socialSettings, partial),
         })),
       resetSocialSettings: () =>
         set({
-          socialSettings: { ...defaultSocialSettings },
+          socialSettings: { ...DEFAULT_SOCIAL_SETTINGS },
         }),
       hydrateSiteSettings: (payload) =>
         set((state) => ({
@@ -324,10 +315,7 @@ export const useAppStore = create<AppState>()(
             ...state.contentSettings,
             ...(payload.contentSettings ?? {}),
           },
-          socialSettings: {
-            ...state.socialSettings,
-            ...(payload.socialSettings ?? {}),
-          },
+          socialSettings: mergeSocialSettings(payload.socialSettings, state.socialSettings),
         })),
     }),
     {

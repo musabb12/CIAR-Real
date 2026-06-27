@@ -13,12 +13,13 @@ import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import { useLocalizedCountryName } from '@/hooks/use-localized-country-name';
 import { useSiteCurrency } from '@/hooks/use-site-currency';
+import { formatDateEn, formatNumberEn } from '@/lib/format-numbers';
 import { PageHero } from '@/components/layout/page-hero';
 import type { Favorite, Property } from '@/types';
 
 // ─── Component ──────────────────────────────────────────────────
 export function FavoritesPage() {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const countryLabel = useLocalizedCountryName();
   const { formatPrice } = useSiteCurrency();
   const {
@@ -187,7 +188,7 @@ export function FavoritesPage() {
                         {formatPrice(property.price, property.country?.currency)}
                       </span>
                       {isRent && (
-                        <span className="ml-1 text-[10px] text-white/60">{t.property.perMonth}</span>
+                        <span className="ml-1 text-[10px] text-white">{t.property.perMonth}</span>
                       )}
                     </div>
 
@@ -221,8 +222,8 @@ export function FavoritesPage() {
                       {property.title}
                     </h3>
 
-                    <div className="flex items-center gap-1 text-muted-foreground mb-3">
-                      <MapPin className="h-3.5 w-3.5 shrink-0 text-primary/60" />
+                    <div className="flex items-center gap-1 text-foreground dark:text-white mb-3">
+                      <MapPin className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                       <span className="text-xs truncate">
                         {[property.city?.name, property.country ? countryLabel(property.country) : null]
                           .filter(Boolean)
@@ -232,35 +233,35 @@ export function FavoritesPage() {
 
                     <div className="gradient-divider mb-3" />
 
-                    <div className="flex items-center gap-4 text-muted-foreground">
+                    <div className="flex items-center gap-4 text-foreground dark:text-white">
                       {property.bedrooms && (
                         <div className="flex items-center gap-1 text-xs">
-                          <Bed className="h-3.5 w-3.5 text-primary/70" />
-                          <span className="font-semibold">{property.bedrooms}</span>
+                          <Bed className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                          <span className="font-semibold tabular-nums">{formatNumberEn(property.bedrooms)}</span>
                         </div>
                       )}
                       {property.bathrooms && (
                         <div className="flex items-center gap-1 text-xs">
-                          <Bath className="h-3.5 w-3.5 text-primary/70" />
-                          <span className="font-semibold">{property.bathrooms}</span>
+                          <Bath className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                          <span className="font-semibold tabular-nums">{formatNumberEn(property.bathrooms)}</span>
                         </div>
                       )}
                       {property.area > 0 && (
                         <div className="flex items-center gap-1 text-xs">
-                          <Maximize className="h-3.5 w-3.5 text-primary/70" />
-                          <span className="font-semibold">{property.area} {t.property.sqm}</span>
+                          <Maximize className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                          <span className="font-semibold tabular-nums">{formatNumberEn(property.area)} {t.property.sqm}</span>
                         </div>
                       )}
                     </div>
 
                     {/* Saved date */}
                     <div className="mt-3 flex items-center justify-between">
-                      <span className="text-[10px] text-muted-foreground/60">
-                        {new Date(favorite.createdAt).toLocaleDateString()}
+                      <span className="text-[10px] text-foreground/80 dark:text-white/80 tabular-nums">
+                        {formatDateEn(favorite.createdAt, locale === 'ar' ? 'ar' : 'en')}
                       </span>
                       <button
                         onClick={() => handlePropertyClick(property)}
-                        className="text-xs font-semibold text-primary hover:underline flex items-center gap-1"
+                        className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
                       >
                         {t.property.viewDetails}
                         <ArrowRight className="h-3 w-3" />

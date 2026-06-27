@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { formatNumberEn } from '@/lib/format-numbers';
 import {
   ArrowLeft,
   Loader2,
@@ -320,7 +321,7 @@ export function AgentSettingsPanel({ agentId, isAr, onBack, onUpdated }: Props) 
                         {p.commissionPercent != null ? ` · ${p.commissionPercent}%` : ''}
                       </div>
                     </div>
-                    <span className="text-amber-200/90 tabular-nums">${p.price.toLocaleString()}</span>
+                    <span className="text-amber-200/90 tabular-nums">${formatNumberEn(p.price)}</span>
                   </li>
                 ))}
               </ul>

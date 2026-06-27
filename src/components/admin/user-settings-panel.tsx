@@ -15,6 +15,7 @@ import {
 import { toast } from 'sonner';
 import type { Agent, Property, User as AppUser } from '@/types';
 import { userRoleLabel } from '@/lib/admin-labels';
+import { formatNumberEn } from '@/lib/format-numbers';
 import { getSeedCountryById } from '@/lib/seed-countries-catalog';
 import { countryDisplayName } from '@/lib/country-flags';
 import { listDemoProperties } from '@/lib/demo-properties';
@@ -255,7 +256,7 @@ export function UserSettingsPanel({ userId, isAr, onBack, onUpdated }: Props) {
                     {p.commissionPercent != null ? ` · ${p.commissionPercent}%` : ''}
                   </div>
                 </div>
-                <span className="text-amber-200/90 tabular-nums shrink-0">${p.price.toLocaleString()}</span>
+                <span className="text-amber-200/90 tabular-nums shrink-0">${formatNumberEn(p.price)}</span>
               </li>
             ))}
           </ul>

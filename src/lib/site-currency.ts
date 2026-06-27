@@ -1,4 +1,5 @@
 import type { Locale } from '@/lib/i18n';
+import { formatNumberEn } from '@/lib/format-numbers';
 
 /** USD-based exchange rates (display / conversion). */
 export const CURRENCY_RATES: Record<string, number> = {
@@ -149,7 +150,7 @@ export function formatMoneyValue(
   const symbol = getCurrencySymbol(code);
   const isZeroDecimal = code === 'JPY' || code === 'KRW';
   const value = isZeroDecimal ? Math.round(amount) : amount;
-  const formatted = value.toLocaleString(locale === 'ar' ? 'ar-EG' : 'en-US', {
+  const formatted = formatNumberEn(value, {
     minimumFractionDigits: isZeroDecimal ? 0 : 0,
     maximumFractionDigits: isZeroDecimal ? 0 : value >= 1000 ? 0 : 2,
   });

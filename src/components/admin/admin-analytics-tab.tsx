@@ -14,6 +14,7 @@ import {
   Legend,
 } from 'recharts';
 import { Loader2, TrendingUp, Users, Building2, MessageSquare } from 'lucide-react';
+import { formatNumberEn } from '@/lib/format-numbers';
 
 const COLORS = ['#f5c97b', '#2dd4bf', '#a78bfa', '#fb7185', '#60a5fa', '#fbbf24'];
 
@@ -152,7 +153,7 @@ export function AdminAnalyticsTab({ isAr }: { isAr: boolean }) {
               </div>
               <div>
                 <div className="text-[11px] text-[var(--admin-text-mute)] uppercase tracking-wider">{s.label}</div>
-                <div className="text-2xl font-bold tabular-nums">{s.value.toLocaleString()}</div>
+                <div className="text-2xl font-bold tabular-nums">{formatNumberEn(s.value)}</div>
               </div>
             </div>
           );

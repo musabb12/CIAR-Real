@@ -55,6 +55,7 @@ import {
   ProgressBar,
   useLiveTime,
 } from './admin-primitives';
+import { formatDateEn, formatNumberEn } from '@/lib/format-numbers';
 
 interface AdminStats {
   totals?: {
@@ -175,7 +176,7 @@ function WelcomeHero({
 
   const emoji = hour < 5 ? '🌙' : hour < 12 ? '☀️' : hour < 18 ? '🌤️' : '🌅';
 
-  const dateStr = now.toLocaleDateString(isAr ? 'ar-SA' : 'en-US', {
+  const dateStr = formatDateEn(now, isAr ? 'ar-SA' : 'en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -595,7 +596,7 @@ function RecentInquiries({ isAr, items }: { isAr: boolean; items: AdminStats['re
                 <div className="flex items-baseline gap-2">
                   <p className="font-semibold text-sm truncate">{q.name}</p>
                   <span className="text-[10px] text-[var(--admin-text-faint)]">
-                    {new Date(q.createdAt).toLocaleDateString(isAr ? 'ar' : 'en')}
+                    {formatDateEn(q.createdAt, isAr ? 'ar' : 'en')}
                   </span>
                 </div>
                 <p className="text-xs text-[var(--admin-text-mute)] truncate mt-0.5">{q.message}</p>
@@ -842,7 +843,7 @@ function NotificationsCenter({ isAr }: { isAr: boolean }) {
 function MiniCalendar({ isAr }: { isAr: boolean }) {
   const today = new Date();
   const day = today.getDate();
-  const monthName = today.toLocaleDateString(isAr ? 'ar' : 'en', { month: 'long', year: 'numeric' });
+  const monthName = formatDateEn(today, isAr ? 'ar' : 'en', { month: 'long', year: 'numeric' });
   const days = Array.from({ length: 30 }, (_, i) => i + 1);
   const events = [3, 7, 12, 18, 22, day, 28];
   return (
@@ -961,7 +962,7 @@ function ConversionFunnel({ isAr }: { isAr: boolean }) {
             <div key={i}>
               <div className="flex items-center justify-between text-xs mb-1">
                 <span className="text-[var(--admin-text-mute)]">{tx(isAr, s.ar, s.en)}</span>
-                <span className="font-bold tabular-nums">{s.val.toLocaleString()}</span>
+                <span className="font-bold tabular-nums">{formatNumberEn(s.val)}</span>
               </div>
               <motion.div
                 initial={{ width: 0 }}

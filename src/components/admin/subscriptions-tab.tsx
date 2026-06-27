@@ -12,6 +12,7 @@ import {
   Users,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDateEn } from '@/lib/format-numbers';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import type {
@@ -474,7 +475,7 @@ export function SubscriptionsTab({ isAr }: { isAr: boolean }) {
                       {partner.expiresAt && !partner.exempt && (
                         <span className="text-[11px] text-[var(--admin-text-faint)]">
                           {tx(isAr, 'حتى', 'Until')}{' '}
-                          {new Date(partner.expiresAt).toLocaleDateString(isAr ? 'ar' : 'en')}
+                          {formatDateEn(partner.expiresAt, isAr ? 'ar' : 'en')}
                         </span>
                       )}
                     </div>

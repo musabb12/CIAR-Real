@@ -17,6 +17,7 @@ import {
 import { toast } from 'sonner';
 import type { Agent, Company, Property } from '@/types';
 import { countryDisplayName } from '@/lib/country-flags';
+import { formatNumberEn } from '@/lib/format-numbers';
 import { getSeedCountryById } from '@/lib/seed-countries-catalog';
 import {
   COMPANY_ADMIN_PERMISSIONS,
@@ -377,7 +378,7 @@ export function CompanySettingsPanel({ companyId, isAr, onBack, onUpdated }: Pro
                         {p.commissionPercent != null ? ` · ${p.commissionPercent}%` : ''}
                       </div>
                     </div>
-                    <span className="text-amber-200/90 tabular-nums">${p.price.toLocaleString()}</span>
+                    <span className="text-amber-200/90 tabular-nums">${formatNumberEn(p.price)}</span>
                   </li>
                 ))}
               </ul>

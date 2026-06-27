@@ -28,6 +28,7 @@ import type {
   SubscriptionPlanId,
 } from '@/types/subscription';
 import { toast } from 'sonner';
+import { formatDateEn } from '@/lib/format-numbers';
 
 type SubscriptionResponse = PartnerSubscriptionView & {
   agentId: string;
@@ -177,7 +178,7 @@ export function PartnerSubscriptionPage() {
             {data?.expiresAt && !data.exempt && (
               <p className="text-white/55 text-sm mb-6">
                 {tx('ينتهي في', 'Expires')}:{' '}
-                {new Date(data.expiresAt).toLocaleDateString(rtl ? 'ar' : 'en')}
+                {formatDateEn(data.expiresAt, rtl ? 'ar' : 'en')}
               </p>
             )}
             <Button

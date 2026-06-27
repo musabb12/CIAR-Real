@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import { useLocalizedCountryName } from '@/hooks/use-localized-country-name';
+import { formatNumberEn } from '@/lib/format-numbers';
 import { useSiteCurrency } from '@/hooks/use-site-currency';
 import { PageHero } from '@/components/layout/page-hero';
 import type { Agent, Property } from '@/types';
@@ -432,8 +433,8 @@ function AgentPropertyCard({
         </div>
       </div>
       <CardContent className="p-3">
-        <h4 className="text-xs font-bold truncate mb-1">{property.title}</h4>
-        <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+        <h4 className="text-xs font-bold truncate mb-1 text-foreground dark:text-white">{property.title}</h4>
+        <div className="flex items-center gap-1 text-[11px] text-foreground dark:text-white">
           <MapPin className="h-3 w-3 shrink-0" />
           <span className="truncate">
             {[property.city?.name, property.country ? countryLabel(property.country) : null]
@@ -441,19 +442,19 @@ function AgentPropertyCard({
               .join(', ')}
           </span>
         </div>
-        <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground">
+        <div className="flex items-center gap-3 mt-2 text-[11px] text-foreground dark:text-white">
           {property.bedrooms && (
-            <span className="flex items-center gap-0.5">
-              <Bed className="h-3 w-3" /> {property.bedrooms}
+            <span className="flex items-center gap-0.5 tabular-nums">
+              <Bed className="h-3 w-3" /> {formatNumberEn(property.bedrooms)}
             </span>
           )}
           {property.bathrooms && (
-            <span className="flex items-center gap-0.5">
-              <Bath className="h-3 w-3" /> {property.bathrooms}
+            <span className="flex items-center gap-0.5 tabular-nums">
+              <Bath className="h-3 w-3" /> {formatNumberEn(property.bathrooms)}
             </span>
           )}
-          <span className="flex items-center gap-0.5">
-            <Maximize className="h-3 w-3" /> {property.area} {t.property.sqm}
+          <span className="flex items-center gap-0.5 tabular-nums">
+            <Maximize className="h-3 w-3" /> {formatNumberEn(property.area)} {t.property.sqm}
           </span>
         </div>
       </CardContent>

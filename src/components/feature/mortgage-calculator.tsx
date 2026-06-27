@@ -32,6 +32,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { formatNumberEn } from '@/lib/format-numbers';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -434,7 +435,7 @@ export function MortgageCalculator({
                   {formatCurrency(loanAmount, currency)}
                 </p>
                 <p className="text-xs text-emerald-600/70 dark:text-emerald-400/60 mt-1">
-                  {currency}{homePrice.toLocaleString()} &times; {(100 - downPaymentPercent) / 100}
+                  {currency}{formatNumberEn(homePrice)} &times; {(100 - downPaymentPercent) / 100}
                 </p>
               </div>
             </div>

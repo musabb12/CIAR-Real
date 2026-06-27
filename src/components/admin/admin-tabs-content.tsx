@@ -71,6 +71,7 @@ import {
   inquiryStatusLabel,
   userRoleLabel,
 } from '@/lib/admin-labels';
+import { formatDateEn, formatDateTimeEn, formatNumberEn } from '@/lib/format-numbers';
 
 const PropertyAdminMapPicker = dynamic(
   () => import('./property-admin-map-picker').then((m) => m.PropertyAdminMapPicker),
@@ -415,7 +416,7 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
     {
       key: 'price',
       header: { ar: 'السعر', en: 'Price' },
-      render: (r) => <span className="font-bold text-[#f5c97b]">${r.price.toLocaleString()}</span>,
+      render: (r) => <span className="font-bold text-[#f5c97b]">${formatNumberEn(r.price)}</span>,
     },
     {
       key: 'commission',
@@ -429,7 +430,7 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
     {
       key: 'views',
       header: { ar: 'المشاهدات', en: 'Views' },
-      render: (r) => <span className="text-[var(--admin-text-mute)]">{r.views?.toLocaleString() ?? 0}</span>,
+      render: (r) => <span className="text-[var(--admin-text-mute)]">{formatNumberEn(r.views ?? 0)}</span>,
     },
     {
       key: 'status',
@@ -972,11 +973,11 @@ export function PropertiesTab({ isAr }: { isAr: boolean }) {
                 <span className={`admin-pill ${r.status === 'AVAILABLE' ? 'admin-pill-up' : r.status === 'PENDING' ? 'admin-pill-gold' : 'admin-pill-down'}`}>
                   {r.status}
                 </span>
-                <span className="text-[11px] text-[var(--admin-text-faint)]">{tx(isAr, 'المشاهدات', 'Views')}: {r.views?.toLocaleString() ?? 0}</span>
+                <span className="text-[11px] text-[var(--admin-text-faint)]">{tx(isAr, 'المشاهدات', 'Views')}: {formatNumberEn(r.views ?? 0)}</span>
               </div>
 
               <div className="mt-2 text-sm text-[var(--admin-text-mute)]">
-                ${r.price.toLocaleString()} · {r.propertyType} · {r.listingType}
+                ${formatNumberEn(r.price)} · {r.propertyType} · {r.listingType}
               </div>
             </div>
                   ))}
@@ -1377,8 +1378,8 @@ export function FeaturedTab({ isAr }: { isAr: boolean }) {
       ),
     },
     { key: 'country', header: { ar: 'الدولة', en: 'Country' }, render: (r) => (r.country ? countryLabel(r.country) : '—') },
-    { key: 'price', header: { ar: 'السعر', en: 'Price' }, render: (r) => <span className="font-bold text-[#f5c97b]">${r.price.toLocaleString()}</span> },
-    { key: 'views', header: { ar: 'المشاهدات', en: 'Views' }, render: (r) => r.views?.toLocaleString() ?? 0 },
+    { key: 'price', header: { ar: 'السعر', en: 'Price' }, render: (r) => <span className="font-bold text-[#f5c97b]">${formatNumberEn(r.price)}</span> },
+    { key: 'views', header: { ar: 'المشاهدات', en: 'Views' }, render: (r) => formatNumberEn(r.views ?? 0) },
     { key: 'status', header: { ar: 'الحالة', en: 'Status' }, render: (r) => <span className="admin-pill admin-pill-gold">{r.status}</span> },
   ];
   const rowActions = (r: Row): RowAction[] => [
@@ -1756,7 +1757,7 @@ export function UsersTab({ isAr }: { isAr: boolean }) {
             </div>
           )}
           <p className="text-[11px] text-[var(--admin-text-faint)]">
-            {tx(isAr, 'انضم', 'Joined')}: {new Date(r.createdAt).toLocaleDateString(isAr ? 'ar' : 'en')}
+            {tx(isAr, 'انضم', 'Joined')}: {formatDateEn(r.createdAt, isAr ? 'ar' : 'en')}
           </p>
         </div>
       )}
@@ -2370,13 +2371,13 @@ export function InquiriesTab({ isAr }: { isAr: boolean }) {
                 <p className="text-xs text-[var(--admin-text-mute)] whitespace-pre-wrap">{r.adminReply}</p>
                 {r.repliedAt && (
                   <p className="text-[10px] text-[var(--admin-text-faint)] mt-1">
-                    {new Date(r.repliedAt).toLocaleString(isAr ? 'ar' : 'en')}
+                    {formatDateTimeEn(r.repliedAt, isAr ? 'ar' : 'en')}
                   </p>
                 )}
               </div>
             )}
             <p className="text-[11px] text-[var(--admin-text-faint)] mt-2">
-              {new Date(r.createdAt).toLocaleDateString(isAr ? 'ar' : 'en', { dateStyle: 'medium' })}
+              {formatDateEn(r.createdAt, isAr ? 'ar' : 'en', { dateStyle: 'medium' })}
             </p>
           </div>
         )}
@@ -2616,7 +2617,7 @@ export function ReviewsTab({ isAr }: { isAr: boolean }) {
       header: { ar: 'التاريخ', en: 'Date' },
       render: (r) => (
         <span className="text-[var(--admin-text-mute)] text-[12px]">
-          {new Date(r.createdAt).toLocaleDateString(isAr ? 'ar' : 'en')}
+          {formatDateEn(r.createdAt, isAr ? 'ar' : 'en')}
         </span>
       ),
     },
@@ -2742,7 +2743,7 @@ export function FavoritesTab({ isAr }: { isAr: boolean }) {
       header: { ar: 'السعر', en: 'Price' },
       render: (r) => (
         <span className="font-bold text-[#f5c97b]">
-          {r.property?.price != null ? `$${Number(r.property.price).toLocaleString()}` : '—'}
+          {r.property?.price != null ? `$${formatNumberEn(Number(r.property.price))}` : '—'}
         </span>
       ),
     },
@@ -2751,7 +2752,7 @@ export function FavoritesTab({ isAr }: { isAr: boolean }) {
       header: { ar: 'أضيفت', en: 'Saved' },
       render: (r) => (
         <span className="text-[var(--admin-text-mute)] text-[12px]">
-          {new Date(r.createdAt).toLocaleDateString(isAr ? 'ar' : 'en')}
+          {formatDateEn(r.createdAt, isAr ? 'ar' : 'en')}
         </span>
       ),
     },
@@ -3483,10 +3484,10 @@ export function SettingsTab({
             <input className="admin-input" value={socialSettings.email} onChange={(e) => updateSocialSettings({ email: e.target.value })} placeholder="info@example.com" />
           </Field>
           <Field label={tx(isAr, 'الهاتف', 'Phone')}>
-            <input className="admin-input" value={socialSettings.phone} onChange={(e) => updateSocialSettings({ phone: e.target.value })} placeholder="+966..." />
+            <input className="admin-input" value={socialSettings.phone} onChange={(e) => updateSocialSettings({ phone: e.target.value })} placeholder="+963..." />
           </Field>
           <Field label={tx(isAr, 'واتساب', 'WhatsApp')}>
-            <input className="admin-input" value={socialSettings.whatsapp} onChange={(e) => updateSocialSettings({ whatsapp: e.target.value })} placeholder="+966..." />
+            <input className="admin-input" value={socialSettings.whatsapp} onChange={(e) => updateSocialSettings({ whatsapp: e.target.value })} placeholder="+963..." />
           </Field>
           <Field label={tx(isAr, 'تيليجرام', 'Telegram')}>
             <input className="admin-input" value={socialSettings.telegram} onChange={(e) => updateSocialSettings({ telegram: e.target.value })} placeholder="https://t.me/username" />

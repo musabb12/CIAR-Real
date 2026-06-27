@@ -23,15 +23,7 @@ import { useAppStore } from '@/store/app-store';
 import { useTranslation } from '@/lib/i18n/use-translation';
 import { useLocalizedCountryName } from '@/hooks/use-localized-country-name';
 import { useSiteCurrency } from '@/hooks/use-site-currency';
-
-// ============================================================
-// Helpers
-// ============================================================
-
-/** Format a number with commas: 12500000 → "12,500,000" */
-function formatNumber(num: number): string {
-  return num.toLocaleString('en-US');
-}
+import { formatNumberEn } from '@/lib/format-numbers';
 
 /** Listing type to translation key mapping */
 const listingTypeKeys: Record<ListingType, keyof import('@/lib/i18n/translations').Translations['property']> = {
@@ -227,7 +219,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             {property.status !== 'AVAILABLE' && (
               <div className="absolute left-3 top-[72px] flex items-center gap-1.5">
                 <span className={`inline-block h-2 w-2 rounded-full ${statusDotColors[property.status]} animate-pulse`} />
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-white/90 drop-shadow-md">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-white drop-shadow-md">
                   {t.status[statusKeys[property.status]]}
                 </span>
               </div>
@@ -240,7 +232,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                   <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
                 </span>
-                <span className="text-[10px] font-semibold uppercase tracking-wide text-white/80 drop-shadow-md">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-white drop-shadow-md">
                   {t.status.available}
                 </span>
               </div>
@@ -277,16 +269,16 @@ export function PropertyCard({ property }: PropertyCardProps) {
             <div className="estate-property-price">
               {formatPrice(property.price, property.country?.currency)}
               {isRent && (
-                <span className="ms-1 text-[11px] font-medium opacity-75">
+                <span className="ms-1 text-[11px] font-medium text-white">
                   {t.property.perMonth}
                 </span>
               )}
             </div>
             {imageCount > 1 && (
               <div className="absolute right-3 top-14 z-[3] flex items-center gap-1 glass-badge rounded-lg px-2 py-0.5">
-                <Eye className="h-3 w-3 text-white/70" />
-                <span className="text-[10px] font-medium text-white/70">
-                  {imageCount} {imageCount === 1 ? t.property.photo : t.property.photos}
+                <Eye className="h-3 w-3 text-white" />
+                <span className="text-[10px] font-medium text-white">
+                  {formatNumberEn(imageCount)} {imageCount === 1 ? t.property.photo : t.property.photos}
                 </span>
               </div>
             )}
@@ -297,14 +289,14 @@ export function PropertyCard({ property }: PropertyCardProps) {
           ================================================================ */}
           <CardContent className="relative space-y-2.5 p-4 pt-3.5">
             {/* Title with gradient hover effect */}
-            <h3 className="property-card-title line-clamp-1 text-sm font-bold leading-snug tracking-tight text-foreground">
+            <h3 className="property-card-title line-clamp-1 text-sm font-bold leading-snug tracking-tight text-foreground dark:text-white">
               {property.title}
             </h3>
 
             {/* Location */}
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <MapPin className="h-3.5 w-3.5 shrink-0 text-primary/60" />
-              <span className="truncate text-xs font-medium">
+            <div className="flex items-center gap-1.5 text-foreground dark:text-white">
+              <MapPin className="h-3.5 w-3.5 shrink-0 text-foreground/90 dark:text-white/90" />
+              <span className="truncate text-xs font-medium text-foreground dark:text-white">
                 {[property.city?.name, property.region?.name, property.country ? countryLabel(property.country) : null]
                   .filter(Boolean)
                   .join(', ')}
@@ -315,24 +307,24 @@ export function PropertyCard({ property }: PropertyCardProps) {
             <div className="gradient-divider" />
 
             {/* Stats row: beds, baths, area */}
-            <div className="flex items-center gap-4 text-muted-foreground">
+            <div className="flex items-center gap-4 text-foreground dark:text-white">
               {property.bedrooms != null && property.bedrooms > 0 && (
-                <div className="flex items-center gap-1.5 rounded-md bg-muted/60 px-2 py-1">
-                  <Bed className="h-3.5 w-3.5 text-primary/70" />
-                  <span className="text-xs font-semibold tabular-nums">{property.bedrooms}</span>
+                <div className="flex items-center gap-1.5 rounded-md bg-muted/60 dark:bg-white/10 px-2 py-1">
+                  <Bed className="h-3.5 w-3.5 text-foreground/90 dark:text-white/90" />
+                  <span className="text-xs font-semibold tabular-nums text-foreground dark:text-white">{formatNumberEn(property.bedrooms)}</span>
                 </div>
               )}
               {property.bathrooms != null && property.bathrooms > 0 && (
-                <div className="flex items-center gap-1.5 rounded-md bg-muted/60 px-2 py-1">
-                  <Bath className="h-3.5 w-3.5 text-primary/70" />
-                  <span className="text-xs font-semibold tabular-nums">{property.bathrooms}</span>
+                <div className="flex items-center gap-1.5 rounded-md bg-muted/60 dark:bg-white/10 px-2 py-1">
+                  <Bath className="h-3.5 w-3.5 text-foreground/90 dark:text-white/90" />
+                  <span className="text-xs font-semibold tabular-nums text-foreground dark:text-white">{formatNumberEn(property.bathrooms)}</span>
                 </div>
               )}
               {property.area > 0 && (
-                <div className="flex items-center gap-1.5 rounded-md bg-muted/60 px-2 py-1">
-                  <Maximize className="h-3.5 w-3.5 text-primary/70" />
-                  <span className="text-xs font-semibold tabular-nums">
-                    {formatNumber(property.area)} {t.property.sqm}
+                <div className="flex items-center gap-1.5 rounded-md bg-muted/60 dark:bg-white/10 px-2 py-1">
+                  <Maximize className="h-3.5 w-3.5 text-foreground/90 dark:text-white/90" />
+                  <span className="text-xs font-semibold tabular-nums text-foreground dark:text-white">
+                    {formatNumberEn(property.area)} {t.property.sqm}
                   </span>
                 </div>
               )}
@@ -349,17 +341,17 @@ export function PropertyCard({ property }: PropertyCardProps) {
                     className="h-6 w-6 rounded-full object-cover ring-1 ring-border"
                   />
                 ) : (
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-muted">
-                    <User className="h-3.5 w-3.5 text-muted-foreground" />
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-muted dark:bg-white/10">
+                    <User className="h-3.5 w-3.5 text-foreground/90 dark:text-white/90" />
                   </div>
                 )}
-                <span className="max-w-[100px] truncate text-[11px] font-medium text-muted-foreground">
+                <span className="max-w-[100px] truncate text-[11px] font-medium text-foreground dark:text-white">
                   {agentName ?? t.property.agent}
                 </span>
               </div>
 
               {/* View Details — slides in on hover */}
-              <span className="flex items-center gap-1 text-xs font-semibold text-primary">
+              <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                 <span className="hidden opacity-0 transition-all duration-300 group-hover:opacity-100 group-hover:inline">
                   {t.property.viewDetails}
                 </span>

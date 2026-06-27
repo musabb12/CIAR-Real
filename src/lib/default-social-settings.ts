@@ -4,8 +4,8 @@ import type { SiteSocialSettings } from '@/types';
 export const DEFAULT_SOCIAL_SETTINGS: SiteSocialSettings = {
   website: 'https://ciar.com',
   email: 'info@ciar.com',
-  phone: '+971 4 123 4567',
-  whatsapp: '+97141234567',
+  phone: '+963 993 153 333',
+  whatsapp: '+963993153333',
   telegram: 'https://t.me/ciar',
   facebook: 'https://facebook.com/ciar',
   instagram: 'https://instagram.com/ciar',
@@ -20,6 +20,9 @@ export const DEFAULT_SOCIAL_SETTINGS: SiteSocialSettings = {
 
 const SOCIAL_KEYS = Object.keys(DEFAULT_SOCIAL_SETTINGS) as (keyof SiteSocialSettings)[];
 
+/** Previous default contact numbers — auto-upgraded to {@link DEFAULT_SOCIAL_SETTINGS}. */
+const LEGACY_CONTACT_PHONES = new Set(['+971 4 123 4567', '+97141234567']);
+
 /** Merge layers; later non-empty values win. Empty strings fall back to defaults. */
 export function mergeSocialSettings(
   ...layers: Array<Partial<SiteSocialSettings> | undefined | null>
@@ -33,6 +36,12 @@ export function mergeSocialSettings(
         result[key] = value.trim();
       }
     }
+  }
+  if (LEGACY_CONTACT_PHONES.has(result.phone)) {
+    result.phone = DEFAULT_SOCIAL_SETTINGS.phone;
+  }
+  if (LEGACY_CONTACT_PHONES.has(result.whatsapp)) {
+    result.whatsapp = DEFAULT_SOCIAL_SETTINGS.whatsapp;
   }
   return result;
 }

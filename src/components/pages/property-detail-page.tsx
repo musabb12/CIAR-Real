@@ -22,12 +22,7 @@ import type { Property, PropertyImage, Amenity, PropertyStatus, PropertyType } f
 
 const PropertyMap = dynamic(() => import('@/components/map/property-map').then(m => ({ default: m.PropertyMap })), { ssr: false });
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
-
-// ─── Helpers ───────────────────────────────────────────────
-
-function formatNumber(num: number): string {
-  return num.toLocaleString('en-US');
-}
+import { formatNumberEn } from '@/lib/format-numbers';
 
 function formatPropertyType(type: string): string {
   return type.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
@@ -398,7 +393,7 @@ export function PropertyDetailPage() {
                   )}
                   <div className="flex items-center gap-2 mt-1 justify-end text-xs text-muted-foreground">
                     <Eye className="h-3.5 w-3.5" />
-                    <span>{property.views} {t.property.views}</span>
+                    <span className="tabular-nums">{formatNumberEn(property.views)} {t.property.views}</span>
                   </div>
                 </div>
               </div>
@@ -411,28 +406,28 @@ export function PropertyDetailPage() {
               {property.bedrooms != null && property.bedrooms > 0 && (
                 <div className="glass-card rounded-xl p-4 text-center">
                   <Bed className="h-5 w-5 text-primary mx-auto mb-2" />
-                  <div className="text-xl font-bold">{property.bedrooms}</div>
+                  <div className="text-xl font-bold tabular-nums">{formatNumberEn(property.bedrooms)}</div>
                   <div className="text-xs text-muted-foreground">{t.property.bedrooms}</div>
                 </div>
               )}
               {property.bathrooms != null && property.bathrooms > 0 && (
                 <div className="glass-card rounded-xl p-4 text-center">
                   <Bath className="h-5 w-5 text-primary mx-auto mb-2" />
-                  <div className="text-xl font-bold">{property.bathrooms}</div>
+                  <div className="text-xl font-bold tabular-nums">{formatNumberEn(property.bathrooms)}</div>
                   <div className="text-xs text-muted-foreground">{t.property.bathrooms}</div>
                 </div>
               )}
               {property.area > 0 && (
                 <div className="glass-card rounded-xl p-4 text-center">
                   <Maximize className="h-5 w-5 text-primary mx-auto mb-2" />
-                  <div className="text-xl font-bold">{formatNumber(property.area)}</div>
+                  <div className="text-xl font-bold tabular-nums">{formatNumberEn(property.area)}</div>
                   <div className="text-xs text-muted-foreground">{t.property.sqm}</div>
                 </div>
               )}
               {property.yearBuilt && (
                 <div className="glass-card rounded-xl p-4 text-center">
                   <Calendar className="h-5 w-5 text-primary mx-auto mb-2" />
-                  <div className="text-xl font-bold">{property.yearBuilt}</div>
+                  <div className="text-xl font-bold tabular-nums">{formatNumberEn(property.yearBuilt)}</div>
                   <div className="text-xs text-muted-foreground">{t.property.yearBuilt}</div>
                 </div>
               )}
@@ -466,7 +461,7 @@ export function PropertyDetailPage() {
                 {property.floors != null && property.floors > 0 && (
                   <div className="rounded-xl bg-muted/40 px-4 py-3">
                     <dt className="text-xs text-muted-foreground">{t.property.floors}</dt>
-                    <dd className="text-sm font-semibold mt-1">{property.floors}</dd>
+                    <dd className="text-sm font-semibold mt-1 tabular-nums">{formatNumberEn(property.floors)}</dd>
                   </div>
                 )}
                 {property.address && (

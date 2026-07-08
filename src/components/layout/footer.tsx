@@ -376,21 +376,30 @@ export function Footer() {
             </div>
             <div className="flex items-center gap-6">
               <button
-                onClick={() => setCurrentPage('home')}
+                onClick={() => {
+                  setCurrentPage('privacy-policy');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 className="text-xs text-gray-500 transition-colors duration-300 hover:text-amber-300"
               >
                 {t.footer.privacy}
               </button>
               <span className="h-3 w-px bg-amber-500/20" />
               <button
-                onClick={() => setCurrentPage('home')}
+                onClick={() => {
+                  setCurrentPage('terms');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 className="text-xs text-gray-500 transition-colors duration-300 hover:text-amber-300"
               >
                 {t.footer.terms}
               </button>
               <span className="h-3 w-px bg-amber-500/20" />
               <button
-                onClick={() => setCurrentPage('contact')}
+                onClick={() => {
+                  setCurrentPage('contact');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
                 className="text-xs text-gray-500 transition-colors duration-300 hover:text-amber-300"
               >
                 {t.common.contact}

@@ -279,6 +279,8 @@ export type AppPage =
   | 'agents'
   | 'favorites'
   | 'contact'
+  | 'privacy-policy'
+  | 'terms'
   | 'admin'
   | 'admin-login'
   | 'partner-dashboard'

@@ -13,6 +13,7 @@ import { FavoritesPage } from '@/components/pages/favorites-page';
 import { AdminPage } from '@/components/pages/admin-page';
 import { AdminLoginPage } from '@/components/pages/admin-login-page';
 import { ContactPage } from '@/components/pages/contact-page';
+import { PrivacyPolicyPage, TermsPage } from '@/components/pages/legal-document-page';
 import { RegisterPage } from '@/components/pages/register-page';
 import { LoginPage } from '@/components/pages/login-page';
 import { CheckoutPage } from '@/components/pages/checkout-page';
@@ -124,6 +125,10 @@ export default function Home() {
         return <AgentsPage />;
       case 'contact':
         return <ContactPage />;
+      case 'privacy-policy':
+        return <PrivacyPolicyPage />;
+      case 'terms':
+        return <TermsPage />;
       case 'favorites':
         return <FavoritesPage />;
       case 'admin':

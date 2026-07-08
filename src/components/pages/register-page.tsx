@@ -394,10 +394,23 @@ export function RegisterPage() {
                 className="mt-1 h-4 w-4 rounded border-white/20 bg-white/10 accent-amber-500"
               />
               <span>
-                {tx(
-                  'أوافق على شروط الاستخدام وسياسة الخصوصية الخاصة بـ CIAR.',
-                  'I accept CIAR\'s Terms of Service and Privacy Policy.',
-                )}
+                {tx('أوافق على ', 'I accept CIAR\'s ')}
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage('terms')}
+                  className="font-semibold text-amber-300 hover:text-amber-200 underline-offset-2 hover:underline"
+                >
+                  {tx('شروط الاستخدام', 'Terms of Service')}
+                </button>
+                {tx(' و', ' and ')}
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage('privacy-policy')}
+                  className="font-semibold text-amber-300 hover:text-amber-200 underline-offset-2 hover:underline"
+                >
+                  {tx('سياسة الخصوصية', 'Privacy Policy')}
+                </button>
+                {tx(' الخاصة بـ CIAR.', '.')}
               </span>
             </label>
 

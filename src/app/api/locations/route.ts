@@ -40,16 +40,10 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching locations:', error);
 
-    if (isFirebaseQuotaError(error)) {
-      return NextResponse.json(getDemoLocationsPayload({ includeProperties }), {
-        headers: { 'X-Data-Source': 'demo' },
-      });
-    }
-
-    return NextResponse.json(
-      { error: 'Failed to fetch locations' },
-      { status: 500 }
-    );
+    // Any Firestore failure → demo locations so pages keep working.
+    return NextResponse.json(getDemoLocationsPayload({ includeProperties }), {
+      headers: { 'X-Data-Source': 'demo' },
+    });
   }
 }
 

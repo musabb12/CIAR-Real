@@ -11,3 +11,12 @@ export function isFirebaseQuotaError(error: unknown): boolean {
     text.includes('resource_exhausted')
   );
 }
+
+/** Short, safe description of a Firestore failure for diagnostics endpoints. */
+export function describeFirebaseError(error: unknown): string {
+  if (!error) return 'Unknown Firestore error';
+  const e = error as { code?: number | string; message?: string };
+  const code = e.code !== undefined ? `code=${e.code} ` : '';
+  const message = e.message ?? String(error);
+  return `${code}${message}`.slice(0, 500);
+}

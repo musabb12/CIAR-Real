@@ -24,10 +24,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(merged);
   } catch (error) {
     console.error('Error fetching companies:', error);
-    if (isFirestoreQuotaError(error)) {
-      return NextResponse.json(mergeMarketplaceCompanies([], countryId));
-    }
-    return NextResponse.json({ error: 'Failed to fetch companies' }, { status: 500 });
+    // Any Firestore failure → demo companies so the page keeps working.
+    return NextResponse.json(mergeMarketplaceCompanies([], countryId));
   }
 }
 

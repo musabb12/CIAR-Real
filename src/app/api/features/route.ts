@@ -23,10 +23,9 @@ export async function GET() {
     }
     return NextResponse.json(features);
   } catch (error) {
-    if (isFirestoreQuotaError(error)) {
-      return NextResponse.json(getDefaultFeaturesForApi());
-    }
-    return NextResponse.json({ error: 'Failed to fetch features' }, { status: 500 });
+    console.error('Error fetching features:', error);
+    // Any Firestore failure → default feature toggles.
+    return NextResponse.json(getDefaultFeaturesForApi());
   }
 }
 

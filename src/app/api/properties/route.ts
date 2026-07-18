@@ -93,23 +93,20 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching properties:', error);
 
-    if (isFirebaseQuotaError(error)) {
-      const out = listDemoProperties(queryParams);
-      return NextResponse.json({
-        data: out.data,
-        pagination: out.pagination,
-        backendConfigured: true,
-        quotaExceeded: true,
-        dataSource: 'demo',
-        backendMessage:
-          'Firestore quota exceeded — showing demo listings. Upgrade your Firebase plan or wait for the daily reset.',
-      });
-    }
-
-    return NextResponse.json(
-      { error: 'Failed to fetch properties' },
-      { status: 500 }
-    );
+    // Any Firestore failure (quota, bad credentials, network) → demo listings
+    // so the public site never shows an empty page.
+    const quota = isFirebaseQuotaError(error);
+    const out = listDemoProperties(queryParams);
+    return NextResponse.json({
+      data: out.data,
+      pagination: out.pagination,
+      backendConfigured: true,
+      quotaExceeded: quota,
+      dataSource: 'demo',
+      backendMessage: quota
+        ? 'Firestore quota exceeded — showing demo listings. Upgrade your Firebase plan or wait for the daily reset.'
+        : 'Firestore is unreachable — showing demo listings. Check Firebase credentials on the server.',
+    });
   }
 }
 

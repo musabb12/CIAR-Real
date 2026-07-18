@@ -134,31 +134,36 @@ export async function POST(request: NextRequest) {
     return sessionResponse(safeUser);
   } catch (error) {
     console.error('Error during login:', error);
+    const quota = isFirebaseQuotaError(error);
 
-    if (isFirebaseQuotaError(error) && email) {
+    // Firestore is unreachable (quota, bad credentials, network) — fall back
+    // to local storage or the demo admin so the site stays usable.
+    if (email) {
       const local = await loginViaLocalStore(email, password);
       if (local && 'deactivated' in local) {
         return NextResponse.json({ error: 'Account is deactivated' }, { status: 403 });
       }
       if (local?.user) {
         return sessionResponse(local.user, {
-          quotaExceeded: true,
+          quotaExceeded: quota,
           localAuth: true,
-          warning:
-            'Signed in via local account storage because Firestore quota is exceeded.',
+          warning: quota
+            ? 'Signed in via local account storage because Firestore quota is exceeded.'
+            : 'Signed in via local account storage because Firestore is unreachable.',
         });
       }
       if (isDemoAdminCredentials(email, password)) {
         return sessionResponse(getDemoAdminUser(), {
-          quotaExceeded: true,
+          quotaExceeded: quota,
           demoAuth: true,
-          warning:
-            'Signed in with demo admin because Firestore quota is exceeded. Dashboard data may be limited until quota resets.',
+          warning: quota
+            ? 'Signed in with demo admin because Firestore quota is exceeded. Dashboard data may be limited until quota resets.'
+            : 'Signed in with demo admin because Firestore is unreachable. Dashboard data may be limited.',
         });
       }
     }
 
-    if (isFirebaseQuotaError(error)) {
+    if (quota) {
       return NextResponse.json({ error: 'firebase_quota_exceeded' }, { status: 503 });
     }
 

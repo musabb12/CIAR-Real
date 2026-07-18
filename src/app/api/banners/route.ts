@@ -26,13 +26,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(banners);
   } catch (error) {
     console.error('Error fetching banners:', error);
-    if (isFirestoreQuotaError(error)) {
-      return NextResponse.json(listDemoBanners(filters));
-    }
-    return NextResponse.json(
-      { error: 'Failed to fetch banners' },
-      { status: 500 }
-    );
+    // Any Firestore failure → demo banners.
+    return NextResponse.json(listDemoBanners(filters));
   }
 }
 

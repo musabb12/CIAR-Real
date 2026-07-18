@@ -34,11 +34,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(news);
   } catch (error) {
     console.error('Error fetching news:', error);
-    if (isFirestoreQuotaError(error)) {
-      const demo = getDefaultNewsForApi();
-      return NextResponse.json(all ? demo : demo.filter((item) => item.isActive));
-    }
-    return NextResponse.json({ error: 'Failed to fetch news' }, { status: 500 });
+    // Any Firestore failure → default news items.
+    const demo = getDefaultNewsForApi();
+    return NextResponse.json(all ? demo : demo.filter((item) => item.isActive));
   }
 }
 

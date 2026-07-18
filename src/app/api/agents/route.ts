@@ -22,10 +22,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(mergeMarketplaceAgents(agents, countryId));
   } catch (error) {
     console.error('Error fetching agents:', error);
-    if (isFirestoreQuotaError(error)) {
-      return NextResponse.json(mergeMarketplaceAgents([], countryId));
-    }
-    return NextResponse.json({ error: 'Failed to fetch agents' }, { status: 500 });
+    // Any Firestore failure → demo agents so the page keeps working.
+    return NextResponse.json(mergeMarketplaceAgents([], countryId));
   }
 }
 

@@ -5,6 +5,7 @@ import {
   isFirebaseAdminConfigured,
 } from '@/lib/firebase-admin';
 import { col, FIRESTORE_COLLECTIONS } from '@/lib/firestore-shared';
+import { describeFirebaseError } from '@/lib/firebase-errors';
 
 /** GET /api/health — deployment diagnostics (no secrets). */
 export async function GET() {
@@ -22,6 +23,7 @@ export async function GET() {
     propertiesCollection: string;
     propertiesDocumentCount: number;
   } | null = null;
+  let firestoreError: string | null = null;
 
   if (firebaseOk) {
     try {
@@ -39,6 +41,7 @@ export async function GET() {
       };
     } catch (error) {
       console.error('Health check Firestore count failed:', error);
+      firestoreError = describeFirebaseError(error);
     }
   }
 
@@ -52,5 +55,6 @@ export async function GET() {
     whereToLookInConsole:
       'Firebase Console → Firestore Database → (default) → collections "users" and "properties"',
     firestore: firestoreStats,
+    firestoreError,
   });
 }

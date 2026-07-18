@@ -184,7 +184,7 @@ export function AiHubTab({ isAr }: { isAr: boolean }) {
     setError('');
     setSuccess('');
     try {
-      const res = await fetch('/api/admin/ai/providers/test', { method: 'POST' });
+      const res = await fetch('/api/admin/ai/providers/probe', { method: 'POST' });
       const data = await res.json();
       if (data.ok) {
         setSuccess(

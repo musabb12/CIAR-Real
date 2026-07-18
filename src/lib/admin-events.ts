@@ -13,7 +13,8 @@ export type AdminResource =
   | 'agents'
   | 'companies'
   | 'users'
-  | 'all';
+  | 'all'
+  | 'advertiser-ads';
 
 const EVENT = 'ciar:invalidate';
 const STORAGE_PREFIX = 'ciar:invalidate:';

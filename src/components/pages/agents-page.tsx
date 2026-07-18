@@ -17,12 +17,13 @@ import { useLocalizedCountryName } from '@/hooks/use-localized-country-name';
 import { formatNumberEn } from '@/lib/format-numbers';
 import { useSiteCurrency } from '@/hooks/use-site-currency';
 import { PageHero } from '@/components/layout/page-hero';
+import { AdPlacementSlot } from '@/components/advertiser/ad-placement-slot';
 import type { Agent, Property } from '@/types';
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 
 // ─── Component ──────────────────────────────────────────────────
 export function AgentsPage() {
-  const { t } = useTranslation();
+  const { t, rtl } = useTranslation();
   const { setCurrentPage, setSelectedPropertyId } = useAppStore();
 
   const [agents, setAgents] = useState<(Agent & { _count?: { properties: number } })[]>([]);
@@ -146,6 +147,9 @@ export function AgentsPage() {
       </PageHero>
 
       <div className="max-w-7xl mx-auto px-4 py-10">
+        <div className="mb-8">
+          <AdPlacementSlot placementId="agents_page_banner" isAr={rtl} variant="banner" />
+        </div>
         {/* ─── Selected Agent Detail Panel ─── */}
         {selectedAgent && (
           <div className="animate-fade-in-up glass-card rounded-2xl p-6 mb-10">

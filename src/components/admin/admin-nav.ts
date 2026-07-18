@@ -10,6 +10,8 @@ import {
   CreditCard,
   MessageCircle,
   Heart,
+  Megaphone,
+  Brain,
   Image as ImageIcon,
   Newspaper,
   Sparkles,
@@ -33,6 +35,8 @@ export type AdminTabId =
   | 'reviews'
   | 'favorites'
   | 'banners'
+  | 'advertiser-ads'
+  | 'ai-hub'
   | 'news'
   | 'features'
   | 'content-manager'
@@ -66,6 +70,8 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { id: 'favorites', ar: 'المفضلة', en: 'Favorites', icon: Heart, group: 'engagement' },
 
   { id: 'banners', ar: 'البنرات', en: 'Banners', icon: ImageIcon, group: 'content' },
+  { id: 'advertiser-ads', ar: 'إعلانات المعلنين', en: 'Advertiser ads', icon: Megaphone, group: 'content' },
+  { id: 'ai-hub', ar: 'الذكاء الاصطناعي', en: 'AI Hub', icon: Brain, group: 'content' },
   { id: 'news', ar: 'الأخبار', en: 'News', icon: Newspaper, group: 'content' },
   { id: 'features', ar: 'الميزات', en: 'Features', icon: Sparkles, group: 'content' },
   { id: 'content-manager', ar: 'محتوى الصفحات', en: 'Page content', icon: FileText, group: 'content' },

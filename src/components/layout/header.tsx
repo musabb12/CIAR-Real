@@ -44,13 +44,14 @@ import { CurrencySwitcher } from '@/components/layout/currency-switcher';
 
 const navConfig: {
   page: AppPage;
-  labelKey: 'home' | 'properties' | 'agents' | 'contact' | 'favorites' | 'admin';
+  labelKey: 'home' | 'properties' | 'agents' | 'ads' | 'contact' | 'favorites' | 'admin';
   icon: React.ReactNode;
   showAdmin?: boolean;
 }[] = [
   { page: 'home', labelKey: 'home', icon: <Building2 className="h-4 w-4" /> },
   { page: 'search', labelKey: 'properties', icon: <Search className="h-4 w-4" /> },
   { page: 'agents', labelKey: 'agents', icon: <Users className="h-4 w-4" /> },
+  { page: 'ads', labelKey: 'ads', icon: <Megaphone className="h-4 w-4" /> },
   { page: 'contact', labelKey: 'contact', icon: <MessageSquare className="h-4 w-4" /> },
   { page: 'favorites', labelKey: 'favorites', icon: <Heart className="h-4 w-4" /> },
 ];
@@ -357,9 +358,9 @@ export function Header() {
       {/* Header */}
       <header
         dir={rtl ? 'rtl' : 'ltr'}
-        className={`estate-nav luxury-nav relative sticky top-0 z-50 w-full transition-all duration-500 ease-out glass-nav ${headerShadow}`}
+        className={`estate-nav luxury-nav sticky top-0 z-50 w-full transition-all duration-500 ease-out glass-nav ${headerShadow}`}
       >
-        <div className="mx-auto flex h-16 max-w-7xl items-center gap-2 px-3 sm:gap-3 sm:px-6 lg:px-8">
+        <div className="mx-auto flex h-16 max-w-7xl flex-nowrap items-center gap-1.5 px-3 sm:gap-2 sm:px-4 lg:px-6 xl:px-8">
           {/* ---- Logo ---- */}
           <button
             onClick={() => handleNavClick('home')}
@@ -374,7 +375,7 @@ export function Header() {
           </button>
 
           {/* ---- Desktop Navigation ---- */}
-          <nav className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 lg:flex">
+          <nav className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 overflow-hidden lg:flex">
             {navConfig.map((item) => {
               if (item.showAdmin && currentUser?.role !== 'ADMIN') return null;
               const isActive =
@@ -385,11 +386,11 @@ export function Header() {
                   key={item.page}
                   onClick={() => handleNavClick(item.page)}
                   data-active={isActive}
-                  className={`luxury-nav-link relative flex items-center gap-1.5 rounded-lg px-2.5 py-2 xl:px-3.5 ${
+                  className={`luxury-nav-link relative flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2 py-2 xl:px-3 ${
                     isActive ? 'opacity-100' : scrolled ? '' : isDark ? 'text-white/80' : navTextColor
                   }`}
                 >
-                  {item.icon}
+                  <span className="hidden xl:inline-flex">{item.icon}</span>
                   <span>{t.nav[item.labelKey]}</span>
                   {item.page === 'favorites' && favoritePropertyIds.size > 0 && (
                     <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-emerald-500 px-1 text-[10px] font-bold leading-none text-white">
@@ -402,9 +403,9 @@ export function Header() {
           </nav>
 
           {/* ---- Right Side Actions ---- */}
-          <div className="flex shrink-0 items-center gap-1 sm:gap-1.5 ms-auto lg:ms-0">
-            {/* Desktop Search */}
-            <form onSubmit={handleSearch} className="hidden lg:block">
+          <div className="ms-auto flex shrink-0 flex-nowrap items-center gap-0.5 sm:gap-1 lg:ms-0">
+            {/* Desktop Search (xl+ to avoid crowding at lg) */}
+            <form onSubmit={handleSearch} className="hidden xl:block">
               <div className="relative">
                 <Search
                   className={`absolute start-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 ${
@@ -416,20 +417,36 @@ export function Header() {
                   placeholder={t.hero.searchPlaceholder}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`h-8 w-44 rounded-lg border px-8 text-[13px] outline-none transition-all duration-300 focus:w-56 focus:ring-2 focus:ring-amber-500/20 ${searchBg}`}
+                  className={`h-8 w-36 rounded-lg border px-8 text-[13px] outline-none transition-all duration-300 focus:w-52 focus:ring-2 focus:ring-amber-500/20 ${searchBg}`}
                 />
               </div>
             </form>
+
+            {/* Compact search icon (lg only, where the input is hidden) */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleNavClick('search')}
+              className="hidden h-8 w-8 rounded-full lg:inline-flex xl:hidden"
+              aria-label={t.nav.properties}
+            >
+              <Search
+                className={`h-4 w-4 ${
+                  scrolled ? '' : isDark ? 'text-white/70' : 'text-gray-600'
+                }`}
+              />
+            </Button>
 
             {/* ---- Add listing CTA ---- */}
             <Button
               type="button"
               onClick={handleAddListing}
               size="sm"
-              className="hidden md:inline-flex h-8 shrink-0 rounded-lg border border-amber-500/40 bg-gradient-to-r from-amber-500/15 to-emerald-500/15 px-3 text-[12px] font-semibold text-amber-800 shadow-sm hover:from-amber-500/25 hover:to-emerald-500/25 dark:text-amber-200"
+              className="hidden h-8 shrink-0 whitespace-nowrap rounded-lg border border-amber-500/40 bg-gradient-to-r from-amber-500/15 to-emerald-500/15 px-2.5 text-[12px] font-semibold text-amber-800 shadow-sm hover:from-amber-500/25 hover:to-emerald-500/25 md:inline-flex dark:text-amber-200"
+              title={t.nav.addYourListing}
             >
-              <Megaphone className="me-1.5 h-3.5 w-3.5" />
-              <span className="max-w-[9rem] truncate sm:max-w-none">
+              <Megaphone className="h-3.5 w-3.5 xl:me-1.5" />
+              <span className="hidden max-w-[10rem] truncate xl:inline">
                 {t.nav.addYourListing}
               </span>
             </Button>
@@ -438,7 +455,7 @@ export function Header() {
             <Button
               variant="ghost"
               size="icon"
-              className="relative h-8 w-8 rounded-full"
+              className="relative hidden h-8 w-8 rounded-full sm:inline-flex"
             >
               <Bell
                 className={`h-4 w-4 ${
@@ -454,13 +471,13 @@ export function Header() {
 
             <CurrencySwitcher
               variant="site"
-              buttonClassName={
+              buttonClassName={`px-2 sm:px-2.5 [&>span]:!hidden xl:[&>span]:!inline ${
                 scrolled
                   ? ''
                   : isDark
                     ? '[&_svg]:text-white/70 [&_span]:text-white/70'
                     : '[&_svg]:text-gray-500 [&_span]:text-gray-600'
-              }
+              }`}
             />
 
             {/* ---- Language Switcher ---- */}
@@ -472,14 +489,14 @@ export function Header() {
                   e.stopPropagation();
                   setLangMenuOpen(!langMenuOpen);
                 }}
-                className="h-8 gap-1.5 rounded-lg px-2.5 text-[13px] font-medium"
+                className="h-8 gap-1.5 whitespace-nowrap rounded-lg px-2 text-[13px] font-medium sm:px-2.5"
               >
                 <Globe
                   className={`h-3.5 w-3.5 ${
                     scrolled ? 'text-muted-foreground' : isDark ? 'text-white/70' : 'text-gray-500'
                   }`}
                 />
-                <span className={`hidden sm:inline ${
+                <span className={`hidden xl:inline ${
                     scrolled ? '' : isDark ? 'text-white/70' : 'text-gray-600'
                   }`}
                 >
@@ -605,19 +622,19 @@ export function Header() {
                 )}
               </div>
             ) : (
-              <div className="hidden lg:flex items-center gap-2">
+              <div className="hidden items-center gap-1.5 lg:flex">
                 <Button
                   onClick={() => handleNavClick('login')}
                   variant="ghost"
                   size="sm"
-                  className="h-8 rounded-lg px-3 text-[13px] font-medium"
+                  className="h-8 whitespace-nowrap rounded-lg px-2.5 text-[13px] font-medium"
                 >
-                  <LogIn className="me-1.5 h-3.5 w-3.5" />
-                  {t.nav.signIn}
+                  <LogIn className="h-3.5 w-3.5 xl:me-1.5" />
+                  <span className="hidden xl:inline">{t.nav.signIn}</span>
                 </Button>
                 <Button
                   onClick={() => handleNavClick('register')}
-                  className="h-8 rounded-lg bg-gradient-to-r from-amber-600 to-emerald-600 px-4 text-[13px] font-semibold tracking-wide text-white shadow-md shadow-amber-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/30 hover:brightness-105"
+                  className="h-8 whitespace-nowrap rounded-lg bg-gradient-to-r from-amber-600 to-emerald-600 px-3 text-[13px] font-semibold tracking-wide text-white shadow-md shadow-amber-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/30 hover:brightness-105 xl:px-4"
                   size="sm"
                 >
                   <UserPlus className="me-1.5 h-3.5 w-3.5" />

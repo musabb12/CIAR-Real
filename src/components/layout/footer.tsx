@@ -181,6 +181,10 @@ export function Footer() {
       action: () => setCurrentPage('agents'),
     },
     {
+      label: t.nav.ads,
+      action: () => setCurrentPage('ads'),
+    },
+    {
       label: t.nav.favorites,
       action: () => setCurrentPage('favorites'),
     },

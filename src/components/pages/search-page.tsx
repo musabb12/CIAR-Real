@@ -27,6 +27,7 @@ import { sortCountriesByLabel } from '@/lib/localize-country';
 import { CountryFlagLabel } from '@/components/ui/country-flag-label';
 import type { Property, Country, PaginatedResponse, PropertyFilters } from '@/types';
 import { normalizeLocationsResponse } from '@/lib/normalize-locations';
+import { AdPlacementSlot } from '@/components/advertiser/ad-placement-slot';
 
 // ─── Property type icons ────────────────────────────────────────
 const propertyTypeIcons: Record<string, React.ElementType> = {
@@ -186,6 +187,10 @@ export function SearchPage() {
       </PageHero>
 
       <div className="max-w-7xl mx-auto px-4">
+        <div className="mb-6 -mt-2">
+          <AdPlacementSlot placementId="search_top" isAr={locale === 'ar'} variant="banner" />
+        </div>
+
         {/* ─── Filters Panel ─── */}
         <div className="animate-fade-in-up -mt-4 mb-8 luxury-filter-panel luxury-glass rounded-2xl p-6">
             <div className="flex items-center justify-between mb-5">
@@ -370,6 +375,8 @@ export function SearchPage() {
           </Button>
         </div>
 
+        <div className="lg:grid lg:grid-cols-[1fr_220px] lg:gap-6">
+        <div className="min-w-0">
         {/* ─── Properties Grid ─── */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 py-4">
@@ -451,6 +458,11 @@ export function SearchPage() {
             </Button>
           </div>
         )}
+        </div>
+        <aside className="hidden lg:block sticky top-24 self-start pb-8">
+          <AdPlacementSlot placementId="search_sidebar" isAr={locale === 'ar'} variant="sidebar" />
+        </aside>
+        </div>
       </div>
     </div>
   );

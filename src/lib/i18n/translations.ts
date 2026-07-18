@@ -6,6 +6,7 @@ export interface Translations {
     home: string;
     properties: string;
     agents: string;
+    ads: string;
     contact: string;
     favorites: string;
     admin: string;
@@ -424,6 +425,7 @@ export const translations: Record<Locale, Translations> = {
       home: 'Home',
       properties: 'Properties',
       agents: 'Agents',
+      ads: 'Ads',
       contact: 'Contact',
       favorites: 'Favorites',
       admin: 'Admin',
@@ -846,6 +848,7 @@ export const translations: Record<Locale, Translations> = {
       home: 'الرئيسية',
       properties: 'العقارات',
       agents: 'الوكلاء',
+      ads: 'الإعلانات',
       contact: 'تواصل',
       favorites: 'المفضلة',
       admin: 'لوحة التحكم',
@@ -1267,6 +1270,7 @@ export const translations: Record<Locale, Translations> = {
       home: 'Accueil',
       properties: 'Propriétés',
       agents: 'Agents',
+      ads: 'Annonces',
       contact: 'Contact',
       favorites: 'Favoris',
       admin: 'Administration',
@@ -1689,6 +1693,7 @@ export const translations: Record<Locale, Translations> = {
       home: 'Inicio',
       properties: 'Propiedades',
       agents: 'Agentes',
+      ads: 'Anuncios',
       contact: 'Contacto',
       favorites: 'Favoritos',
       admin: 'Admin',
@@ -2111,6 +2116,7 @@ export const translations: Record<Locale, Translations> = {
       home: 'Ana Sayfa',
       properties: 'Emlaklar',
       agents: 'Danışmanlar',
+      ads: 'İlanlar',
       contact: 'İletişim',
       favorites: 'Favoriler',
       admin: 'Yönetim',

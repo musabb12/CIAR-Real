@@ -9,6 +9,7 @@ import { HomePage } from '@/components/pages/home-page';
 import { SearchPage } from '@/components/pages/search-page';
 import { PropertyDetailPage } from '@/components/pages/property-detail-page';
 import { AgentsPage } from '@/components/pages/agents-page';
+import { AdsPage } from '@/components/pages/ads-page';
 import { FavoritesPage } from '@/components/pages/favorites-page';
 import { AdminPage } from '@/components/pages/admin-page';
 import { AdminLoginPage } from '@/components/pages/admin-login-page';
@@ -123,6 +124,8 @@ export default function Home() {
         return <PropertyDetailPage />;
       case 'agents':
         return <AgentsPage />;
+      case 'ads':
+        return <AdsPage />;
       case 'contact':
         return <ContactPage />;
       case 'privacy-policy':

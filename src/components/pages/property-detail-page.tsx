@@ -23,6 +23,8 @@ import type { Property, PropertyImage, Amenity, PropertyStatus, PropertyType } f
 const PropertyMap = dynamic(() => import('@/components/map/property-map').then(m => ({ default: m.PropertyMap })), { ssr: false });
 import { buildWhatsAppUrl } from '@/lib/whatsapp';
 import { formatNumberEn } from '@/lib/format-numbers';
+import { AdPlacementSlot } from '@/components/advertiser/ad-placement-slot';
+import { AiInsightsPanel } from '@/components/feature/ai-insights-panel';
 
 function formatPropertyType(type: string): string {
   return type.split('_').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ');
@@ -486,6 +488,19 @@ export function PropertyDetailPage() {
               </p>
             </div>
 
+            <AiInsightsPanel
+              propertyId={property.id}
+              price={property.price}
+              bedrooms={property.bedrooms}
+              propertyType={property.propertyType}
+              cityId={property.cityId}
+              countryId={property.countryId}
+              title={property.title}
+              description={property.description ?? ''}
+              cityName={property.city?.name}
+              countryName={property.country?.name}
+            />
+
             <Separator />
 
             {/* Amenities */}
@@ -532,6 +547,11 @@ export function PropertyDetailPage() {
 
           {/* Right: Agent Card + Inquiry */}
           <div className="space-y-6">
+            <AdPlacementSlot
+              placementId="property_detail_sidebar"
+              isAr={rtl}
+              variant="sidebar"
+            />
             {/* Agent Card */}
             {property.agent && (
               <Card className="glass-card overflow-hidden rounded-2xl border-0">

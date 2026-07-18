@@ -18,6 +18,7 @@ import {
   Sparkles,
   ImageIcon,
   MessageCircle,
+  Megaphone,
   CreditCard,
   BedDouble,
   Bath,
@@ -40,7 +41,7 @@ import { cn } from '@/lib/utils';
 import { normalizeLocationsResponse } from '@/lib/normalize-locations';
 import { CountryFlagLabel } from '@/components/ui/country-flag-label';
 import type { Country, ListingType, Property, PropertyStatus, PropertyType } from '@/types';
-import { toast } from 'sonner';
+import { AdvertiserAdsPanel } from '@/components/advertiser/advertiser-ads-panel';
 
 const FALLBACK_COVER =
   'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&q=80&auto=format&fit=crop';
@@ -156,6 +157,7 @@ export function PartnerDashboardPage() {
   const [filterStatus, setFilterStatus] = useState<PropertyStatus | 'ALL'>('ALL');
   const [filterListing, setFilterListing] = useState<ListingType | 'ALL'>('ALL');
   const [showProfile, setShowProfile] = useState(false);
+  const [showAdvertiserAds, setShowAdvertiserAds] = useState(false);
   const [profileWhatsapp, setProfileWhatsapp] = useState('');
   const [profilePhone, setProfilePhone] = useState('');
   const [profileTitle, setProfileTitle] = useState('');
@@ -336,6 +338,8 @@ export function PartnerDashboardPage() {
     }
     setEditingId(null);
     setForm(emptyForm);
+    setShowAdvertiserAds(false);
+    setShowProfile(false);
     setShowForm(true);
   };
 
@@ -456,14 +460,27 @@ export function PartnerDashboardPage() {
         <nav className="space-y-1 flex-1">
           <button
             type="button"
-            className={cn('partner-nav-item', !showForm && !showProfile && 'is-active')}
+            className={cn('partner-nav-item', !showForm && !showProfile && !showAdvertiserAds && 'is-active')}
             onClick={() => {
               setShowForm(false);
               setShowProfile(false);
+              setShowAdvertiserAds(false);
             }}
           >
             <LayoutGrid className="h-4 w-4" />
             {tx('عقاراتي', 'My listings')}
+          </button>
+          <button
+            type="button"
+            className={cn('partner-nav-item', showAdvertiserAds && 'is-active')}
+            onClick={() => {
+              setShowAdvertiserAds(true);
+              setShowForm(false);
+              setShowProfile(false);
+            }}
+          >
+            <Megaphone className="h-4 w-4" />
+            {tx('إعلاناتي', 'My ads')}
           </button>
           <button type="button" className="partner-nav-item" onClick={openAddForm}>
             <Plus className="h-4 w-4" />
@@ -475,6 +492,7 @@ export function PartnerDashboardPage() {
             onClick={() => {
               setShowProfile(true);
               setShowForm(false);
+              setShowAdvertiserAds(false);
             }}
           >
             <MessageCircle className="h-4 w-4" />
@@ -572,7 +590,7 @@ export function PartnerDashboardPage() {
             </div>
           </div>
 
-          {!profileLoading && !profileWhatsapp.trim() && !showForm && !showProfile && (
+          {!profileLoading && !profileWhatsapp.trim() && !showForm && !showProfile && !showAdvertiserAds && (
             <div className="mb-6 rounded-2xl border border-amber-400/30 bg-amber-500/10 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
               <div className="flex items-start gap-3 flex-1">
                 <MessageCircle className="h-5 w-5 text-amber-300 shrink-0 mt-0.5" />
@@ -598,6 +616,7 @@ export function PartnerDashboardPage() {
           )}
 
           {/* Stats */}
+          {!showForm && !showProfile && !showAdvertiserAds && (
           <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4 mb-8">
             <StatCard
               icon={Building2}
@@ -637,6 +656,7 @@ export function PartnerDashboardPage() {
               className="col-span-2 lg:col-span-1"
             />
           </div>
+          )}
 
           {showForm ? (
             <PropertyFormPanel
@@ -738,6 +758,13 @@ export function PartnerDashboardPage() {
                 </Button>
               </div>
             </div>
+          ) : showAdvertiserAds ? (
+            <AdvertiserAdsPanel
+              isAr={isAr}
+              advertiserId={currentUser?.id ?? 'anonymous'}
+              advertiserName={currentUser?.name ?? null}
+              advertiserEmail={currentUser?.email ?? null}
+            />
           ) : (
             <>
               {/* Toolbar */}

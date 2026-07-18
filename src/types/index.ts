@@ -277,6 +277,7 @@ export type AppPage =
   | 'search'
   | 'property-detail'
   | 'agents'
+  | 'ads'
   | 'favorites'
   | 'contact'
   | 'privacy-policy'

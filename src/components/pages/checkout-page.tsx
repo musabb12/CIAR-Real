@@ -311,6 +311,39 @@ export function CheckoutPage({ mode }: { mode: CheckoutMode }) {
 
     setSubmitting(true);
     try {
+      const fraudRes = await fetch('/api/ai/fraud-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: estimatedTotal,
+          customerEmail: form.customerEmail,
+          customerPhone: form.customerPhone,
+          customerName: form.customerName,
+          paymentMethod: form.paymentMethod,
+          checkIn: form.checkIn || null,
+          checkOut: form.checkOut || null,
+          isPurchase,
+        }),
+      });
+      const fraud = await fraudRes.json().catch(() => null);
+      if (fraud && fraud.allowProceed === false) {
+        toast.error(
+          tx(
+            typeof fraud.summaryAr === 'string' ? fraud.summaryAr : 'تم إيقاف الدفع بسبب مخاطر عالية',
+            typeof fraud.summaryEn === 'string' ? fraud.summaryEn : 'Payment blocked due to high risk',
+          ),
+        );
+        return;
+      }
+      if (fraud?.level === 'medium') {
+        toast.message(
+          tx(
+            typeof fraud.summaryAr === 'string' ? fraud.summaryAr : 'تنبيه مخاطر متوسطة',
+            typeof fraud.summaryEn === 'string' ? fraud.summaryEn : 'Medium risk notice',
+          ),
+        );
+      }
+
       const createRes = await fetch('/api/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

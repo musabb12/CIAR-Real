@@ -12,7 +12,8 @@ import { AdminSidebar } from '@/components/admin/admin-sidebar';
 import { AdminTopbar } from '@/components/admin/admin-topbar';
 import { AdminDashboard } from '@/components/admin/admin-dashboard';
 import { ADMIN_NAV, type AdminTabId } from '@/components/admin/admin-nav';
-import { SubscriptionsTab } from '@/components/admin/subscriptions-tab';
+import { AdvertiserAdsTab } from '@/components/admin/advertiser-ads-tab';
+import { AiHubTab } from '@/components/admin/ai-hub-tab';
 import {
   PropertiesTab,
   FeaturedTab,
@@ -216,6 +217,10 @@ export function AdminPage() {
         return <FavoritesTab isAr={isAr} />;
       case 'banners':
         return <BannersTab isAr={isAr} />;
+      case 'advertiser-ads':
+        return <AdvertiserAdsTab isAr={isAr} />;
+      case 'ai-hub':
+        return <AiHubTab isAr={isAr} />;
       case 'news':
         return <NewsTab isAr={isAr} />;
       case 'features':

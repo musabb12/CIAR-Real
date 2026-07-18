@@ -3,6 +3,7 @@ import { recommendPropertiesHeuristic } from '@/lib/ai/heuristics';
 import { isFirebaseAdminConfigured } from '@/lib/firebase-admin';
 import { listPropertiesFromFirestore } from '@/lib/firestore-properties';
 import { listDemoProperties } from '@/lib/demo-properties';
+import { gateAiCapability, logAiCall } from '@/lib/ai/runtime';
 import type { Property } from '@/types';
 
 function toCatalog(rows: Property[]) {
@@ -18,7 +19,11 @@ function toCatalog(rows: Property[]) {
 }
 
 export async function GET(request: NextRequest) {
+  const started = Date.now();
   try {
+    const gate = await gateAiCapability(request, 'ai_recommendations');
+    if (!gate.ok) return gate.response;
+
     const { searchParams } = new URL(request.url);
     const propertyId = searchParams.get('propertyId');
     const price = Number(searchParams.get('price') || 0);
@@ -79,6 +84,13 @@ export async function GET(request: NextRequest) {
     };
 
     const recommendations = recommendPropertiesHeuristic(seed, catalog, limit);
+    await logAiCall({
+      request,
+      capability: 'ai_recommendations',
+      engine: 'heuristic',
+      success: true,
+      latencyMs: Date.now() - started,
+    });
     return NextResponse.json({ recommendations, engine: 'heuristic' });
   } catch (error) {
     console.error('AI recommendations error:', error);

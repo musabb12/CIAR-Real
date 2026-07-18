@@ -1,10 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { completeChat, isAiLlmConfigured } from '@/lib/ai/client';
 import { fraudCheckHeuristic } from '@/lib/ai/heuristics';
+import {
+  gateAiCapability,
+  logAiCall,
+  runLlmIfAllowed,
+} from '@/lib/ai/runtime';
 
 export async function POST(request: NextRequest) {
+  const started = Date.now();
   try {
     const body = await request.json();
+    const gate = await gateAiCapability(
+      request,
+      'ai_fraud',
+      String(body.customerEmail ?? body.paymentMethod ?? 'checkout'),
+    );
+    if (!gate.ok) return gate.response;
+    const { ctx } = gate;
+
     const heuristic = fraudCheckHeuristic({
       amount: Number(body.amount) || 0,
       customerEmail: body.customerEmail,
@@ -16,11 +29,8 @@ export async function POST(request: NextRequest) {
       isPurchase: Boolean(body.isPurchase),
     });
 
-    if (!isAiLlmConfigured()) {
-      return NextResponse.json(heuristic);
-    }
-
-    const raw = await completeChat(
+    const { reply: raw } = await runLlmIfAllowed(
+      ctx,
       [
         {
           role: 'system',
@@ -45,23 +55,41 @@ export async function POST(request: NextRequest) {
       { temperature: 0.1 },
     );
 
-    if (!raw) return NextResponse.json(heuristic);
+    const latencyMs = Date.now() - started;
 
-    try {
-      const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim()) as Partial<typeof heuristic>;
-      return NextResponse.json({
-        riskScore: Number(parsed.riskScore ?? heuristic.riskScore),
-        level: parsed.level ?? heuristic.level,
-        flags: Array.isArray(parsed.flags) ? parsed.flags.map(String) : heuristic.flags,
-        allowProceed:
-          typeof parsed.allowProceed === 'boolean' ? parsed.allowProceed : heuristic.allowProceed,
-        summaryAr: parsed.summaryAr ?? heuristic.summaryAr,
-        summaryEn: parsed.summaryEn ?? heuristic.summaryEn,
-        engine: 'llm' as const,
-      });
-    } catch {
-      return NextResponse.json(heuristic);
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw.replace(/```json|```/g, '').trim()) as Partial<typeof heuristic>;
+        await logAiCall({
+          request,
+          capability: 'ai_fraud',
+          engine: 'llm',
+          success: true,
+          latencyMs,
+        });
+        return NextResponse.json({
+          riskScore: Number(parsed.riskScore ?? heuristic.riskScore),
+          level: parsed.level ?? heuristic.level,
+          flags: Array.isArray(parsed.flags) ? parsed.flags.map(String) : heuristic.flags,
+          allowProceed:
+            typeof parsed.allowProceed === 'boolean' ? parsed.allowProceed : heuristic.allowProceed,
+          summaryAr: parsed.summaryAr ?? heuristic.summaryAr,
+          summaryEn: parsed.summaryEn ?? heuristic.summaryEn,
+          engine: 'llm' as const,
+        });
+      } catch {
+        // fall through
+      }
     }
+
+    await logAiCall({
+      request,
+      capability: 'ai_fraud',
+      engine: 'heuristic',
+      success: true,
+      latencyMs,
+    });
+    return NextResponse.json(heuristic);
   } catch (error) {
     console.error('AI fraud-check error:', error);
     return NextResponse.json({ error: 'Fraud check failed' }, { status: 500 });

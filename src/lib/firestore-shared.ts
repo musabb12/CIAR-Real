@@ -31,6 +31,9 @@ export const FIRESTORE_COLLECTIONS = {
   partnerSubscriptions: 'partnerSubscriptions',
   users: 'users',
   transactions: 'transactions',
+  aiSettings: 'aiSettings',
+  aiUsageLogs: 'aiUsageLogs',
+  aiAuditLogs: 'aiAuditLogs',
 } as const;
 
 export type FirestoreCollectionName =

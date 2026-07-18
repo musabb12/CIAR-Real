@@ -1,10 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { completeChat } from '@/lib/ai/client';
 import { inventoryForecastHeuristic, type InventoryForecast } from '@/lib/ai/heuristics';
+import {
+  gateAiCapability,
+  logAiCall,
+  runLlmIfAllowed,
+} from '@/lib/ai/runtime';
 
 export async function POST(request: NextRequest) {
+  const started = Date.now();
   try {
     const body = await request.json();
+    const gate = await gateAiCapability(request, 'ai_inventory', String(body.placementId ?? 'inventory'));
+    if (!gate.ok) return gate.response;
+    const { ctx } = gate;
+
     const stockRemaining = Number(body.stockRemaining ?? 0);
     const heuristic = inventoryForecastHeuristic({
       stockRemaining,
@@ -14,7 +23,7 @@ export async function POST(request: NextRequest) {
       durationDays: body.durationDays != null ? Number(body.durationDays) : undefined,
     });
 
-    const llm = await completeChat([
+    const { reply: llm } = await runLlmIfAllowed(ctx, [
       {
         role: 'system',
         content:
@@ -23,12 +32,21 @@ export async function POST(request: NextRequest) {
       { role: 'user', content: JSON.stringify(body) },
     ]);
 
+    const latencyMs = Date.now() - started;
+
     if (llm) {
       try {
         const jsonMatch = llm.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]) as Partial<InventoryForecast>;
           if (parsed.demandLevel && typeof parsed.reorderSuggested === 'boolean') {
+            await logAiCall({
+              request,
+              capability: 'ai_inventory',
+              engine: 'llm',
+              success: true,
+              latencyMs,
+            });
             return NextResponse.json({
               stockRemaining: Number(parsed.stockRemaining ?? heuristic.stockRemaining),
               daysOfCover: Number(parsed.daysOfCover ?? heuristic.daysOfCover),
@@ -45,6 +63,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    await logAiCall({
+      request,
+      capability: 'ai_inventory',
+      engine: 'heuristic',
+      success: true,
+      latencyMs,
+    });
     return NextResponse.json(heuristic);
   } catch (error) {
     console.error('AI inventory forecast error:', error);

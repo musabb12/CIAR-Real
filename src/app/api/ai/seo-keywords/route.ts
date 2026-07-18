@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { completeChat } from '@/lib/ai/client';
 import { seoKeywordsHeuristic, type SeoKeywordResult } from '@/lib/ai/heuristics';
+import {
+  gateAiCapability,
+  logAiCall,
+  runLlmIfAllowed,
+} from '@/lib/ai/runtime';
 
 export async function POST(request: NextRequest) {
+  const started = Date.now();
   try {
     const body = await request.json();
     const title = String(body.title ?? '').trim();
@@ -10,8 +15,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'title is required' }, { status: 400 });
     }
 
+    const gate = await gateAiCapability(request, 'ai_seo', title);
+    if (!gate.ok) return gate.response;
+    const { ctx } = gate;
+
     const input = {
-      title,
+      title: title.slice(0, ctx.settings.provider.maxInputChars),
       description: body.description ? String(body.description) : undefined,
       city: body.city ? String(body.city) : undefined,
       country: body.country ? String(body.country) : undefined,
@@ -20,18 +29,16 @@ export async function POST(request: NextRequest) {
     };
 
     const heuristic = seoKeywordsHeuristic(input);
-
-    const llm = await completeChat([
+    const { reply: llm } = await runLlmIfAllowed(ctx, [
       {
         role: 'system',
         content:
           'You are an SEO expert for a real-estate & marketplace site (CIAR). Reply ONLY JSON: {"keywords":string[],"titleSuggestions":string[3],"metaDescription":string max 155 chars}',
       },
-      {
-        role: 'user',
-        content: JSON.stringify(input),
-      },
+      { role: 'user', content: JSON.stringify(input) },
     ]);
+
+    const latencyMs = Date.now() - started;
 
     if (llm) {
       try {
@@ -39,6 +46,14 @@ export async function POST(request: NextRequest) {
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]) as Partial<SeoKeywordResult>;
           if (Array.isArray(parsed.keywords) && parsed.keywords.length) {
+            await logAiCall({
+              request,
+              capability: 'ai_seo',
+              engine: 'llm',
+              success: true,
+              latencyMs,
+              text: title,
+            });
             return NextResponse.json({
               keywords: parsed.keywords.slice(0, 15).map(String),
               titleSuggestions: (parsed.titleSuggestions ?? heuristic.titleSuggestions)
@@ -54,6 +69,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    await logAiCall({
+      request,
+      capability: 'ai_seo',
+      engine: 'heuristic',
+      success: true,
+      latencyMs,
+      text: title,
+    });
     return NextResponse.json(heuristic);
   } catch (error) {
     console.error('AI SEO error:', error);

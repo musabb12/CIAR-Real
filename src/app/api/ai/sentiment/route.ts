@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { completeChat } from '@/lib/ai/client';
 import { analyzeSentimentHeuristic, type SentimentResult } from '@/lib/ai/heuristics';
+import {
+  gateAiCapability,
+  logAiCall,
+  runLlmIfAllowed,
+  truncateInput,
+} from '@/lib/ai/runtime';
 
 export async function POST(request: NextRequest) {
+  const started = Date.now();
   try {
     const body = await request.json();
     const text = String(body.text ?? '').trim();
@@ -10,16 +16,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'text is required' }, { status: 400 });
     }
 
-    const heuristic = analyzeSentimentHeuristic(text);
+    const gate = await gateAiCapability(request, 'ai_sentiment', text);
+    if (!gate.ok) return gate.response;
+    const { ctx } = gate;
+    const capped = truncateInput(text, ctx.settings);
+    const heuristic = analyzeSentimentHeuristic(capped);
 
-    const llm = await completeChat([
+    const { reply: llm } = await runLlmIfAllowed(ctx, [
       {
         role: 'system',
         content:
           'Analyze customer review sentiment. Reply ONLY valid JSON: {"label":"positive|neutral|negative","score":number between -1 and 1,"summaryAr":"...","summaryEn":"..."}',
       },
-      { role: 'user', content: text.slice(0, 3000) },
+      { role: 'user', content: capped },
     ]);
+
+    const latencyMs = Date.now() - started;
 
     if (llm) {
       try {
@@ -27,6 +39,14 @@ export async function POST(request: NextRequest) {
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]) as Partial<SentimentResult>;
           if (parsed.label && typeof parsed.score === 'number') {
+            await logAiCall({
+              request,
+              capability: 'ai_sentiment',
+              engine: 'llm',
+              success: true,
+              latencyMs,
+              text: capped,
+            });
             return NextResponse.json({
               label: parsed.label,
               score: parsed.score,
@@ -41,6 +61,14 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    await logAiCall({
+      request,
+      capability: 'ai_sentiment',
+      engine: 'heuristic',
+      success: true,
+      latencyMs,
+      text: capped,
+    });
     return NextResponse.json(heuristic);
   } catch (error) {
     console.error('AI sentiment error:', error);

@@ -358,13 +358,13 @@ export function Header() {
       {/* Header */}
       <header
         dir={rtl ? 'rtl' : 'ltr'}
-        className={`estate-nav luxury-nav sticky top-0 z-50 w-full transition-all duration-500 ease-out glass-nav ${headerShadow}`}
+        className={`estate-nav luxury-nav sticky top-0 z-50 w-full overflow-x-clip transition-all duration-500 ease-out glass-nav ${headerShadow}`}
       >
-        <div className="mx-auto flex h-16 max-w-7xl flex-nowrap items-center gap-1.5 px-3 sm:gap-2 sm:px-4 lg:px-6 xl:px-8">
+        <div className="mx-auto grid h-16 max-w-[90rem] grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 px-3 sm:gap-3 sm:px-4 xl:px-6 2xl:px-8">
           {/* ---- Logo ---- */}
           <button
             onClick={() => handleNavClick('home')}
-            className="group flex shrink-0 items-center pe-1 transition-opacity hover:opacity-90 sm:pe-2"
+            className="group flex shrink-0 items-center transition-opacity hover:opacity-90"
             aria-label="CIAR Real Estate"
           >
             <CiarBrandLockup
@@ -374,38 +374,40 @@ export function Header() {
             />
           </button>
 
-          {/* ---- Desktop Navigation ---- */}
-          <nav className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 overflow-hidden lg:flex">
-            {navConfig.map((item) => {
-              if (item.showAdmin && currentUser?.role !== 'ADMIN') return null;
-              const isActive =
-                currentPage === item.page ||
-                (item.page === 'search' && currentPage === 'property-detail');
-              return (
-                <button
-                  key={item.page}
-                  onClick={() => handleNavClick(item.page)}
-                  data-active={isActive}
-                  className={`luxury-nav-link relative flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg px-2 py-2 xl:px-3 ${
-                    isActive ? 'opacity-100' : scrolled ? '' : isDark ? 'text-white/80' : navTextColor
-                  }`}
-                >
-                  <span className="hidden xl:inline-flex">{item.icon}</span>
-                  <span>{t.nav[item.labelKey]}</span>
-                  {item.page === 'favorites' && favoritePropertyIds.size > 0 && (
-                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-emerald-500 px-1 text-[10px] font-bold leading-none text-white">
-                      {favoritePropertyIds.size}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
+          {/* ---- Desktop Navigation (xl+ only — avoids crowding under ~1280px) ---- */}
+          <div className="min-w-0">
+            <nav className="hidden min-w-0 items-center justify-center gap-0.5 overflow-hidden xl:flex">
+              {navConfig.map((item) => {
+                if (item.showAdmin && currentUser?.role !== 'ADMIN') return null;
+                const isActive =
+                  currentPage === item.page ||
+                  (item.page === 'search' && currentPage === 'property-detail');
+                return (
+                  <button
+                    key={item.page}
+                    onClick={() => handleNavClick(item.page)}
+                    data-active={isActive}
+                    className={`luxury-nav-link relative flex shrink-0 items-center gap-1 whitespace-nowrap rounded-lg px-1.5 py-2 text-[13px] 2xl:gap-1.5 2xl:px-2.5 2xl:text-sm ${
+                      isActive ? 'opacity-100' : scrolled ? '' : isDark ? 'text-white/80' : navTextColor
+                    }`}
+                  >
+                    <span className="hidden 2xl:inline-flex">{item.icon}</span>
+                    <span>{t.nav[item.labelKey]}</span>
+                    {item.page === 'favorites' && favoritePropertyIds.size > 0 && (
+                      <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-r from-amber-500 to-emerald-500 px-1 text-[10px] font-bold leading-none text-white">
+                        {favoritePropertyIds.size}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
 
-          {/* ---- Right Side Actions ---- */}
-          <div className="ms-auto flex shrink-0 flex-nowrap items-center gap-0.5 sm:gap-1 lg:ms-0">
-            {/* Desktop Search (xl+ to avoid crowding at lg) */}
-            <form onSubmit={handleSearch} className="hidden xl:block">
+          {/* ---- Actions cluster ---- */}
+          <div className="flex shrink-0 flex-nowrap items-center gap-0.5 isolate sm:gap-1">
+            {/* Search input: very wide screens only */}
+            <form onSubmit={handleSearch} className="hidden 2xl:block">
               <div className="relative">
                 <Search
                   className={`absolute start-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 ${
@@ -417,17 +419,17 @@ export function Header() {
                   placeholder={t.hero.searchPlaceholder}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`h-8 w-36 rounded-lg border px-8 text-[13px] outline-none transition-all duration-300 focus:w-52 focus:ring-2 focus:ring-amber-500/20 ${searchBg}`}
+                  className={`h-8 w-40 max-w-[10rem] rounded-lg border px-8 text-[13px] outline-none transition-all duration-300 focus:w-48 focus:max-w-[12rem] focus:ring-2 focus:ring-amber-500/20 ${searchBg}`}
                 />
               </div>
             </form>
 
-            {/* Compact search icon (lg only, where the input is hidden) */}
+            {/* Search icon: xl–2xl */}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => handleNavClick('search')}
-              className="hidden h-8 w-8 rounded-full lg:inline-flex xl:hidden"
+              className="hidden h-8 w-8 shrink-0 rounded-full xl:inline-flex 2xl:hidden"
               aria-label={t.nav.properties}
             >
               <Search
@@ -437,25 +439,25 @@ export function Header() {
               />
             </Button>
 
-            {/* ---- Add listing CTA ---- */}
+            {/* Add listing — icon until 2xl */}
             <Button
               type="button"
               onClick={handleAddListing}
               size="sm"
-              className="hidden h-8 shrink-0 whitespace-nowrap rounded-lg border border-amber-500/40 bg-gradient-to-r from-amber-500/15 to-emerald-500/15 px-2.5 text-[12px] font-semibold text-amber-800 shadow-sm hover:from-amber-500/25 hover:to-emerald-500/25 md:inline-flex dark:text-amber-200"
+              className="hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-amber-500/40 bg-gradient-to-r from-amber-500/15 to-emerald-500/15 p-0 text-[12px] font-semibold text-amber-800 shadow-sm hover:from-amber-500/25 hover:to-emerald-500/25 xl:inline-flex 2xl:w-auto 2xl:px-3 dark:text-amber-200"
               title={t.nav.addYourListing}
             >
-              <Megaphone className="h-3.5 w-3.5 xl:me-1.5" />
-              <span className="hidden max-w-[10rem] truncate xl:inline">
+              <Megaphone className="h-3.5 w-3.5 2xl:me-1.5" />
+              <span className="hidden max-w-[9rem] truncate 2xl:inline">
                 {t.nav.addYourListing}
               </span>
             </Button>
 
-            {/* ---- Notification Bell ---- */}
+            {/* Notification — desktop bar only */}
             <Button
               variant="ghost"
               size="icon"
-              className="relative hidden h-8 w-8 rounded-full sm:inline-flex"
+              className="relative hidden h-8 w-8 shrink-0 rounded-full xl:inline-flex"
             >
               <Bell
                 className={`h-4 w-4 ${
@@ -471,40 +473,38 @@ export function Header() {
 
             <CurrencySwitcher
               variant="site"
-              buttonClassName={`px-2 sm:px-2.5 [&>span]:!hidden xl:[&>span]:!inline ${
+              showCode={false}
+              className="hidden xl:block"
+              buttonClassName={`!h-8 !w-8 !shrink-0 !gap-0 !px-0 ${
                 scrolled
                   ? ''
                   : isDark
-                    ? '[&_svg]:text-white/70 [&_span]:text-white/70'
-                    : '[&_svg]:text-gray-500 [&_span]:text-gray-600'
+                    ? '[&_svg]:text-white/70'
+                    : '[&_svg]:text-gray-500'
               }`}
             />
 
-            {/* ---- Language Switcher ---- */}
-            <div className="relative">
+            {/* Language — icon only in bar; label in menu */}
+            <div className="relative hidden xl:block">
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 onClick={(e) => {
                   e.stopPropagation();
                   setLangMenuOpen(!langMenuOpen);
                 }}
-                className="h-8 gap-1.5 whitespace-nowrap rounded-lg px-2 text-[13px] font-medium sm:px-2.5"
+                className="h-8 w-8 shrink-0 rounded-full"
+                title={currentLocaleName}
+                aria-label={currentLocaleName}
               >
                 <Globe
                   className={`h-3.5 w-3.5 ${
                     scrolled ? 'text-muted-foreground' : isDark ? 'text-white/70' : 'text-gray-500'
                   }`}
                 />
-                <span className={`hidden xl:inline ${
-                    scrolled ? '' : isDark ? 'text-white/70' : 'text-gray-600'
-                  }`}
-                >
-                  {currentLocaleName}
-                </span>
               </Button>
               {langMenuOpen && (
-                <div className="absolute end-0 top-full mt-2 w-44 overflow-hidden glass-deep rounded-xl p-1">
+                <div className="absolute end-0 top-full z-[70] mt-2 w-44 overflow-hidden glass-deep rounded-xl p-1">
                   {locales.map((l) => (
                     <button
                       key={l.code}
@@ -536,23 +536,23 @@ export function Header() {
               )}
             </div>
 
-            {/* ---- Theme Toggle ---- */}
+            {/* Theme */}
             {mounted && (
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                className="relative h-8 w-8 rounded-full overflow-hidden"
+                className="relative h-8 w-8 shrink-0 rounded-full overflow-hidden"
               >
                 {theme === 'dark' ? (
-                  <Sun className={`h-4 w-4 ${scrolled ? 'text-gray-500' : 'text-gray-500'}`} />
+                  <Sun className="h-4 w-4 text-gray-500" />
                 ) : (
-                  <Moon className={`h-4 w-4 ${scrolled ? 'text-gray-500' : 'text-gray-500'}`} />
+                  <Moon className="h-4 w-4 text-gray-500" />
                 )}
               </Button>
             )}
 
-            {/* ---- User Menu / Login / Register ---- */}
+            {/* User / Auth */}
             {isAuthenticated ? (
               <div className="relative">
                 <Button
@@ -562,14 +562,14 @@ export function Header() {
                     e.stopPropagation();
                     setUserMenuOpen(!userMenuOpen);
                   }}
-                  className="h-8 w-8 rounded-full"
+                  className="h-8 w-8 shrink-0 rounded-full"
                 >
                   <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-emerald-600 text-[11px] font-bold tracking-wide text-white shadow-sm shadow-amber-500/20">
                     {currentUser?.name?.charAt(0)?.toUpperCase() || 'U'}
                   </div>
                 </Button>
                 {userMenuOpen && (
-                  <div className="absolute end-0 top-full mt-2 w-60 overflow-hidden glass-deep rounded-xl p-1">
+                  <div className="absolute end-0 top-full z-[70] mt-2 w-60 overflow-hidden glass-deep rounded-xl p-1">
                     <div className="border-b border-gray-100 px-3 py-3 dark:border-white/5">
                       <div className="flex items-center gap-3">
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-amber-500 to-emerald-600 text-sm font-bold text-white">
@@ -622,33 +622,34 @@ export function Header() {
                 )}
               </div>
             ) : (
-              <div className="hidden items-center gap-1.5 lg:flex">
+              <div className="hidden items-center gap-1 xl:flex">
                 <Button
                   onClick={() => handleNavClick('login')}
                   variant="ghost"
-                  size="sm"
-                  className="h-8 whitespace-nowrap rounded-lg px-2.5 text-[13px] font-medium"
+                  size="icon"
+                  className="h-8 w-8 shrink-0 rounded-full 2xl:w-auto 2xl:rounded-lg 2xl:px-2.5"
+                  title={t.nav.signIn}
                 >
-                  <LogIn className="h-3.5 w-3.5 xl:me-1.5" />
-                  <span className="hidden xl:inline">{t.nav.signIn}</span>
+                  <LogIn className="h-3.5 w-3.5 2xl:me-1.5" />
+                  <span className="hidden 2xl:inline text-[13px] font-medium">{t.nav.signIn}</span>
                 </Button>
                 <Button
                   onClick={() => handleNavClick('register')}
-                  className="h-8 whitespace-nowrap rounded-lg bg-gradient-to-r from-amber-600 to-emerald-600 px-3 text-[13px] font-semibold tracking-wide text-white shadow-md shadow-amber-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/30 hover:brightness-105 xl:px-4"
+                  className="h-8 shrink-0 whitespace-nowrap rounded-lg bg-gradient-to-r from-amber-600 to-emerald-600 px-2.5 text-[12px] font-semibold tracking-wide text-white shadow-md shadow-amber-500/20 transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/30 hover:brightness-105 2xl:px-3.5 2xl:text-[13px]"
                   size="sm"
                 >
-                  <UserPlus className="me-1.5 h-3.5 w-3.5" />
+                  <UserPlus className="me-1 h-3.5 w-3.5" />
                   {t.auth.signUp}
                 </Button>
               </div>
             )}
 
-            {/* ---- Mobile Menu Toggle ---- */}
+            {/* Menu toggle below xl */}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className={`relative h-8 w-8 rounded-full lg:hidden ${
+              className={`relative h-8 w-8 shrink-0 rounded-full xl:hidden ${
                 scrolled ? '' : isDark ? 'text-white' : 'text-gray-900'
               }`}
             >
@@ -662,9 +663,9 @@ export function Header() {
         </div>
       </header>
 
-      {/* Mobile Menu - Full Screen Overlay */}
+      {/* Mobile / tablet menu — used until xl */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-40 flex flex-col glass-deep lg:hidden">
+        <div className="fixed inset-0 z-40 flex flex-col glass-deep xl:hidden">
           {/* Mobile Menu Header */}
           <div className="flex h-16 items-center justify-between border-b border-gray-100 px-4 sm:px-6 dark:border-white/5">
             <button
